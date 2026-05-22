@@ -45,21 +45,6 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     uri = task["uri"]
     user_text = task["text"]
     embed = task.get("embed")
-    do_search = "!t" in user_text.lower() or "!c" in user_text.lower()
-    search_data = ""
-    source = ""
-    if do_search:
-        clean_text = re.sub(r'(!t|!c)', '', user_text, flags=re.I).strip()
-        if "!c" in user_text.lower():
-            kw = generator.extract_chainbase_keyword(llm, clean_text, "")
-            if kw:
-                search_data = await search.fetch_chainbase(kw)
-                source = "chainbase"
-        else:
-            q, t = generator.extract_search_intent(llm, clean_text)
-            if q:
-                search_data = await search.fetch_tavily(q, t)
-                source = "tavily"
     chain = await bsky.fetch_thread_chain(client, uri)
     if not chain: return []
     root_uri = chain.get("root_uri", uri)
@@ -67,9 +52,7 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     parent_uri = uri
     parent_cid = chain.get("cid", "")
     if not parent_cid: return []
-    clean_query = utils.clean_for_llm(user_text)
     root_text = utils.clean_for_llm(chain.get("root_text", ""))
-    clean_search = utils.clean_for_llm(search_data) if search_data else ""
     posts = chain.get("chain", [])
     history_lines = []
     for post in posts[1:]:
@@ -83,6 +66,25 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
         else: prefix = "USER:"
         history_lines.append(f"{prefix} {text}")
     history_block = "\n".join(history_lines[-5:]) if history_lines else "No history."
+    clean_query = utils.clean_for_llm(user_text)
+    search_data = ""
+    source = ""
+    do_search = "!t" in user_text.lower() or "!c" in user_text.lower()
+    if do_search:
+        clean_text = re.sub(r'(!t|!c)', '', user_text, flags=re.I).strip()
+        topic_context = f"{root_text}\n{history_block}".strip()
+        if "!c" in user_text.lower():
+            kw = generator.extract_chainbase_keyword(llm, clean_text, topic_context)
+            if kw:
+                search_data = await search.fetch_chainbase(kw)
+                source = "chainbase"
+        else:
+            q, t = generator.extract_search_intent(llm, clean_text)
+            enriched_query = f"{q} in context: {root_text[:200]}" if root_text else q
+            if q:
+                search_data = await search.fetch_tavily(enriched_query, t)
+                source = "tavily"
+    clean_search = utils.clean_for_llm(search_data) if search_data else ""
     embed_context = await extract_embed_context(embed, client)
     model_ctx = (
         f"[QUERY]\n{clean_query}\n"
@@ -100,6 +102,8 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
     reply = generator.get_answer(llm, model_ctx, clean_query, max_chars=max_reply_chars, temperature=0.5, prompt_key="owner_reply")
     reply = reply.strip()
+    if reply.startswith("```") and reply.endswith("```"):
+        reply = reply[3:-3].strip()
     reply, facets_list = facets.enhance_tickers(reply)
     final_text = reply + sig
     if utils.count_graphemes(final_text) > config.MAX_COMMENT_CHARS:
