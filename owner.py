@@ -1,0 +1,116 @@
+import logging
+import re
+import config
+import bsky
+import generator
+import search
+import utils
+import facets
+import build_content
+from typing import List, Dict, Any
+logger = logging.getLogger(__name__)
+async def extract_embed_context(embed: dict, client) -> str:
+    if not embed: return ""
+    parts = []
+    etype = embed.get("$type", "")
+    if etype == "app.bsky.embed.record":
+        rec = embed.get("record", {}).get("value", {})
+        if rec and rec.get("text"):
+            parts.append(f"QUOTED TEXT: {rec['text']}")
+    elif etype == "app.bsky.embed.images":
+        for img in embed.get("images", []):
+            if img.get("alt"): parts.append(f"IMAGE ALT: {img['alt']}")
+    elif etype == "app.bsky.embed.recordWithMedia":
+        rec = embed.get("record", {}).get("value", {})
+        if rec and rec.get("text"): parts.append(f"QUOTED TEXT: {rec['text']}")
+        media = embed.get("media", {})
+        if media.get("$type") == "app.bsky.embed.external":
+            ext = media.get("external", {})
+            if ext.get("description"): parts.append(f"LINK DESC: {ext['description']}")
+            if ext.get("title"): parts.append(f"LINK TITLE: {ext['title']}")
+    elif etype == "app.bsky.embed.external":
+        ext = embed.get("external", {})
+        if ext.get("description"): parts.append(f"LINK DESC: {ext['description']}")
+        if ext.get("title"): parts.append(f"LINK TITLE: {ext['title']}")
+    urls = re.findall(r'https?://\S+', " ".join(parts))
+    fetched = []
+    for u in list(set(urls))[:2]:
+        try:
+            content = await bsky._fetch_url_content(client, u)
+            if content: fetched.append(f"LINK CONTENT ({u}): {content[:config.MAX_LINK_CONTENT_SIZE]}")
+        except: pass
+    if parts: return "[EMBED]\n" + "\n".join(parts) + "\n" + "\n".join(fetched)
+    return ""
+async def prepare(client, llm, task) -> List[Dict[str, Any]]:
+    uri = task["uri"]
+    user_text = task["text"]
+    embed = task.get("embed")
+    do_search = "!t" in user_text.lower() or "!c" in user_text.lower()
+    search_data = ""
+    source = ""
+    if do_search:
+        clean_text = re.sub(r'(!t|!c)', '', user_text, flags=re.I).strip()
+        if "!c" in user_text.lower():
+            kw = generator.extract_chainbase_keyword(llm, clean_text, "")
+            if kw:
+                search_data = await search.fetch_chainbase(kw)
+                source = "chainbase"
+        else:
+            q, t = generator.extract_search_intent(llm, clean_text)
+            if q:
+                search_data = await search.fetch_tavily(q, t)
+                source = "tavily"
+    chain = await bsky.fetch_thread_chain(client, uri)
+    if not chain: return []
+    root_uri = chain.get("root_uri", uri)
+    root_cid = chain.get("root_cid", "")
+    parent_uri = uri
+    parent_cid = chain.get("cid", "")
+    if not parent_cid: return []
+    clean_query = utils.clean_for_llm(user_text)
+    root_text = utils.clean_for_llm(chain.get("root_text", ""))
+    clean_search = utils.clean_for_llm(search_data) if search_data else ""
+    posts = chain.get("chain", [])[-5:]
+    history_lines = []
+    for post in posts:
+        rec = post.get("record", {})
+        author = post.get("author", {})
+        did = author.get("did", "")
+        text = utils.clean_for_llm(rec.get("text", ""))
+        if not text: continue
+        if did == config.OWNER_DID: prefix = "OWNER:"
+        elif did == config.BOT_DID: prefix = "BOT:"
+        else: prefix = "USER:"
+        history_lines.append(f"{prefix} {text}")
+    history_block = "\n".join(history_lines) if history_lines else "No history."
+    embed_context = await extract_embed_context(embed, client)
+    model_ctx = (
+        f"[QUERY]\n{clean_query}\n"
+        f"[CONVERSATION]\n"
+        f"[ROOT]\n{root_text}\n"
+        f"[HISTORY]\n{history_block}\n"
+        f"[SEARCH]\n{clean_search if clean_search else 'No external data'}\n"
+        f"{embed_context}"
+    )
+    if config.RAW_DEBUG:
+        logger.info("=== [OWNER CONTEXT] ===")
+        logger.info(model_ctx)
+        logger.info("=== [END CONTEXT] ===")
+    sig = build_content._get_signature(source, bool(search_data))
+    max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
+    reply = generator.get_answer(llm, model_ctx, clean_query, max_chars=max_reply_chars, temperature=0.5, prompt_key="owner_reply")
+    reply = reply.strip()
+    reply, facets_list = facets.enhance_tickers(reply)
+    final_text = reply + sig
+    if utils.count_graphemes(final_text) > config.MAX_COMMENT_CHARS:
+        reply = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
+        reply, facets_list = facets.enhance_tickers(reply)
+        final_text = reply + sig
+    if config.RAW_DEBUG:
+        logger.info("=== [FINAL POST] ===")
+        logger.info(final_text)
+        logger.info("=== [END POST] ===")
+    return [{
+        "type": "post_reply",
+        "args": {"bot_did": config.BOT_DID, "text": final_text, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": parent_uri, "parent_cid": parent_cid, "facets": facets_list}
+    }]
