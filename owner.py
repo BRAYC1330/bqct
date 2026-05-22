@@ -52,7 +52,14 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     parent_uri = uri
     parent_cid = chain.get("cid", "")
     if not parent_cid: return []
-    root_text = utils.clean_for_llm(chain.get("root_text", ""))
+    root_record = chain.get("root_record", {})
+    root_text_raw = root_record.get("text", "")
+    root_embed = root_record.get("embed")
+    root_text_clean = utils.clean_for_llm(root_text_raw)
+    root_embed_context = await extract_embed_context(root_embed, client)
+    root_context = root_text_clean
+    if root_embed_context:
+        root_context = f"{root_text_clean}\n{root_embed_context}"
     posts = chain.get("chain", [])
     history_lines = []
     for post in posts[1:]:
@@ -72,7 +79,7 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     do_search = "!t" in user_text.lower() or "!c" in user_text.lower()
     if do_search:
         clean_text = re.sub(r'(!t|!c)', '', user_text, flags=re.I).strip()
-        topic_context = f"{root_text}\n{history_block}".strip()
+        topic_context = f"{root_context}\n{history_block}".strip()
         if "!c" in user_text.lower():
             kw = generator.extract_chainbase_keyword(llm, clean_text, topic_context)
             if kw:
@@ -80,19 +87,33 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
                 source = "chainbase"
         else:
             q, t = generator.extract_search_intent(llm, clean_text)
-            enriched_query = f"{q} in context: {root_text[:200]}" if root_text else q
             if q:
+                if root_text_clean:
+                    snippet = root_text_clean[:config.SEARCH_CONTEXT_SNIPPET_LEN]
+                    enriched_query = f"{q} in context: {snippet}"
+                else:
+                    enriched_query = q
+                if config.RAW_DEBUG:
+                    logger.info(f"=== [SEARCH QUERY] ===")
+                    logger.info(f"Original: {clean_text}")
+                    logger.info(f"Extracted: {q} | Time: {t or 'none'}")
+                    logger.info(f"Enriched: {enriched_query}")
+                    logger.info("=== [END SEARCH QUERY] ===")
                 search_data = await search.fetch_tavily(enriched_query, t)
                 source = "tavily"
+                if config.RAW_DEBUG and search_data:
+                    logger.info(f"=== [SEARCH RAW RESULTS] ===")
+                    logger.info(search_data[:1500] + ("..." if len(search_data) > 1500 else ""))
+                    logger.info("=== [END SEARCH RESULTS] ===")
     clean_search = utils.clean_for_llm(search_data) if search_data else ""
-    embed_context = await extract_embed_context(embed, client)
+    current_embed_context = await extract_embed_context(embed, client)
     model_ctx = (
         f"[QUERY]\n{clean_query}\n"
         f"[CONVERSATION]\n"
-        f"[ROOT]\n{root_text}\n"
+        f"[ROOT]\n{root_context}\n"
         f"[HISTORY]\n{history_block}\n"
         f"[SEARCH]\n{clean_search if clean_search else 'No external data'}\n"
-        f"{embed_context}"
+        f"{current_embed_context}"
     )
     if config.RAW_DEBUG:
         logger.info("=== [OWNER CONTEXT] ===")
