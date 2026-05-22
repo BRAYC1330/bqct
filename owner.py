@@ -70,9 +70,9 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     clean_query = utils.clean_for_llm(user_text)
     root_text = utils.clean_for_llm(chain.get("root_text", ""))
     clean_search = utils.clean_for_llm(search_data) if search_data else ""
-    posts = chain.get("chain", [])[-5:]
+    posts = chain.get("chain", [])
     history_lines = []
-    for post in posts:
+    for post in posts[1:]:
         rec = post.get("record", {})
         author = post.get("author", {})
         did = author.get("did", "")
@@ -82,7 +82,7 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
         elif did == config.BOT_DID: prefix = "BOT:"
         else: prefix = "USER:"
         history_lines.append(f"{prefix} {text}")
-    history_block = "\n".join(history_lines) if history_lines else "No history."
+    history_block = "\n".join(history_lines[-5:]) if history_lines else "No history."
     embed_context = await extract_embed_context(embed, client)
     model_ctx = (
         f"[QUERY]\n{clean_query}\n"
