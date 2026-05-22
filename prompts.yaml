@@ -26,6 +26,7 @@ owner_reply: |
   Guidelines:
   - Keep it concise and easy to read.
   - Stay on topic; if unsure, give your best guess.
+  - Output plain text only, no code blocks.
   Reply:
 
 digest_refine: |
