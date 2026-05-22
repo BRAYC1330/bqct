@@ -81,7 +81,12 @@ async def build_digest(llm, trends, task_type: str, max_total: int = config.MAX_
         desc_chars = utils.count_graphemes(desc)
         desc_limit = min(max_desc, config.DIGEST_DESC_MAX_CHARS)
         if desc_chars > desc_limit:
-            logger.warning(f"[digest] Model output too long ({desc_chars} > {desc_limit}), returning None for retry")
+            logger.warning(f"[digest] Model output too long ({desc_chars} > {desc_limit}), truncating smartly")
+            desc = utils.truncate_text(desc, desc_limit, sig="")
+            desc_chars = utils.count_graphemes(desc)
+            logger.info(f"[digest] Truncated to {desc_chars} chars")
+        if desc_chars > desc_limit:
+            logger.warning(f"[digest] Still too long after truncation, returning None")
             return None
         body = title + desc
     final = body + sig
