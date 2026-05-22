@@ -68,7 +68,11 @@ async def run():
                     if state.digest_uri and root_uri == state.digest_uri:
                         tasks.append(Task(type=TaskType.digest_comment, uri=uri, text=text, author_did=author_did, parent_uri=parent_uri, embed=embed))
                         digest_comment_count += 1
-                        logger.info(f"[debug] queued digest_comment (owner->bot direct) | uri={uri}")
+                        logger.info(f"[debug] queued digest_comment (owner->bot in digest) | uri={uri}")
+                    else:
+                        tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
+                        owner_count += 1
+                        logger.info(f"[debug] queued owner_command (owner->bot outside digest) | uri={uri}")
                     continue
                 elif f"@{config.BOT_HANDLE.replace('@', '')}" in text:
                     tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
