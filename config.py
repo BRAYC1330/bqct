@@ -35,3 +35,10 @@ LLM_TOKENS_KEYWORD = 10
 LLM_TOKENS_REGEN = 15
 RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
 LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
+DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
+IMAGE_STYLES = [
+    "cyberpunk aesthetic", "anime illustration", "impressionist like Van Gogh",
+    "surrealist dream", "minimalist geometric", "retro synthwave",
+    "watercolor painting", "glitch art core", "neo-noir atmosphere",
+    "abstract fluid dynamics"
+]
