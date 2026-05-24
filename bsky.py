@@ -137,10 +137,14 @@ async def _fetch_url_content(client, url):
     return ""
 async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/jpeg", alt: str = ""):
     try:
-        blob = await client.com.atproto.repo.uploadBlob(data=image_bytes, encoding=mime)
+        url = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
+        headers = {"Content-Type": mime}
+        r = await client.post(url, content=image_bytes, headers=headers, timeout=30)
+        r.raise_for_status()
+        blob = r.json().get("blob")
         return {
             "$type": "app.bsky.embed.images",
-            "images": [{"image": blob.data.blob, "alt": alt or "Digest visualization"}]
+            "images": [{"image": blob, "alt": alt or "Digest visualization"}]
         }
     except Exception as e:
         logger.warning(f"[bsky] Digest image upload failed: {e}")
