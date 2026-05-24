@@ -12,7 +12,7 @@ chainbase_keyword: |
 
 community_reply: |
   Query: {query}
-  Context: [ROOT] and [SEARCH] below.
+  Context: conversation root and relevant data below.
   Task: Answer naturally using the context.
   Guidelines:
   - Keep it concise and easy to read.
