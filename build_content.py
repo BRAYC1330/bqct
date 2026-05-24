@@ -35,16 +35,23 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         texture = random.choice(config.IMAGE_STYLE_TEXTURE)
         color = random.choice(config.IMAGE_STYLE_COLOR)
         composition = random.choice(config.IMAGE_STYLE_COMPOSITION)
-        subject = trends[0].get("keyword", "crypto trends") if task_type == "digest_mini" else (trends[0].get("summary", "market analysis")[:60] if trends else "market analysis")
+
+        top_item = trends[0]
+        summary = top_item.get("summary", "")
+        keyword = top_item.get("keyword", "crypto trends")
+
+        subject = summary[:60] if len(summary) > 5 else keyword
+        
         style_phrase = f"{medium}, {clarity}, {texture}, {color}, {composition}"
-        prompt = f"Abstract visualization of {subject}, {style_phrase}, high quality digital art, creative composition"
+        prompt = f"Abstract visualization of {subject}, {style_phrase}, featuring {config.IMAGE_CHARACTER_DESC}, naturally integrated into the scene, high quality digital art, creative composition"
+        
         img_url = await _call_image_gen(prompt)
         if not img_url: return None
         async with httpx.AsyncClient() as http:
             r = await http.get(img_url, timeout=20)
             if r.status_code != 200: return None
             mime = "image/png" if img_url.lower().endswith(".png") else "image/jpeg"
-        return await bsky.upload_digest_image(client, r.content, mime, alt=f"Abstract digest: {subject}")
+        return await bsky.upload_digest_image(client, r.content, mime, alt=f"Abstract digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
