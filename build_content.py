@@ -4,6 +4,8 @@ import generator
 import logging
 import random
 import httpx
+import asyncio
+import io
 import bsky
 logger = logging.getLogger(__name__)
 SIG_DIGEST = "\n\nQwen | Chainbase TOPS " + config.SIGNATURE_ICONS
@@ -43,28 +45,31 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         prompt = f"Abstract visualization of {subject}, {style_phrase}, featuring {config.IMAGE_CHARACTER_DESC}, naturally integrated into the scene, high quality digital art, creative composition"
         image_bytes = await _call_image_gen(prompt)
         if not image_bytes: return None
-        mime = "image/png"
-        return await bsky.upload_digest_image(client, image_bytes, mime, alt=f"Abstract digest: {keyword}")
+        return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Abstract digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
 async def _call_image_gen(prompt: str) -> bytes | None:
     try:
+        from huggingface_hub import InferenceClient
         if not config.HF_API_TOKEN:
-            logger.warning("[image_gen] HF_API_TOKEN is empty")
             return None
-        headers = {"Authorization": f"Bearer {config.HF_API_TOKEN}", "Content-Type": "application/json"}
+        client = InferenceClient(token=config.HF_API_TOKEN)
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        payload = {"inputs": prompt, "parameters": {"width": w, "height": h, "num_inference_steps": 30, "guidance_scale": 7.5}}
-        model_url = f"https://api-inference.huggingface.co/models/{config.HF_IMAGE_MODEL}"
-        async with httpx.AsyncClient() as http:
-            r = await http.post(model_url, headers=headers, json=payload, timeout=90)
-            if r.status_code != 200:
-                logger.warning(f"[image_gen] HF API error {r.status_code}: {r.text[:100]}")
-                return None
-            return r.content
+        image = await asyncio.to_thread(
+            client.text_to_image,
+            prompt=prompt,
+            model="stabilityai/stable-diffusion-xl-base-1.0",
+            width=w,
+            height=h,
+            guidance_scale=7.5,
+            num_inference_steps=30
+        )
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        return buffer.getvalue()
     except Exception as e:
-        logger.warning(f"[image_gen] HF API call failed: {e}")
+        logger.warning(f"[image_gen] HF InferenceClient failed: {e}")
         return None
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
