@@ -26,20 +26,24 @@ async def login_with_cache(client, handle, password):
         json.dump(sess, f)
     logger.info("[bsky] New session created and cached")
 @retry_async()
-async def post_root(client, bot_did, text, facets=None):
+async def post_root(client, bot_did, text, facets=None, embed=None):
     record = {"$type": "app.bsky.feed.post", "text": text, "createdAt": datetime.now(timezone.utc).isoformat()}
     if facets:
         record["facets"] = facets
+    if embed:
+        record["embed"] = embed
     body = {"repo": bot_did, "collection": "app.bsky.feed.post", "record": record}
     r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
 @retry_async()
-async def post_reply(client, bot_did, text, root_uri, root_cid, parent_uri, parent_cid, facets=None):
+async def post_reply(client, bot_did, text, root_uri, root_cid, parent_uri, parent_cid, facets=None, embed=None):
     reply = {"root": {"uri": root_uri, "cid": root_cid}, "parent": {"uri": parent_uri, "cid": parent_cid}}
     record = {"$type": "app.bsky.feed.post", "text": text, "createdAt": datetime.now(timezone.utc).isoformat(), "reply": reply}
     if facets:
         record["facets"] = facets
+    if embed:
+        record["embed"] = embed
     body = {"repo": bot_did, "collection": "app.bsky.feed.post", "record": record}
     r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
@@ -131,3 +135,13 @@ async def _fetch_url_content(client, url):
     except Exception:
         pass
     return ""
+async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/jpeg", alt: str = ""):
+    try:
+        blob = await client.com.atproto.repo.uploadBlob(data=image_bytes, encoding=mime)
+        return {
+            "$type": "app.bsky.embed.images",
+            "images": [{"image": blob.data.blob, "alt": alt or "Digest visualization"}]
+        }
+    except Exception as e:
+        logger.warning(f"[bsky] Digest image upload failed: {e}")
+        return None
