@@ -35,16 +35,12 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         texture = random.choice(config.IMAGE_STYLE_TEXTURE)
         color = random.choice(config.IMAGE_STYLE_COLOR)
         composition = random.choice(config.IMAGE_STYLE_COMPOSITION)
-
         top_item = trends[0]
         summary = top_item.get("summary", "")
         keyword = top_item.get("keyword", "crypto trends")
-
         subject = summary[:60] if len(summary) > 5 else keyword
-        
         style_phrase = f"{medium}, {clarity}, {texture}, {color}, {composition}"
         prompt = f"Abstract visualization of {subject}, {style_phrase}, featuring {config.IMAGE_CHARACTER_DESC}, naturally integrated into the scene, high quality digital art, creative composition"
-        
         img_url = await _call_image_gen(prompt)
         if not img_url: return None
         async with httpx.AsyncClient() as http:
@@ -56,7 +52,11 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
 async def _call_image_gen(prompt: str) -> str | None:
-    return None
+    try:
+        return None
+    except Exception as e:
+        logger.warning(f"[image_gen] API call failed: {e}")
+        return None
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
     sig = SIG_DIGEST
