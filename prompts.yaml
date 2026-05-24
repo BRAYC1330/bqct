@@ -71,16 +71,13 @@ validate_search: |
   Result:
 
 keyword_regenerate: |
-  No results for "{original}". Suggest ONE MORE SPECIFIC alternative keyword.
-  Rules:
-  - Combine the query topic with context from the root post.
-  - Focus on unique identifiers: project names, protocols, chains, or technical terms.
-  - NEVER suggest any of these already-tried keywords: {tried_keywords}
-  - Output ONLY the keyword, no explanation.
-  Query: "{query}"
-  Root context: "{root_topic}"
-  Already tried: {tried_keywords}
-  More specific keyword:
+  From the QUERY below, extract ONE specific keyword.
+  Ignore generic words. NEVER use: {tried_keywords}
+  
+  QUERY: {query}
+  Context: {root_topic}
+  
+  Keyword:
 
 dyor_fallback: |
   No search data for "{keyword}".
