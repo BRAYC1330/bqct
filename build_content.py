@@ -41,21 +41,30 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         subject = summary[:60] if len(summary) > 5 else keyword
         style_phrase = f"{medium}, {clarity}, {texture}, {color}, {composition}"
         prompt = f"Abstract visualization of {subject}, {style_phrase}, featuring {config.IMAGE_CHARACTER_DESC}, naturally integrated into the scene, high quality digital art, creative composition"
-        img_url = await _call_image_gen(prompt)
-        if not img_url: return None
-        async with httpx.AsyncClient() as http:
-            r = await http.get(img_url, timeout=20)
-            if r.status_code != 200: return None
-            mime = "image/png" if img_url.lower().endswith(".png") else "image/jpeg"
-        return await bsky.upload_digest_image(client, r.content, mime, alt=f"Abstract digest: {keyword}")
+        image_bytes = await _call_image_gen(prompt)
+        if not image_bytes: return None
+        mime = "image/png"
+        return await bsky.upload_digest_image(client, image_bytes, mime, alt=f"Abstract digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
-async def _call_image_gen(prompt: str) -> str | None:
+async def _call_image_gen(prompt: str) -> bytes | None:
     try:
-        return None
+        if not config.HF_API_TOKEN:
+            logger.warning("[image_gen] HF_API_TOKEN is empty")
+            return None
+        headers = {"Authorization": f"Bearer {config.HF_API_TOKEN}", "Content-Type": "application/json"}
+        w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+        payload = {"inputs": prompt, "parameters": {"width": w, "height": h, "num_inference_steps": 30, "guidance_scale": 7.5}}
+        model_url = f"https://api-inference.huggingface.co/models/{config.HF_IMAGE_MODEL}"
+        async with httpx.AsyncClient() as http:
+            r = await http.post(model_url, headers=headers, json=payload, timeout=90)
+            if r.status_code != 200:
+                logger.warning(f"[image_gen] HF API error {r.status_code}: {r.text[:100]}")
+                return None
+            return r.content
     except Exception as e:
-        logger.warning(f"[image_gen] API call failed: {e}")
+        logger.warning(f"[image_gen] HF API call failed: {e}")
         return None
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
