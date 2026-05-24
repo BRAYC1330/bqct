@@ -16,7 +16,8 @@ def clean_for_llm(text: str) -> str:
     return text.strip()
 
 def count_graphemes(text: str) -> int:
-    return len(re.findall(r'\X', text, re.UNICODE))
+    if not text: return 0
+    return len(text.encode('utf-8').decode('utf-8', errors='ignore'))
 
 def count_tokens(text: str, llm) -> int:
     if hasattr(llm, "tokenize"):
