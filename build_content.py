@@ -2,6 +2,9 @@ import config
 import utils
 import generator
 import logging
+import random
+import httpx
+import bsky
 logger = logging.getLogger(__name__)
 SIG_DIGEST = "\n\nQwen | Chainbase TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
@@ -19,13 +22,31 @@ async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", s
     sig = _get_signature(source, bool(search_data))
     max_body = max_total - len(sig)
     if search_data:
-        ctx = f"[SEARCH]\n{search_data}\n{thread_ctx}"
+        ctx = f"{search_data}\n{thread_ctx}"
     else:
         ctx = thread_ctx
     reply = generator.get_answer(llm, ctx, query, max_chars=max_body, temperature=0.5)
     return utils.truncate_text(reply, max_body).strip() + sig
-async def build_digest(llm, trends, task_type: str, max_total: int = config.MAX_COMMENT_CHARS) -> str | None:
-    if not trends: return None
+async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
+    if not config.DIGEST_IMAGE_ENABLED: return None
+    try:
+        style = random.choice(config.IMAGE_STYLES)
+        subject = trends[0].get("keyword", "crypto trends") if task_type == "digest_mini" else (trends[0].get("summary", "market analysis")[:60] if trends else "market analysis")
+        prompt = f"Abstract visualization of {subject}, {style}, high quality digital art, creative composition"
+        img_url = await _call_image_gen(prompt)
+        if not img_url: return None
+        async with httpx.AsyncClient() as http:
+            r = await http.get(img_url, timeout=20)
+            if r.status_code != 200: return None
+            mime = "image/png" if img_url.lower().endswith(".png") else "image/jpeg"
+        return await bsky.upload_digest_image(client, r.content, mime, alt=f"Abstract digest: {subject}")
+    except Exception as e:
+        logger.warning(f"[digest] Image pipeline failed: {e}")
+        return None
+async def _call_image_gen(prompt: str) -> str | None:
+    return None
+async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
+    if not trends: return None, None
     sig = SIG_DIGEST
     emojis = config.TREND_EMOJIS
     stats_emoji = config.TREND_STATS_EMOJI
@@ -43,7 +64,7 @@ async def build_digest(llm, trends, task_type: str, max_total: int = config.MAX_
             if len("\n".join(lines)) + len(sig) > max_total:
                 lines.pop()
                 break
-        if not lines: return None
+        if not lines: return None, None
         body = "\n".join(lines)
     else:
         item = trends[0]
@@ -58,7 +79,7 @@ async def build_digest(llm, trends, task_type: str, max_total: int = config.MAX_
         max_desc = max_total - fixed_len
         if max_desc < 30:
             logger.warning(f"[digest] max_desc too small: {max_desc} < 30")
-            return None
+            return None, None
         prompt_text = generator.load_prompt("digest_refine", keyword=kw, summary=summary, max_chars=min(max_desc, config.DIGEST_DESC_MAX_CHARS))
         prompt_text = str(prompt_text).strip()
         if config.RAW_DEBUG:
@@ -87,15 +108,18 @@ async def build_digest(llm, trends, task_type: str, max_total: int = config.MAX_
             logger.info(f"[digest] Truncated to {desc_chars} chars")
         if desc_chars > desc_limit:
             logger.warning(f"[digest] Still too long after truncation, returning None")
-            return None
+            return None, None
         body = title + desc
     final = body + sig
     final_len = utils.count_graphemes(final)
     if final_len > max_total:
         logger.warning(f"[digest] Final post too long: {final_len} > {max_total} | type={task_type}")
-        return None
+        return None, None
     if config.RAW_DEBUG:
         logger.info("=== [FINAL DIGEST POST] ===")
         logger.info(final)
         logger.info("=== [END FINAL POST] ===")
-    return final
+    embed = None
+    if client and task_type.startswith("digest_"):
+        embed = await _generate_digest_embed(client, trends, task_type)
+    return final, embed
