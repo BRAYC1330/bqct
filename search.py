@@ -9,7 +9,6 @@ import httpx
 logger = logging.getLogger(__name__)
 
 def _clean_tavily_content(text: str) -> str:
-    """Используем trafilatura для извлечения чистого текста из HTML/сырого контента"""
     if not text: return ""
     clean = trafilatura.extract(text, include_comments=False, include_tables=False, fallback_to_scraper=False)
     if clean:
@@ -88,3 +87,40 @@ async def fetch_chainbase(keyword: str) -> str:
             if len(valid) >= config.MAX_SEARCH_RESULTS: break
         if not valid: return ""
         return "\n".join(f"{kw}: {sm}" for kw, sm in valid)
+
+@retry_async()
+async def fetch_mentions(keyword: str) -> str:
+    if not keyword: return ""
+    keywords_to_try = [keyword]
+    if not keyword.startswith("$"):
+        keywords_to_try.append(f"${keyword}")
+    all_mentions = []
+    seen_ids = set()
+    async with httpx.AsyncClient(timeout=config.SEARCH_TIMEOUT) as client:
+        for kw in keywords_to_try:
+            try:
+                url = "https://api.chainbase.com/tops/v1/tool/search-mentions"
+                params = {"keyword": kw}
+                r = await client.get(url, params=params)
+                if r.status_code != 200:
+                    logger.warning(f"[search] Mentions failed for {kw}: {r.status_code}")
+                    continue
+                data = r.json()
+                items = data.get("items", [])
+                for item in items[:5]:
+                    item_id = item.get("id")
+                    if item_id in seen_ids: continue
+                    seen_ids.add(item_id)
+                    user = item.get("user", {})
+                    username = user.get("screen_name", "unknown")
+                    text = item.get("text", "")
+                    if not text or len(text) < 20: continue
+                    clean_text = text.replace("\n", " ").strip()
+                    if len(clean_text) > 280:
+                        clean_text = clean_text[:277] + "..."
+                    all_mentions.append(f"@{username}: {clean_text}")
+            except Exception as e:
+                logger.warning(f"[search] Mentions error for {kw}: {e}")
+                continue
+    if not all_mentions: return ""
+    return "Recent mentions:\n" + "\n\n".join(all_mentions[:5])
