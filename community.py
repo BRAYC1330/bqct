@@ -81,7 +81,7 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
         reply = generator.get_answer(llm, ctx_text, clean_query, max_chars=max_reply_chars, temperature=config.LLM_TEMP_STANDARD, prompt_key="dyor_fallback", keyword=original_keyword or "this topic")
     else:
         clean_search = utils.clean_for_llm(search_data)
-        minimal_ctx = f"[ROOT]\n{clean_root}\n[SEARCH]\n{clean_search}"
+        minimal_ctx = f"[ROOT]\n{clean_root}\n\n{clean_search}"
         reply = generator.get_answer(llm, minimal_ctx, clean_query, max_chars=max_reply_chars, temperature=config.LLM_TEMP_STANDARD, prompt_key="community_reply")
     
     if config.RAW_DEBUG:
