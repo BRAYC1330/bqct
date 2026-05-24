@@ -38,7 +38,7 @@ LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1792x1024")
-IMAGE_CHARACTER_DESC = "a small minimalist robot with a rounded white body, glowing cyan visor, hexagonal chest plate, jointed limbs, consistent proportions"
+IMAGE_CHARACTER_DESC = "a cute small robot, white smooth body, glowing cyan visor, two arms, two legs, hexagonal chest plate, simple joints, clean design"
 IMAGE_STYLE_MEDIUM = ["watercolor", "pencil sketch", "graffiti", "oil painting", "digital art", "charcoal", "ink drawing", "pastel", "marker art", "collage"]
 IMAGE_STYLE_CLARITY = ["sharp focus", "soft blur", "dreamy haze", "crisp details", "motion blur", "bokeh background", "high contrast", "low contrast", "grainy texture", "clean render"]
 IMAGE_STYLE_TEXTURE = ["pixel art", "film grain", "smooth gradient", "glitch effect", "paper texture", "canvas weave", "neon glow", "matte finish", "glossy surface", "rough strokes"]
