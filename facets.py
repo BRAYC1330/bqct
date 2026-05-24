@@ -13,7 +13,7 @@ def validate_facets(text: str, facets: List[dict]) -> List[dict]:
 
 def enhance_tickers(text: str) -> Tuple[str, List[dict]]:
     if not text: return "", []
-    pattern = re.compile(r'\$([A-Za-z][A-Za-z0-9]{1,9})\b')
+    pattern = re.compile(r'\$(?![0-9])([A-Za-z]{2,10})(?![A-Za-z0-9])')
     hashtag_pattern = re.compile(r'#([a-zA-Z0-9_]+)')
     seen = set()
     parts = []
@@ -41,7 +41,7 @@ def enhance_tickers(text: str) -> Tuple[str, List[dict]]:
 
 def generate_digest_facets(text: str) -> List[dict]:
     if not text: return []
-    pattern = re.compile(r'\$([A-Za-z][A-Za-z0-9]{1,9})\b')
+    pattern = re.compile(r'\$(?![0-9])([A-Za-z]{2,10})(?![A-Za-z0-9])')
     hashtag_pattern = re.compile(r'#([a-zA-Z0-9_]+)')
     facets = []
     for m in pattern.finditer(text):
