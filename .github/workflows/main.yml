@@ -42,6 +42,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           LAST_PROCESSED: ${{ secrets.LAST_PROCESSED }}
           MANUAL_DIGEST_TYPE: ${{ inputs.manual_digest }}
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: python check.py
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
