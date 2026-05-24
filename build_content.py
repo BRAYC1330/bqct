@@ -43,27 +43,30 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         subject = summary[:60] if len(summary) > 5 else keyword
         style_phrase = f"{medium}, {clarity}, {texture}, {color}, {composition}"
         prompt = f"Abstract visualization of {subject}, {style_phrase}, featuring {config.IMAGE_CHARACTER_DESC}, naturally integrated into the scene, high quality digital art, creative composition"
-        image_bytes = await _call_image_gen(prompt)
+        
+        logger.info(f"[image_gen] Styles: {style_phrase}")
+        logger.info(f"[image_gen] Subject: {subject}")
+        
+        seed = random.randint(0, 2**31 - 1)
+        image_bytes = await _call_image_gen(prompt, seed)
         if not image_bytes: return None
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Abstract digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
-async def _call_image_gen(prompt: str) -> bytes | None:
+async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
     try:
         from huggingface_hub import InferenceClient
-        if not config.HF_API_TOKEN:
-            return None
+        if not config.HF_API_TOKEN: return None
         client = InferenceClient(token=config.HF_API_TOKEN)
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         image = await asyncio.to_thread(
             client.text_to_image,
             prompt=prompt,
             model="stabilityai/stable-diffusion-xl-base-1.0",
-            width=w,
-            height=h,
-            guidance_scale=7.5,
-            num_inference_steps=30
+            width=w, height=h, guidance_scale=7.5,
+            num_inference_steps=30,
+            seed=seed
         )
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
