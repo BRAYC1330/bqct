@@ -30,10 +30,11 @@ owner_reply: |
   Reply:
 
 digest_refine: |
-  Write ONE very short news insight based on the context.
+  Write a concise news insight based on the context.
   Topic reference: {keyword} (do not repeat in output).
   Guidelines:
-  - ONE sentence only. Start with the core fact, end with a period.
+  - 2-3 sentences max. Focus on key facts, metrics, and impact.
+  - Start with the core fact, end with a period.
   - Maximum {max_chars} characters total.
   Context: {summary}
   Insight:
