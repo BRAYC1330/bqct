@@ -21,23 +21,45 @@ class Dispatcher:
             try:
                 if task.type in (TaskType.digest_mini, TaskType.digest_full):
                     import digest
-                    action = await digest.prepare(self.llm, task.type)
+                    digest_text, embed = await digest.prepare(self.llm, task.type, self.client)
+                    if digest_text:
+                        action = {
+                            "type": "post_root",
+                            "args": {
+                                "bot_did": self.ctx.bot_did,
+                                "text": digest_text,
+                                "embed": embed
+                            },
+                            "track_uri": True
+                        }
+                        self.actions.append(action)
+                        self.metrics["success"] += 1
+                    else:
+                        self.metrics["failed"] += 1
                 elif task.type == TaskType.digest_comment:
                     import community
                     action = await community.prepare(self.ctx, self.client, self.llm, task.model_dump())
+                    if action is not None:
+                        if isinstance(action, list):
+                            self.actions.extend(action)
+                        else:
+                            self.actions.append(action)
+                        self.metrics["success"] += 1
+                    else:
+                        self.metrics["failed"] += 1
                 elif task.type == TaskType.owner_command:
                     import owner
                     action = await owner.prepare(self.client, self.llm, task.model_dump())
+                    if action is not None:
+                        if isinstance(action, list):
+                            self.actions.extend(action)
+                        else:
+                            self.actions.append(action)
+                        self.metrics["success"] += 1
+                    else:
+                        self.metrics["failed"] += 1
                 else:
                     logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
-                    action = None
-                if action is not None:
-                    if isinstance(action, list):
-                        self.actions.extend(action)
-                    else:
-                        self.actions.append(action)
-                    self.metrics["success"] += 1
-                else:
                     self.metrics["failed"] += 1
             except Exception as e:
                 logger.error(f"[DISPATCHER] Task {task.type} preparation failed: {repr(e)}")
