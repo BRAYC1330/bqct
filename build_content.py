@@ -43,10 +43,8 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         subject = summary[:60] if len(summary) > 5 else keyword
         style_phrase = f"{medium}, {clarity}, {texture}, {color}, {composition}"
         prompt = f"Abstract visualization of {subject}, {style_phrase}, featuring {config.IMAGE_CHARACTER_DESC}, naturally integrated into the scene, high quality digital art, creative composition"
-        
         logger.info(f"[image_gen] Styles: {style_phrase}")
         logger.info(f"[image_gen] Subject: {subject}")
-        
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(prompt, seed)
         if not image_bytes: return None
