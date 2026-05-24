@@ -36,10 +36,10 @@ LLM_TOKENS_REGEN = 15
 RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
 LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
+IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1792x1024")
+IMAGE_CHARACTER_DESC = "a small minimalist robot with a rounded white body, glowing cyan visor, hexagonal chest plate, jointed limbs, consistent proportions"
 IMAGE_STYLE_MEDIUM = ["watercolor", "pencil sketch", "graffiti", "oil painting", "digital art", "charcoal", "ink drawing", "pastel", "marker art", "collage"]
 IMAGE_STYLE_CLARITY = ["sharp focus", "soft blur", "dreamy haze", "crisp details", "motion blur", "bokeh background", "high contrast", "low contrast", "grainy texture", "clean render"]
 IMAGE_STYLE_TEXTURE = ["pixel art", "film grain", "smooth gradient", "glitch effect", "paper texture", "canvas weave", "neon glow", "matte finish", "glossy surface", "rough strokes"]
 IMAGE_STYLE_COLOR = ["vibrant palette", "monochrome", "pastel tones", "neon colors", "earth tones", "cool blues", "warm reds", "black and white", "duotone", "rainbow gradient"]
 IMAGE_STYLE_COMPOSITION = ["minimalist", "chaotic energy", "symmetrical", "asymmetrical", "centered subject", "rule of thirds", "abstract geometry", "flowing lines", "fragmented", "layered depth"]
-IMAGE_CHARACTER_DESC = "a small minimalist robot with a rounded white body, glowing cyan visor, hexagonal chest plate, jointed limbs, consistent proportions"
-IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1792x1024")
