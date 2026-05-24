@@ -99,6 +99,7 @@ jobs:
           LLAMA_NO_ACCELERATE: 1
           DEBUG_OWNER: "true"
           LOG_PROMPTS: "false"
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: python bot.py
       - name: Health check alert
         if: failure()
