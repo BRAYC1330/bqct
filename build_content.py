@@ -30,9 +30,14 @@ async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", s
 async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED: return None
     try:
-        style = random.choice(config.IMAGE_STYLES)
+        medium = random.choice(config.IMAGE_STYLE_MEDIUM)
+        clarity = random.choice(config.IMAGE_STYLE_CLARITY)
+        texture = random.choice(config.IMAGE_STYLE_TEXTURE)
+        color = random.choice(config.IMAGE_STYLE_COLOR)
+        composition = random.choice(config.IMAGE_STYLE_COMPOSITION)
         subject = trends[0].get("keyword", "crypto trends") if task_type == "digest_mini" else (trends[0].get("summary", "market analysis")[:60] if trends else "market analysis")
-        prompt = f"Abstract visualization of {subject}, {style}, high quality digital art, creative composition"
+        style_phrase = f"{medium}, {clarity}, {texture}, {color}, {composition}"
+        prompt = f"Abstract visualization of {subject}, {style_phrase}, high quality digital art, creative composition"
         img_url = await _call_image_gen(prompt)
         if not img_url: return None
         async with httpx.AsyncClient() as http:
