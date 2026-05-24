@@ -38,11 +38,11 @@ LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1792x1024")
-IMAGE_CHARACTER_DESC = "a cute small robot, white smooth body, glowing cyan visor, two arms, two legs, hexagonal chest plate, simple joints, clean design"
+IMAGE_CHARACTER_DESC = "a simple toy robot, white and gray matte body, small round head, two arms, two legs, minimal details, no lights, no glow"
 IMAGE_STYLE_MEDIUM = ["watercolor", "pencil sketch", "graffiti", "oil painting", "digital art", "charcoal", "ink drawing", "pastel", "marker art", "collage"]
 IMAGE_STYLE_CLARITY = ["sharp focus", "soft blur", "dreamy haze", "crisp details", "motion blur", "bokeh background", "high contrast", "low contrast", "grainy texture", "clean render"]
-IMAGE_STYLE_TEXTURE = ["pixel art", "film grain", "smooth gradient", "glitch effect", "paper texture", "canvas weave", "neon glow", "matte finish", "glossy surface", "rough strokes"]
-IMAGE_STYLE_COLOR = ["vibrant palette", "monochrome", "pastel tones", "neon colors", "earth tones", "cool blues", "warm reds", "black and white", "duotone", "rainbow gradient"]
+IMAGE_STYLE_TEXTURE = ["pixel art", "film grain", "smooth gradient", "glitch effect", "paper texture", "canvas weave", "matte finish", "glossy surface", "rough strokes", "hand drawn"]
+IMAGE_STYLE_COLOR = ["vibrant palette", "monochrome", "pastel tones", "earth tones", "warm reds", "cool blues", "black and white", "sepia", "duotone", "rainbow gradient"]
 IMAGE_STYLE_COMPOSITION = ["minimalist", "chaotic energy", "symmetrical", "asymmetrical", "centered subject", "rule of thirds", "abstract geometry", "flowing lines", "fragmented", "layered depth"]
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
 HF_IMAGE_MODEL = os.getenv("HF_IMAGE_MODEL", "stabilityai/stable-diffusion-xl-base-1.0")
