@@ -49,7 +49,7 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex
+          pip install pyyaml PyNaCl trafilatura regex huggingface_hub Pillow
       - name: Verify and Download Model
         if: steps.checker.outputs.status == 'true'
         run: |
