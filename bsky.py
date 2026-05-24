@@ -5,6 +5,8 @@ import httpx
 from datetime import datetime, timezone
 import config
 from retry import retry_async
+from PIL import Image
+import io
 logger = logging.getLogger(__name__)
 @retry_async()
 async def login_with_cache(client, handle, password):
@@ -33,6 +35,8 @@ async def post_root(client, bot_did, text, facets=None, embed=None):
     if embed:
         record["embed"] = embed
     body = {"repo": bot_did, "collection": "app.bsky.feed.post", "record": record}
+    if config.RAW_DEBUG:
+        logger.info(f"[DEBUG] post_root body: {json.dumps(body, indent=2)[:3000]}")
     r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
@@ -135,19 +139,49 @@ async def _fetch_url_content(client, url):
     except Exception:
         pass
     return ""
-async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/jpeg", alt: str = ""):
+async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png", alt: str = ""):
     try:
+        max_size = 900 * 1024
+        if len(image_bytes) > max_size:
+            logger.info(f"[bsky] Compressing image: {len(image_bytes)} → <{max_size} bytes")
+            img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            for quality in [85, 75, 65]:
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG", quality=quality, optimize=True)
+                if buf.tell() <= max_size:
+                    image_bytes = buf.getvalue()
+                    mime = "image/jpeg"
+                    logger.info(f"[bsky] Compressed to {len(image_bytes)} bytes @ quality={quality}")
+                    break
+            else:
+                logger.info("[bsky] Downscaling image")
+                img.thumbnail((1600, 900), Image.Resampling.LANCZOS)
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG", quality=70, optimize=True)
+                image_bytes = buf.getvalue()
+                mime = "image/jpeg"
+        
         url = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
         headers = {
             "Content-Type": mime,
             "Authorization": client.headers.get("Authorization", "")
         }
+        
+        logger.info(f"[bsky] Uploading image: {len(image_bytes)} bytes, mime={mime}")
+        
         r = await client.post(url, content=image_bytes, headers=headers, timeout=30)
-        r.raise_for_status()
+        
+        if r.status_code != 200:
+            logger.warning(f"[bsky] uploadBlob failed: {r.status_code} - {r.text[:200]}")
+            return None
+            
         blob = r.json().get("blob")
         if not blob:
             logger.warning("[bsky] uploadBlob returned no blob")
             return None
+            
+        logger.info(f"[bsky] Image uploaded, blob size: {blob.get('size')}")
+        
         return {
             "$type": "app.bsky.embed.images",
             "images": [{
