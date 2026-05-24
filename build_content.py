@@ -37,16 +37,19 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         texture = random.choice(config.IMAGE_STYLE_TEXTURE)
         color = random.choice(config.IMAGE_STYLE_COLOR)
         composition = random.choice(config.IMAGE_STYLE_COMPOSITION)
+        
         top_item = trends[0]
-        summary = top_item.get("summary", "")
-        keyword = top_item.get("keyword", "crypto trends")
-        subject = summary[:60] if len(summary) > 5 else keyword
+        keyword = top_item.get("keyword", "crypto market")
+        
         style_phrase = f"{medium}, {clarity}, {texture}, {color}, {composition}"
-        prompt = f"Abstract visualization of {subject}, {style_phrase}, featuring {config.IMAGE_CHARACTER_DESC}, naturally integrated into the scene, high quality digital art, creative composition"
+        
         logger.info(f"[image_gen] Styles: {style_phrase}")
-        logger.info(f"[image_gen] Subject: {subject}")
+        logger.info(f"[image_gen] Subject: {keyword}")
+        
+        prompt = f"{style_phrase}, abstract visualization of {keyword}, {config.IMAGE_CHARACTER_DESC} interacting with concept elements, masterpiece, 8k resolution, trending on artstation"
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(prompt, seed)
+        
         if not image_bytes: return None
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Abstract digest: {keyword}")
     except Exception as e:
@@ -58,10 +61,13 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
         if not config.HF_API_TOKEN: return None
         client = InferenceClient(token=config.HF_API_TOKEN)
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+        negative_prompt = "extra limbs, three arms, extra fingers, mutation, deformed, ugly, text, watermark, bad anatomy, green skin, blurry, low quality"
+        
         image = await asyncio.to_thread(
             client.text_to_image,
             prompt=prompt,
             model="stabilityai/stable-diffusion-xl-base-1.0",
+            negative_prompt=negative_prompt,
             width=w, height=h, guidance_scale=7.5,
             num_inference_steps=30,
             seed=seed
