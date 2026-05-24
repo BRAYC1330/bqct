@@ -3,7 +3,7 @@ import config
 import utils
 import facets
 import build_content
-from typing import Optional, Dict, Any
+from typing import Optional, Tuple, Dict, Any
 logger = logging.getLogger(__name__)
 async def prepare(llm, task_type: str, client=None) -> Optional[Dict[str, Any]]:
     trends = await _fetch_trends()
