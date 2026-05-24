@@ -30,15 +30,26 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
 
     search_data = ""
     kw = original_keyword
+    tried_keywords = set()
+    
     for attempt in range(3):
+        if kw:
+            tried_keywords.add(kw.lower())
+        
         logger.info(f"[search] Attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
         
         if not kw:
-            kw = generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root)
+            tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
+            kw = generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str)
             if not kw:
                 logger.info(f"[search] Cannot regenerate keyword (attempt {attempt+1})")
                 break
+            if kw.lower() in tried_keywords:
+                logger.info(f"[search] Regenerated keyword '{kw}' was already tried, skipping")
+                kw = ""
+                continue
             logger.info(f"[search] Regenerated keyword: '{kw}'")
+            tried_keywords.add(kw.lower())
 
         search_data = await search.fetch_chainbase(kw)
         if search_data:
