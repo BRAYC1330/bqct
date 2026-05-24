@@ -45,4 +45,4 @@ IMAGE_STYLE_TEXTURE = ["pixel art", "film grain", "smooth gradient", "glitch eff
 IMAGE_STYLE_COLOR = ["vibrant palette", "monochrome", "pastel tones", "earth tones", "warm reds", "cool blues", "black and white", "sepia", "duotone", "rainbow gradient"]
 IMAGE_STYLE_COMPOSITION = ["minimalist", "chaotic energy", "symmetrical", "asymmetrical", "centered subject", "rule of thirds", "abstract geometry", "flowing lines", "fragmented", "layered depth"]
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
-HF_IMAGE_MODEL = os.getenv("HF_IMAGE_MODEL", "stabilityai/stable-diffusion-xl-base-1.0")
+HF_IMAGE_MODEL = os.getenv("HF_IMAGE_MODEL", "black-forest-labs/FLUX.1-dev")
