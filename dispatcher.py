@@ -19,14 +19,11 @@ class Dispatcher:
         for idx, task in enumerate(tasks):
             logger.info(f"[DISPATCHER] Preparing task #{idx}: {task.type}")
             try:
-if task.type in (TaskType.digest_mini, TaskType.digest_full):
-    import digest
-    action = await digest.prepare(self.llm, task.type, client=self.client)
-    if action is not None:
-        self.actions.append(action)
-        self.metrics["success"] += 1
-    else:
-        self.metrics["failed"] += 1
+                if task.type in (TaskType.digest_mini, TaskType.digest_full):
+                    import digest
+                    action = await digest.prepare(self.llm, task.type, client=self.client)
+                    if action is not None:
+                        self.actions.append(action)
                         self.metrics["success"] += 1
                     else:
                         self.metrics["failed"] += 1
