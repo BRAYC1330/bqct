@@ -5,7 +5,7 @@ import httpx
 from datetime import datetime, timezone
 import config
 from retry import retry_async
-from pillow import Image
+from PIL import Image
 import io
 logger = logging.getLogger(__name__)
 @retry_async()
