@@ -33,12 +33,13 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
         if not kw: kw = generator.regenerate_keyword(llm, kw or original_keyword, clean_query, clean_root)
         if not kw: break
         search_data = await search.fetch_chainbase(kw)
-        if search_data:
+        if search_  # ← ИСПРАВЛЕНО: была опечатка search_
             sample = "\n".join(search_data.split("\n")[:3])
             if generator.validate_search_results(llm, clean_query, sample):
                 break
             search_data = ""
             kw = ""
+    # Логика подписи: казуал = Qwen, иначе = Chainbase если есть поиск
     if intent == "CASUAL":
         sig = build_content.SIG_DEFAULT
     else:
@@ -47,7 +48,7 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
     if intent == "CASUAL":
         ctx_text = f"[ROOT]\n{clean_root}"
         reply = generator.get_answer(llm, ctx_text, user_text, max_chars=max_reply_chars, temperature=config.LLM_TEMP_CASUAL, prompt_key="casual_reply")
-    elif not search_data:
+    elif not search_
         ctx_text = f"[ROOT]\n{clean_root}"
         reply = generator.get_answer(llm, ctx_text, clean_query, max_chars=max_reply_chars, temperature=config.LLM_TEMP_STANDARD, prompt_key="dyor_fallback", keyword=original_keyword or "this topic")
     else:
@@ -58,7 +59,7 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
         logger.info("=== [COMMUNITY DEBUG] ===")
         logger.info(f"Intent: {intent} | Keyword: {original_keyword} | Search: {'yes' if search_data else 'no'} | Sig: {sig}")
         logger.info(f"Prompt Context:\n[ROOT]\n{clean_root}")
-        if search_data:
+        if search_
             logger.info(f"[SEARCH]\n{utils.clean_for_llm(search_data)}")
         logger.info(f"Raw Model Output: {reply}")
         logger.info("=== [END DEBUG] ===")
