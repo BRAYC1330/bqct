@@ -39,7 +39,8 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
         logger.info(f"[search] Attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
         
         if not kw:
-            kw = generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root)
+            tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
+            kw = generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str)
             if not kw:
                 logger.info(f"[search] Cannot regenerate keyword (attempt {attempt+1})")
                 break
