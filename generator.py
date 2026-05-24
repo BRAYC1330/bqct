@@ -78,8 +78,18 @@ def classify_sentiment(llm, message: str, root_topic: str) -> str:
     except Exception as e:
         logger.warning(f"[generator] Sentiment classify failed: {repr(e)}")
         return "NEUTRAL"
-def regenerate_keyword(llm, original: str, query: str, root_topic: str) -> str:
-    prompt = load_prompt("keyword_regenerate", original=original, query=query, root_topic=root_topic)
+def regenerate_keyword(llm, original: str, query: str, root_topic: str, tried_keywords: str = "none") -> str:
+    """
+    Regenerate keyword when original returned no results.
+    tried_keywords: comma-separated list of already-tried keywords (for prompt exclusion)
+    """
+    prompt = load_prompt(
+        "keyword_regenerate",
+        original=original,
+        query=query,
+        root_topic=root_topic[:300],
+        tried_keywords=tried_keywords
+    )
     try:
         raw = llm(prompt, max_tokens=config.LLM_TOKENS_REGEN, temperature=0.3)
         if isinstance(raw, dict):
