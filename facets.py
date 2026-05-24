@@ -13,9 +13,10 @@ def validate_facets(text: str, facets: List[dict]) -> List[dict]:
 
 def enhance_tickers(text: str) -> Tuple[str, List[dict]]:
     if not text: return "", []
-    pattern = re.compile(r'\$(?![0-9])([A-Za-z]{2,10})(?![A-Za-z0-9])')
+    pattern = re.compile(r'\$(?![0-9])([A-Za-z]{1,10})(?![A-Za-z0-9])')
     hashtag_pattern = re.compile(r'#([a-zA-Z0-9_]+)')
     seen = set()
+    ticker_positions = []
     parts = []
     last_idx = 0
     for m in pattern.finditer(text):
@@ -23,16 +24,19 @@ def enhance_tickers(text: str) -> Tuple[str, List[dict]]:
         if ticker not in seen:
             seen.add(ticker)
             parts.append(text[last_idx:m.start()])
-            parts.append(f"{m.group(0)} {config.TICKER_LINK_EMOJI}")
+            first_start = len("".join(parts).encode('utf-8'))
+            ticker_full = m.group(0)
+            parts.append(ticker_full)
+            parts.append(f" {config.TICKER_LINK_EMOJI} ")
+            parts.append(ticker_full)
+            first_end = first_start + len(ticker_full.encode('utf-8'))
+            ticker_positions.append((ticker, first_start, first_end))
             last_idx = m.end()
     parts.append(text[last_idx:])
     new_text = "".join(parts)
     facets = []
-    for m in pattern.finditer(new_text):
-        ticker = m.group(1).upper()
-        byte_start = len(new_text[:m.start()].encode('utf-8'))
-        byte_end = len(new_text[:m.end()].encode('utf-8'))
-        facets.append({"index": {"byteStart": byte_start, "byteEnd": byte_end}, "features": [{"$type": "app.bsky.richtext.facet#link", "uri": f"https://dexscreener.com/search?q={ticker}"}]})
+    for ticker, bs, be in ticker_positions:
+        facets.append({"index": {"byteStart": bs, "byteEnd": be}, "features": [{"$type": "app.bsky.richtext.facet#link", "uri": f"https://dexscreener.com/search?q={ticker}"}]})
     for m in hashtag_pattern.finditer(new_text):
         bs = len(new_text[:m.start()].encode('utf-8'))
         be = len(new_text[:m.end()].encode('utf-8'))
@@ -41,7 +45,7 @@ def enhance_tickers(text: str) -> Tuple[str, List[dict]]:
 
 def generate_digest_facets(text: str) -> List[dict]:
     if not text: return []
-    pattern = re.compile(r'\$(?![0-9])([A-Za-z]{2,10})(?![A-Za-z0-9])')
+    pattern = re.compile(r'\$(?![0-9])([A-Za-z]{1,10})(?![A-Za-z0-9])')
     hashtag_pattern = re.compile(r'#([a-zA-Z0-9_]+)')
     facets = []
     for m in pattern.finditer(text):
