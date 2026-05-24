@@ -149,6 +149,6 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info(final)
         logger.info("=== [END FINAL POST] ===")
     embed = None
-    if client and task_type.startswith("digest_"):
+    if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type)
     return final, embed
