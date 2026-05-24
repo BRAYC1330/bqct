@@ -19,20 +19,14 @@ class Dispatcher:
         for idx, task in enumerate(tasks):
             logger.info(f"[DISPATCHER] Preparing task #{idx}: {task.type}")
             try:
-                if task.type in (TaskType.digest_mini, TaskType.digest_full):
-                    import digest
-                    digest_text, embed = await digest.prepare(self.llm, task.type, self.client)
-                    if digest_text:
-                        action = {
-                            "type": "post_root",
-                            "args": {
-                                "bot_did": self.ctx.bot_did,
-                                "text": digest_text,
-                                "embed": embed
-                            },
-                            "track_uri": True
-                        }
-                        self.actions.append(action)
+if task.type in (TaskType.digest_mini, TaskType.digest_full):
+    import digest
+    action = await digest.prepare(self.llm, task.type, client=self.client)
+    if action is not None:
+        self.actions.append(action)
+        self.metrics["success"] += 1
+    else:
+        self.metrics["failed"] += 1
                         self.metrics["success"] += 1
                     else:
                         self.metrics["failed"] += 1
