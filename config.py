@@ -42,3 +42,4 @@ IMAGE_STYLE_TEXTURE = ["pixel art", "film grain", "smooth gradient", "glitch eff
 IMAGE_STYLE_COLOR = ["vibrant palette", "monochrome", "pastel tones", "neon colors", "earth tones", "cool blues", "warm reds", "black and white", "duotone", "rainbow gradient"]
 IMAGE_STYLE_COMPOSITION = ["minimalist", "chaotic energy", "symmetrical", "asymmetrical", "centered subject", "rule of thirds", "abstract geometry", "flowing lines", "fragmented", "layered depth"]
 IMAGE_CHARACTER_DESC = "a small minimalist robot with a rounded white body, glowing cyan visor, hexagonal chest plate, jointed limbs, consistent proportions"
+IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1792x1024")
