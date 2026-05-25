@@ -59,6 +59,5 @@ IMAGE_STYLE_COMPOSITION = ["minimalist", "chaotic energy", "symmetrical", "asymm
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
 HF_IMAGE_MODEL = os.getenv("HF_IMAGE_MODEL", "black-forest-labs/FLUX.1-dev")
 
-# Модульные тоглы поиска
 SEARCH_CHAINBASE_ENABLED = os.getenv("ENABLE_CHAINBASE", "true").lower() == "true"
 SEARCH_TAVILY_ENABLED = os.getenv("ENABLE_TAVILY", "true").lower() == "true"

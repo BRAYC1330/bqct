@@ -12,36 +12,46 @@ from typing import List, Dict, Any
 logger = logging.getLogger(__name__)
 
 async def extract_embed_context(embed: dict, client) -> str:
-    if not embed: return ""
+    if not embed:
+        return ""
     parts = []
     etype = embed.get("$type", "")
     if etype == "app.bsky.embed.record":
         rec = embed.get("record", {}).get("value", {})
-        if rec and rec.get("text"): parts.append(f"QUOTED TEXT: {rec['text']}")
+        if rec and rec.get("text"):
+            parts.append(f"QUOTED TEXT: {rec['text']}")
     elif etype == "app.bsky.embed.images":
         for img in embed.get("images", []):
-            if img.get("alt"): parts.append(f"IMAGE ALT: {img['alt']}")
+            if img.get("alt"):
+                parts.append(f"IMAGE ALT: {img['alt']}")
     elif etype == "app.bsky.embed.recordWithMedia":
         rec = embed.get("record", {}).get("value", {})
-        if rec and rec.get("text"): parts.append(f"QUOTED TEXT: {rec['text']}")
+        if rec and rec.get("text"):
+            parts.append(f"QUOTED TEXT: {rec['text']}")
         media = embed.get("media", {})
         if media.get("$type") == "app.bsky.embed.external":
             ext = media.get("external", {})
-            if ext.get("description"): parts.append(f"LINK DESC: {ext['description']}")
-            if ext.get("title"): parts.append(f"LINK TITLE: {ext['title']}")
+            if ext.get("description"):
+                parts.append(f"LINK DESC: {ext['description']}")
+            if ext.get("title"):
+                parts.append(f"LINK TITLE: {ext['title']}")
     elif etype == "app.bsky.embed.external":
         ext = embed.get("external", {})
-        if ext.get("description"): parts.append(f"LINK DESC: {ext['description']}")
-        if ext.get("title"): parts.append(f"LINK TITLE: {ext['title']}")
-
+        if ext.get("description"):
+            parts.append(f"LINK DESC: {ext['description']}")
+        if ext.get("title"):
+            parts.append(f"LINK TITLE: {ext['title']}")
     urls = re.findall(r'https?://\S+', " ".join(parts))
     fetched = []
     for u in list(set(urls))[:2]:
         try:
             content = await bsky._fetch_url_content(client, u)
-            if content: fetched.append(f"LINK CONTENT ({u}): {content[:config.MAX_LINK_CONTENT_SIZE]}")
-        except: pass
-    if parts: return "[EMBED]\n" + "\n".join(parts) + "\n" + "\n".join(fetched)
+            if content:
+                fetched.append(f"LINK CONTENT ({u}): {content[:config.MAX_LINK_CONTENT_SIZE]}")
+        except Exception:
+            pass
+    if parts:
+        return "[EMBED]\n" + "\n".join(parts) + "\n" + "\n".join(fetched)
     return ""
 
 async def prepare(client, llm, task) -> List[Dict[str, Any]]:
@@ -49,22 +59,20 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     user_text = task["text"]
     embed = task.get("embed")
     chain = await bsky.fetch_thread_chain(client, uri)
-    if not chain: return []
-
+    if not chain:
+        return []
     root_uri = chain.get("root_uri", uri)
     root_cid = chain.get("root_cid", "")
     parent_uri = uri
     parent_cid = chain.get("cid", "")
-    if not parent_cid: return []
-
+    if not parent_cid:
+        return []
     root_record = chain.get("root_record", {})
     root_text_raw = root_record.get("text", "")
     root_embed = root_record.get("embed")
     root_text_clean = utils.clean_for_llm(root_text_raw)
     root_embed_context = await extract_embed_context(root_embed, client)
-    root_context = root_text_clean
-    if root_embed_context: root_context = f"{root_text_clean}\n{root_embed_context}"
-
+    root_context = f"{root_text_clean}\n{root_embed_context}" if root_embed_context else root_text_clean
     posts = chain.get("chain", [])
     history_lines = []
     for post in posts[1:]:
@@ -72,16 +80,15 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
         author = post.get("author", {})
         did = author.get("did", "")
         text = utils.clean_for_llm(rec.get("text", ""))
-        if not text: continue
+        if not text:
+            continue
         prefix = "OWNER:" if did == config.OWNER_DID else ("BOT:" if did == config.BOT_DID else "USER:")
         history_lines.append(f"{prefix} {text}")
     history_block = "\n".join(history_lines[-5:]) if history_lines else "No history."
-
     clean_query = utils.clean_for_llm(user_text)
     search_data = ""
     source = ""
     do_search = "!t" in user_text.lower() or "!c" in user_text.lower()
-
     if do_search:
         clean_text = re.sub(r'(!t|!c)', '', user_text, flags=re.I).strip()
         topic_context = f"{root_context}\n{history_block}".strip()
@@ -96,34 +103,21 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
                 enriched_query = f"{q} in context: {root_text_clean[:config.SEARCH_CONTEXT_SNIPPET_LEN]}" if root_text_clean else q
                 search_data = await search.fetch_tavily(enriched_query, t)
                 source = "tavily"
-
     clean_search = utils.clean_for_llm(search_data) if search_data else ""
     current_embed_context = await extract_embed_context(embed, client)
-    
-    model_ctx = (
-        f"[QUERY]\n{clean_query}\n"
-        f"[CONVERSATION]\n"
-        f"[ROOT]\n{root_context}\n"
-        f"[HISTORY]\n{history_block}\n"
-        f"[SEARCH]\n{clean_search if clean_search else 'No external data'}\n"
-        f"{current_embed_context}"
-    )
-
+    model_ctx = f"[QUERY]\n{clean_query}\n[CONVERSATION]\n[ROOT]\n{root_context}\n[HISTORY]\n{history_block}\n[SEARCH]\n{clean_search if clean_search else 'No external data'}\n{current_embed_context}"
     sig = build_content._get_signature(source, bool(search_data))
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
     reply = generator.get_answer(llm, model_ctx, clean_query, max_chars=max_reply_chars, temperature=0.5, prompt_key="owner_reply")
     reply = reply.strip()
-    if reply.startswith("```") and reply.endswith("```"): reply = reply[3:-3].strip()
-    if len(reply) < 8: return []
-
+    if reply.startswith("```") and reply.endswith("```"):
+        reply = reply[3:-3].strip()
+    if len(reply) < 8:
+        return []
     reply, facets_list = facets.enhance_tickers(reply)
     final_text = reply + sig
     if utils.count_graphemes(final_text) > config.MAX_COMMENT_CHARS:
         reply = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
         reply, facets_list = facets.enhance_tickers(reply)
         final_text = reply + sig
-
-    return [{
-        "type": "post_reply",
-        "args": {"bot_did": config.BOT_DID, "text": final_text, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": parent_uri, "parent_cid": parent_cid, "facets": facets_list}
-    }]
+    return [{"type": "post_reply", "args": {"bot_did": config.BOT_DID, "text": final_text, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": parent_uri, "parent_cid": parent_cid, "facets": facets_list}}]

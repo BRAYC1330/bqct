@@ -1,8 +1,10 @@
-import logging, time
+import logging
+import time
 from typing import List, Optional, Dict, Any
 import httpx
 from models import Task, TaskType, RunContext
 import bsky
+
 logger = logging.getLogger(__name__)
 
 class Dispatcher:
@@ -35,12 +37,10 @@ class Dispatcher:
     async def run(self, tasks: List[Task]) -> None:
         self.metrics["total_tasks"] = len(tasks)
         exec_start = time.monotonic()
-        for idx, task in enumerate(tasks):
-            logger.info(f"[DISPATCHER] Preparing task #{idx}: {task.type}")
+        for task in tasks:
             try:
                 handler = self._handlers.get(task.type)
                 if not handler:
-                    logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
                     self.metrics["failed"] += 1
                     continue
                 res = await handler(task)
@@ -53,18 +53,16 @@ class Dispatcher:
                 logger.error(f"[DISPATCHER] Task {task.type} failed: {repr(e)}")
                 self.metrics["failed"] += 1
         self.metrics["execution_time"] = round(time.monotonic() - exec_start, 2)
-
         if self.actions:
-            logger.info(f"[DISPATCHER] Committing {len(self.actions)} actions...")
-            for act in self.actions: await self._execute_action(act)
-        if self.metrics["failed"] > 0:
-            logger.warning(f"[DISPATCHER] {self.metrics['failed']} tasks failed")
+            for act in self.actions:
+                await self._execute_action(act)
 
     async def _execute_action(self, act: Dict[str, Any]) -> None:
         try:
             if act["type"] == "post_root":
                 res = await bsky.post_root(self.client, **act["args"])
-                if act.get("track_uri"): self.new_digest_uri = res.get("uri", "")
+                if act.get("track_uri"):
+                    self.new_digest_uri = res.get("uri", "")
             elif act["type"] == "post_reply":
                 await bsky.post_reply(self.client, **act["args"])
             elif act["type"] == "post_like":

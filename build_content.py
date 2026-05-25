@@ -10,15 +10,18 @@ import bsky
 
 logger = logging.getLogger(__name__)
 
-SIG_DIGEST = "\n\nQwen | Chainbase crypto TOPS " + config.SIGNATURE_ICONS
+SIG_DIGEST = "\n\nQwen | Chainbase TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
 SIG_CHAINBASE = "\n\nQwen | Chainbase"
 SIG_DEFAULT = "\n\nQwen"
 
 def _get_signature(source: str, has_search: bool) -> str:
-    if source == "tavily": return SIG_TAVILY
-    if source == "chainbase": return SIG_CHAINBASE
-    if has_search: return SIG_CHAINBASE
+    if source == "tavily":
+        return SIG_TAVILY
+    if source == "chainbase":
+        return SIG_CHAINBASE
+    if has_search:
+        return SIG_CHAINBASE
     return SIG_DEFAULT
 
 def get_no_data_response(keyword: str) -> str:
@@ -33,7 +36,8 @@ async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", s
     return utils.truncate_text(reply, max_body).strip() + sig
 
 async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
-    if not config.DIGEST_IMAGE_ENABLED: return None
+    if not config.DIGEST_IMAGE_ENABLED:
+        return None
     try:
         medium = random.choice(config.IMAGE_STYLE_MEDIUM)
         clarity = random.choice(config.IMAGE_STYLE_CLARITY)
@@ -42,13 +46,13 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         composition = random.choice(config.IMAGE_STYLE_COMPOSITION)
         top_item = trends[0]
         keyword = top_item.get("keyword", "crypto market")
-        logger.info(f"[image_gen] Styles: {medium}, {clarity}, {texture}, {color}, {composition}")
         style_phrase = f"{medium} style, {clarity}, {texture}, {color} palette, {composition} composition"
         prompt = f"{style_phrase}, abstract concept of {keyword}, {config.IMAGE_CHARACTER_DESC} in scene, masterpiece, high quality"
         negative_prompt = "neon, glow, cyan, green light, blue light, laser, cyberpunk, futuristic lights, extra limbs, deformed, text, watermark, blurry, low quality, photograph, realistic"
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(prompt, negative_prompt, seed)
-        if not image_bytes: return None
+        if not image_bytes:
+            return None
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Abstract digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
@@ -57,18 +61,11 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
 async def _call_image_gen(prompt: str, negative_prompt: str, seed: int) -> bytes | None:
     try:
         from huggingface_hub import InferenceClient
-        if not config.HF_API_TOKEN: return None
+        if not config.HF_API_TOKEN:
+            return None
         client = InferenceClient(token=config.HF_API_TOKEN)
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        image = await asyncio.to_thread(
-            client.text_to_image,
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            model=config.HF_IMAGE_MODEL,
-            width=w, height=h, guidance_scale=7.5,
-            num_inference_steps=30,
-            seed=seed
-        )
+        image = await asyncio.to_thread(client.text_to_image, prompt=prompt, negative_prompt=negative_prompt, model=config.HF_IMAGE_MODEL, width=w, height=h, guidance_scale=7.5, num_inference_steps=30, seed=seed)
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
         return buffer.getvalue()
@@ -77,13 +74,13 @@ async def _call_image_gen(prompt: str, negative_prompt: str, seed: int) -> bytes
         return None
 
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
-    if not trends: return None, None
+    if not trends:
+        return None, None
     sig = SIG_DIGEST
     emojis = config.TREND_EMOJIS
     stats_emoji = config.TREND_STATS_EMOJI
     sep = config.TREND_SCORE_SEPARATOR
     trophy = config.TREND_TROPHY
-
     if task_type == "digest_mini":
         lines = []
         for idx, item in enumerate(trends[:6]):
@@ -94,9 +91,9 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             tr = f" {trophy}" if idx == 0 else ""
             lines.append(f"{e} {kw} {sep} {sc} {stats_emoji}{tr}")
         body = "\n".join(lines)
-        if len(body) + len(sig) > max_total: return None, None
+        if len(body) + len(sig) > max_total:
+            return None, None
         return body + sig, None
-
     item = trends[0]
     kw = str(item.get("keyword", "?"))
     sc = item.get("score")
@@ -105,27 +102,22 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     e = emojis.get(st.lower(), "")
     tr = f" {trophy}"
     title = f"{(e + ' ') if e else ''}{kw} {sep} {sc} {stats_emoji}{tr}\n\n"
-    
     fixed_len = len(title) + len(sig)
     max_desc = max_total - fixed_len
     if max_desc < 30:
-        logger.warning(f"[digest] max_desc too small: {max_desc} < 30")
         return None, None
-
     prompt_text = generator.load_prompt("digest_refine", keyword=kw, summary=summary, max_chars=min(max_desc, config.DIGEST_DESC_MAX_CHARS))
     try:
         output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5)
         desc = output.get("choices", [{}])[0].get("text", "").strip()
     except Exception:
         desc = summary[:max_desc] if summary else "No summary available."
-
     if utils.count_graphemes(desc) > max_desc:
         desc = utils.truncate_text(desc, max_desc, sig="")
-
     body = title + desc
     final = body + sig
-    if utils.count_graphemes(final) > max_total: return None, None
-
+    if utils.count_graphemes(final) > max_total:
+        return None, None
     embed = None
     if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type)

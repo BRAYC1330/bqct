@@ -15,14 +15,7 @@ def get_model():
         logger.error(f"[generator] Model not found: {model_path}")
         return None
     try:
-        llm = Llama(
-            model_path=model_path,
-            n_ctx=config.MODEL_N_CTX,
-            n_gpu_layers=0,
-            n_threads=config.MODEL_N_THREADS,
-            n_batch=512,
-            verbose=False
-        )
+        llm = Llama(model_path=model_path, n_ctx=config.MODEL_N_CTX, n_gpu_layers=0, n_threads=config.MODEL_N_THREADS, n_batch=512, verbose=False)
         logger.info(f"[generator] Model loaded: {os.path.basename(model_path)}")
         return llm
     except Exception as e:
@@ -78,8 +71,10 @@ def classify_sentiment(llm, message: str, root_topic: str) -> str:
         if isinstance(raw, dict):
             raw = raw.get("choices", [{}])[0].get("text", "")
         cls = raw.strip().upper()
-        if "POSITIVE" in cls: return "POSITIVE"
-        if "NEGATIVE" in cls: return "NEGATIVE"
+        if "POSITIVE" in cls:
+            return "POSITIVE"
+        if "NEGATIVE" in cls:
+            return "NEGATIVE"
         return "NEUTRAL"
     except Exception as e:
         logger.warning(f"[generator] Sentiment classify failed: {repr(e)}")
@@ -110,17 +105,11 @@ def validate_search_results(llm, query: str, sample_results: str) -> bool:
 
 def get_answer(llm, context: str, user_query: str, max_chars: int = config.MAX_COMMENT_CHARS, temperature: float = config.LLM_TEMP_STANDARD, prompt_key: str = "community_reply", **kwargs) -> str:
     prompt_skeleton = load_prompt(prompt_key, query=user_query, max_chars=max_chars, context=context, **kwargs)
-    if config.RAW_DEBUG:
-        logger.info(f"=== [PROMPT KEY: {prompt_key}] ===")
-        logger.info(prompt_skeleton)
-        logger.info("=== [END PROMPT] ===")
-
     full_prompt = f"{context}\n{prompt_skeleton}"
     try:
         prompt_tokens = len(llm.tokenize(full_prompt))
     except Exception:
         prompt_tokens = len(full_prompt) // 3
-
     max_ctx = config.MODEL_N_CTX - config.LLM_TOKENS_REPLY - 64
     if prompt_tokens > max_ctx:
         logger.warning(f"[generator] Prompt too long ({prompt_tokens} > {max_ctx}), trimming context")
@@ -128,14 +117,9 @@ def get_answer(llm, context: str, user_query: str, max_chars: int = config.MAX_C
         safe_len = max(int(len(context) * truncate_ratio), 100)
         context = context[:safe_len]
         full_prompt = f"{context}\n{prompt_skeleton}"
-
     try:
         output = llm(full_prompt, max_tokens=config.LLM_TOKENS_REPLY, temperature=temperature)
         raw_text = output.get("choices", [{}])[0].get("text", "")
-        if config.RAW_DEBUG:
-            logger.info(f"=== [MODEL RAW OUTPUT] ===")
-            logger.info(raw_text)
-            logger.info("=== [END MODEL OUTPUT] ===")
         return raw_text.strip()
     except Exception as e:
         logger.error(f"[generator] Answer generation failed: {repr(e)}")
