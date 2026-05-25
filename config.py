@@ -38,4 +38,4 @@ LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1792x1024")
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
-HF_IMAGE_MODEL = os.getenv("HF_IMAGE_MODEL", "black-forest-labs/FLUX.1-dev")
+HF_IMAGE_MODEL = "stabilityai/stable-diffusion-xl-base-1.0"
