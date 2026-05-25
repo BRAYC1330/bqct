@@ -32,7 +32,6 @@ async def login_with_cache(client, handle, password):
             os.remove(session_path)
         except Exception:
             pass
-
     r = await client.post("https://bsky.social/xrpc/com.atproto.server.createSession", json={"identifier": handle, "password": password})
     r.raise_for_status()
     sess = r.json()
