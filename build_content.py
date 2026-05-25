@@ -50,14 +50,16 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
     try:
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         encoded = urllib.parse.quote(prompt, safe='')
-        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&model=flux&nologo=true"
         
         for attempt in range(2):
+            model = "sd-xl" if attempt == 0 else "flux"
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&model={model}&nologo=true"
+            
             async with httpx.AsyncClient() as http:
                 r = await http.get(url, timeout=90)
                 if r.status_code == 200:
                     img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                    logger.info(f"[image_gen] Native size: {img.size}")
+                    logger.info(f"[image_gen] Native size: {img.size} (model: {model})")
                     buffer = io.BytesIO()
                     img.save(buffer, format="PNG", optimize=True)
                     if buffer.tell() > 900 * 1024:
@@ -65,14 +67,13 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
                         img.save(buffer, format="JPEG", quality=85, optimize=True)
                     return buffer.getvalue()
                 elif r.status_code == 500 and attempt == 0:
-                    logger.warning("[image_gen] Pollinations 500, retrying with default model...")
-                    url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&nologo=true"
+                    logger.warning(f"[image_gen] {model} failed (500), retrying with fallback model...")
                     continue
                 else:
-                    logger.warning(f"[image_gen] Pollinations error: {r.status_code}")
+                    logger.warning(f"[image_gen] Error {r.status_code} with {model}")
                     return None
     except Exception as e:
-        logger.warning(f"[image_gen] Pollinations call failed: {type(e).__name__}: {e}")
+        logger.warning(f"[image_gen] Call failed: {type(e).__name__}: {e}")
         return None
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
