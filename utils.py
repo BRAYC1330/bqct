@@ -1,8 +1,9 @@
 import re
 import logging
-import httpx
 import config
 import bsky
+import httpx
+
 logger = logging.getLogger(__name__)
 
 def clean_for_llm(text: str) -> str:
@@ -16,8 +17,7 @@ def clean_for_llm(text: str) -> str:
     return text.strip()
 
 def count_graphemes(text: str) -> int:
-    if not text: return 0
-    return len(text.encode('utf-8').decode('utf-8', errors='ignore'))
+    return len(text) if text else 0
 
 def count_tokens(text: str, llm) -> int:
     if hasattr(llm, "tokenize"):
@@ -26,8 +26,7 @@ def count_tokens(text: str, llm) -> int:
 
 def truncate_text(text: str, max_len: int, sig: str = "") -> str:
     safe_len = max_len - len(sig)
-    if len(text) <= safe_len:
-        return text
+    if len(text) <= safe_len: return text
     truncated = text[:safe_len]
     last_dot = truncated.rfind(".")
     return truncated[:last_dot+1].strip() if last_dot != -1 else truncated.rstrip()
@@ -43,27 +42,19 @@ async def _format_thread_for_llm(chain: dict, owner_did: str, bot_did: str, clie
     root = clean_for_llm(chain.get("root_text", ""))
     posts = chain.get("chain", [])
     recent_posts = posts[-max_recent:] if len(posts) > max_recent else posts
-    dialogue = []
-    seen_hashes = set()
-    seen_hashes.add(hash(root))
+    dialogue, seen_hashes = [], {hash(root)}
     for post in recent_posts:
-        rec = post.get("record", {})
-        author = post.get("author", {})
-        did = author.get("did", "")
-        raw_text = rec.get("text", "")
+        rec, author = post.get("record", {}), post.get("author", {})
+        did, raw_text = author.get("did", ""), rec.get("text", "")
         text = clean_for_llm(raw_text)
         if not text or hash(text) in seen_hashes: continue
         seen_hashes.add(hash(text))
-        embed = rec.get("embed")
-        embed_txt = bsky._extract_embed_text(embed)
+        embed_txt = bsky._extract_embed_text(rec.get("embed"))
         if embed_txt: text += f" [EMBED: {embed_txt}]"
-        urls = re.findall(r'https?://\S+', raw_text)
-        for u in urls:
+        for u in re.findall(r'https?://\S+', raw_text):
             content = await bsky._fetch_url_content(client, u)
             if content: text += f" [LINK: {content[:config.MAX_LINK_CONTENT_SIZE]}]"
-        if did == owner_did: prefix = "OWNER:"
-        elif did == bot_did: prefix = "BOT:"
-        else: prefix = "USER:"
+        prefix = "OWNER:" if did == owner_did else ("BOT:" if did == bot_did else "USER:")
         dialogue.append(f"{prefix} {text}")
     parts = [f"[ROOT]\n{root}"]
     if dialogue: parts.append(f"[RECENT]\n" + "\n".join(dialogue))
