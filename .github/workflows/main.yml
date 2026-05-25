@@ -6,20 +6,21 @@ on:
         description: 'Generate digest manually (optional)'
         required: false
         type: choice
-        options:
-          - none
-          - mini
-          - full
+        options: [none, mini, full]
         default: 'none'
+
 concurrency:
   group: bluesky-bot-${{ github.ref }}
   cancel-in-progress: false
+
 permissions:
   contents: read
+
 jobs:
   run:
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 15
     outputs:
       new_digest_uri: ${{ steps.run.outputs.new_digest_uri }}
       bot_status: ${{ steps.run.outputs.bot_status }}
@@ -29,6 +30,12 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
+      - name: Cache Model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: model-${{ secrets.MODEL_SHA256 }}
+          restore-keys: model-
       - name: Install checker deps
         run: pip install httpx pydantic Pillow
       - name: Check
@@ -43,6 +50,8 @@ jobs:
           LAST_PROCESSED: ${{ secrets.LAST_PROCESSED }}
           MANUAL_DIGEST_TYPE: ${{ inputs.manual_digest }}
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+          ENABLE_CHAINBASE: ${{ secrets.ENABLE_CHAINBASE }}
+          ENABLE_TAVILY: ${{ secrets.ENABLE_TAVILY }}
         run: python check.py
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
@@ -100,12 +109,14 @@ jobs:
           DEBUG_OWNER: "true"
           LOG_PROMPTS: "false"
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+          ENABLE_CHAINBASE: ${{ secrets.ENABLE_CHAINBASE }}
+          ENABLE_TAVILY: ${{ secrets.ENABLE_TAVILY }}
         run: python bot.py
       - name: Health check alert
         if: failure()
         run: |
           if [ -n "${{ secrets.ALERT_WEBHOOK }}" ]; then
             curl -X POST -H "Content-Type: application/json" \
-            -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-            "${{ secrets.ALERT_WEBHOOK }}" || true
+              -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+              "${{ secrets.ALERT_WEBHOOK }}" || true
           fi
