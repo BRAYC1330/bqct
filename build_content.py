@@ -50,29 +50,25 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
     try:
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         encoded = urllib.parse.quote(prompt, safe='')
-        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&nologo=true&seed={seed}&model=sd-xl&enhance=true"
+        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&model=flux"
+        
         async with httpx.AsyncClient() as http:
-            r = await http.get(url, timeout=60)
+            r = await http.get(url, timeout=90)
             if r.status_code != 200:
                 logger.warning(f"[image_gen] Pollinations error: {r.status_code}")
                 return None
+            
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
-            logger.info(f"[image_gen] Native size from API: {img.size}")
-            if img.width == img.height:
-                target_ratio = w / h
-                new_w = img.width
-                new_h = int(img.width / target_ratio)
-                left = 0
-                top = (img.height - new_h) // 2
-                img = img.crop((left, top, left + new_w, top + new_h))
-                logger.info(f"[image_gen] Cropped square to {img.size}")
+            logger.info(f"[image_gen] Native size: {img.size}")
+            
+            # Сжатие для блюскай
             max_size = 900 * 1024
             buffer = io.BytesIO()
             img.save(buffer, format="PNG", optimize=True)
             if buffer.tell() > max_size:
                 buffer = io.BytesIO()
                 img.save(buffer, format="JPEG", quality=85, optimize=True)
-            logger.info(f"[image_gen] Final image size: {img.size}, file size: {buffer.tell()} bytes")
+            
             return buffer.getvalue()
     except Exception as e:
         logger.warning(f"[image_gen] Pollinations call failed: {type(e).__name__}: {e}")
