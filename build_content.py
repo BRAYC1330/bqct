@@ -2,13 +2,13 @@ import config
 import utils
 import generator
 import logging
-import random
 import httpx
 import asyncio
 import io
 import bsky
+import prompt_engine
 logger = logging.getLogger(__name__)
-SIG_DIGEST = "\n\nQwen | Chainbase TOPS " + config.SIGNATURE_ICONS
+SIG_DIGEST = "\n\nQwen | Chainbase crypto TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
 SIG_CHAINBASE = "\n\nQwen | Chainbase"
 SIG_DEFAULT = "\n\nQwen"
@@ -32,44 +32,29 @@ async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", s
 async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED: return None
     try:
-        medium = random.choice(config.IMAGE_STYLE_MEDIUM)
-        clarity = random.choice(config.IMAGE_STYLE_CLARITY)
-        texture = random.choice(config.IMAGE_STYLE_TEXTURE)
-        color = random.choice(config.IMAGE_STYLE_COLOR)
-        composition = random.choice(config.IMAGE_STYLE_COMPOSITION)
-        
         top_item = trends[0]
         keyword = top_item.get("keyword", "crypto market")
-        
-        logger.info(f"[image_gen] Styles: {medium}, {clarity}, {texture}, {color}, {composition}")
-        logger.info(f"[image_gen] Subject: {keyword}")
-
-        style_phrase = f"{medium} style, {clarity}, {texture}, {color} palette, {composition} composition"
-        prompt = f"{style_phrase}, abstract concept of {keyword}, {config.IMAGE_CHARACTER_DESC} in scene, masterpiece, high quality"
-        negative_prompt = "neon, glow, cyan, green light, blue light, laser, cyberpunk, futuristic lights, extra limbs, deformed, text, watermark, blurry, low quality, photograph, realistic"
-        
+        prompt, negative = prompt_engine.build_image_prompt(keyword)
         seed = random.randint(0, 2**31 - 1)
-        image_bytes = await _call_image_gen(prompt, negative_prompt, seed)
-        
+        image_bytes = await _call_image_gen(prompt, negative, seed)
         if not image_bytes: return None
-        return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Abstract digest: {keyword}")
+        return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Scene: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
-async def _call_image_gen(prompt: str, negative_prompt: str, seed: int) -> bytes | None:
+async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None:
     try:
         from huggingface_hub import InferenceClient
         if not config.HF_API_TOKEN: return None
         client = InferenceClient(token=config.HF_API_TOKEN)
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        
         image = await asyncio.to_thread(
             client.text_to_image,
             prompt=prompt,
-            negative_prompt=negative_prompt,
-            model="stabilityai/stable-diffusion-xl-base-1.0",
-            width=w, height=h, guidance_scale=7.5,
-            num_inference_steps=30,
+            negative_prompt=negative,
+            model="black-forest-labs/FLUX.1-dev",
+            width=w, height=h, guidance_scale=3.5,
+            num_inference_steps=28,
             seed=seed
         )
         buffer = io.BytesIO()
