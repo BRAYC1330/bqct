@@ -6,7 +6,9 @@ from typing import Tuple
 from llama_cpp import Llama
 import config
 from prompts import load_prompt
+
 logger = logging.getLogger(__name__)
+
 def get_model():
     model_path = config.MODEL_PATH
     if not os.path.exists(model_path):
@@ -26,6 +28,7 @@ def get_model():
     except Exception as e:
         logger.error(f"[generator] Model load failed: {repr(e)}")
         return None
+
 def extract_search_intent(llm, user_query: str) -> tuple:
     prompt = load_prompt("tavily_intent", query=user_query)
     try:
@@ -43,6 +46,7 @@ def extract_search_intent(llm, user_query: str) -> tuple:
     except Exception as e:
         logger.warning(f"[generator] Search intent parse failed: {repr(e)}")
         return user_query, ""
+
 def extract_chainbase_keyword(llm, query: str, context: str) -> str:
     prompt = load_prompt("chainbase_keyword", query=query, context=context)
     try:
@@ -54,6 +58,7 @@ def extract_chainbase_keyword(llm, query: str, context: str) -> str:
     except Exception as e:
         logger.warning(f"[generator] Keyword extract failed: {repr(e)}")
         return ""
+
 def classify_intent(llm, message: str, root_topic: str) -> str:
     prompt = load_prompt("intent_check", message=message, root_topic=root_topic)
     try:
@@ -65,6 +70,7 @@ def classify_intent(llm, message: str, root_topic: str) -> str:
     except Exception as e:
         logger.warning(f"[generator] Intent classify failed: {repr(e)}")
         return "SUBSTANTIVE"
+
 def classify_sentiment(llm, message: str, root_topic: str) -> str:
     prompt = load_prompt("sentiment_check", message=message, root_topic=root_topic)
     try:
@@ -78,6 +84,7 @@ def classify_sentiment(llm, message: str, root_topic: str) -> str:
     except Exception as e:
         logger.warning(f"[generator] Sentiment classify failed: {repr(e)}")
         return "NEUTRAL"
+
 def regenerate_keyword(llm, original: str, query: str, root_topic: str, tried_keywords: str = "none") -> str:
     prompt = load_prompt("keyword_regenerate", original=original, query=query, root_topic=root_topic, tried_keywords=tried_keywords)
     try:
@@ -89,6 +96,7 @@ def regenerate_keyword(llm, original: str, query: str, root_topic: str, tried_ke
     except Exception as e:
         logger.warning(f"[generator] Keyword regen failed: {repr(e)}")
         return ""
+
 def validate_search_results(llm, query: str, sample_results: str) -> bool:
     prompt = load_prompt("validate_search", query=query, sample=sample_results)
     try:
@@ -99,13 +107,28 @@ def validate_search_results(llm, query: str, sample_results: str) -> bool:
     except Exception as e:
         logger.warning(f"[generator] Search validation failed: {repr(e)}")
         return True
+
 def get_answer(llm, context: str, user_query: str, max_chars: int = config.MAX_COMMENT_CHARS, temperature: float = config.LLM_TEMP_STANDARD, prompt_key: str = "community_reply", **kwargs) -> str:
     prompt_skeleton = load_prompt(prompt_key, query=user_query, max_chars=max_chars, context=context, **kwargs)
     if config.RAW_DEBUG:
         logger.info(f"=== [PROMPT KEY: {prompt_key}] ===")
         logger.info(prompt_skeleton)
         logger.info("=== [END PROMPT] ===")
+
     full_prompt = f"{context}\n{prompt_skeleton}"
+    try:
+        prompt_tokens = len(llm.tokenize(full_prompt))
+    except Exception:
+        prompt_tokens = len(full_prompt) // 3
+
+    max_ctx = config.MODEL_N_CTX - config.LLM_TOKENS_REPLY - 64
+    if prompt_tokens > max_ctx:
+        logger.warning(f"[generator] Prompt too long ({prompt_tokens} > {max_ctx}), trimming context")
+        truncate_ratio = max_ctx / prompt_tokens * 0.8
+        safe_len = max(int(len(context) * truncate_ratio), 100)
+        context = context[:safe_len]
+        full_prompt = f"{context}\n{prompt_skeleton}"
+
     try:
         output = llm(full_prompt, max_tokens=config.LLM_TOKENS_REPLY, temperature=temperature)
         raw_text = output.get("choices", [{}])[0].get("text", "")
