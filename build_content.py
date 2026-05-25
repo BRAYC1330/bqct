@@ -9,6 +9,8 @@ import io
 import bsky
 import prompt_engine
 from PIL import Image
+import hashlib
+import urllib.parse
 logger = logging.getLogger(__name__)
 SIG_DIGEST = "\n\nQwen | Chainbase crypto TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
@@ -38,53 +40,31 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         keyword = top_item.get("keyword", "crypto market")
         prompt, negative = prompt_engine.build_image_prompt(keyword)
         seed = random.randint(0, 2**31 - 1)
-        image_bytes = await _call_image_gen(prompt, negative, seed)
+        image_bytes = await _call_image_gen(prompt, seed)
         if not image_bytes: return None
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Scene: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
-async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None:
+async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
     try:
-        if not config.HF_API_TOKEN: return None
-        
-        url = f"https://api-inference.huggingface.co/models/{config.HF_IMAGE_MODEL}"
-        headers = {
-            "Authorization": f"Bearer {config.HF_API_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "negative_prompt": negative,
-                "guidance_scale": 7.5,
-                "num_inference_steps": 30,
-                "seed": seed
-            }
-        }
+        w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+        encoded = urllib.parse.quote(prompt, safe='')
+        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&nologo=true&seed={seed}&model=flux"
         
         async with httpx.AsyncClient() as http:
-            r = await http.post(url, headers=headers, json=payload, timeout=90)
-            
-            if r.status_code == 503:
-                logger.info("[image_gen] Model loading, waiting 20s...")
-                await asyncio.sleep(20)
-                r = await http.post(url, headers=headers, json=payload, timeout=90)
-            
+            r = await http.get(url, timeout=60)
             if r.status_code != 200:
-                logger.warning(f"[image_gen] API error {r.status_code}: {r.text[:200]}")
+                logger.warning(f"[image_gen] Pollinations error: {r.status_code}")
                 return None
             
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
-            w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-            img.thumbnail((w, h), Image.Resampling.LANCZOS)
-            
             buffer = io.BytesIO()
             img.save(buffer, format="PNG")
             return buffer.getvalue()
         
     except Exception as e:
-        logger.warning(f"[image_gen] HF call failed: {e}")
+        logger.warning(f"[image_gen] Pollinations call failed: {e}")
         return None
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
@@ -115,7 +95,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         summary = str(item.get("summary", ""))
         e = emojis.get(st.lower(), "")
         tr = f" {trophy}"
-        title = f"{(e + ' ') if e else ''}{kw} {sep} {sc} {stats_emoji}{tr}\n\n"
+        title = f"{(e + ' ') if e else ''}{kw} {sep} {sc} {stats_emoji}{tr}\n"
         fixed_len = len(title) + len(sig)
         max_desc = max_total - fixed_len
         if max_desc < 30:
