@@ -139,10 +139,14 @@ async def _fetch_url_content(client, url):
     return ""
 async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png", alt: str = ""):
     try:
+        logger.info(f"[bsky] Uploading image: {len(image_bytes)} bytes, mime={mime}")
+        
         img = Image.open(io.BytesIO(image_bytes))
         width, height = img.size
-        max_size = 976562
+        
+        max_size = 900 * 1024
         if len(image_bytes) > max_size:
+            logger.info(f"[bsky] Compressing image: {len(image_bytes)} → <{max_size}")
             img = img.convert("RGB")
             for quality in [85, 75, 65]:
                 buf = io.BytesIO()
@@ -150,6 +154,7 @@ async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png
                 if buf.tell() <= max_size:
                     image_bytes = buf.getvalue()
                     mime = "image/jpeg"
+                    logger.info(f"[bsky] Compressed to {len(image_bytes)} bytes @ quality={quality}")
                     break
             else:
                 img.thumbnail((1200, 800), Image.Resampling.LANCZOS)
@@ -158,21 +163,38 @@ async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png
                 image_bytes = buf.getvalue()
                 mime = "image/jpeg"
                 width, height = img.size
+        
         url = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
-        headers = {"Content-Type": mime, "Authorization": client.headers.get("Authorization", "")}
+        headers = {
+            "Content-Type": mime,
+            "Authorization": client.headers.get("Authorization", "")
+        }
+        
         r = await client.post(url, content=image_bytes, headers=headers, timeout=30)
-        r.raise_for_status()
+        
+        if r.status_code != 200:
+            logger.warning(f"[bsky] uploadBlob failed: {r.status_code} - {r.text[:300]}")
+            return None
+            
         blob = r.json().get("blob")
         if not blob:
+            logger.warning("[bsky] uploadBlob returned no blob")
             return None
+        
+        cfg_w, cfg_h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+        
+        logger.info(f"[bsky] Image uploaded, blob size: {blob.get('size')}")
+        
         return {
             "$type": "app.bsky.embed.images",
             "images": [{
                 "alt": alt or "Digest visualization",
                 "image": blob,
-                "aspectRatio": {"width": width, "height": height}
+                "aspectRatio": {"width": cfg_w, "height": cfg_h}
             }]
         }
     except Exception as e:
-        logger.warning(f"[bsky] Digest image upload failed: {e}")
+        logger.warning(f"[bsky] Digest image upload failed: {type(e).__name__}: {e}")
+        import traceback
+        logger.warning(f"[bsky] Traceback: {traceback.format_exc()[:500]}")
         return None
