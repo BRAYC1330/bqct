@@ -9,7 +9,6 @@ import io
 import bsky
 import prompt_engine
 from PIL import Image
-import hashlib
 import urllib.parse
 logger = logging.getLogger(__name__)
 SIG_DIGEST = "\n\nQwen | Chainbase crypto TOPS " + config.SIGNATURE_ICONS
@@ -51,21 +50,29 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
     try:
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         encoded = urllib.parse.quote(prompt, safe='')
-        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&nologo=true&seed={seed}&model=flux"
-        
+        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&nologo=true&seed={seed}&model=sd-xl&enhance=true"
         async with httpx.AsyncClient() as http:
             r = await http.get(url, timeout=60)
             if r.status_code != 200:
                 logger.warning(f"[image_gen] Pollinations error: {r.status_code}")
                 return None
-            
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
+            if img.width == img.height:
+                target_ratio = w / h
+                new_w = img.width
+                new_h = int(img.width / target_ratio)
+                left = 0
+                top = (img.height - new_h) // 2
+                img = img.crop((left, top, left + new_w, top + new_h))
+            max_size = 900 * 1024
             buffer = io.BytesIO()
-            img.save(buffer, format="PNG")
+            img.save(buffer, format="PNG", optimize=True)
+            if buffer.tell() > max_size:
+                buffer = io.BytesIO()
+                img.save(buffer, format="JPEG", quality=85, optimize=True)
             return buffer.getvalue()
-        
     except Exception as e:
-        logger.warning(f"[image_gen] Pollinations call failed: {e}")
+        logger.warning(f"[image_gen] Pollinations call failed: {type(e).__name__}: {e}")
         return None
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
