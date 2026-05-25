@@ -37,5 +37,3 @@ RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
 LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1024x1024")
-HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
-HF_IMAGE_MODEL = "prompthero/openjourney-v4"
