@@ -140,10 +140,9 @@ async def _fetch_url_content(client, url):
 async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png", alt: str = ""):
     try:
         logger.info(f"[bsky] Uploading image: {len(image_bytes)} bytes, mime={mime}")
-        
         img = Image.open(io.BytesIO(image_bytes))
         width, height = img.size
-        
+        logger.info(f"[bsky] Image actual size: {width}x{height}")
         max_size = 900 * 1024
         if len(image_bytes) > max_size:
             logger.info(f"[bsky] Compressing image: {len(image_bytes)} → <{max_size}")
@@ -163,34 +162,26 @@ async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png
                 image_bytes = buf.getvalue()
                 mime = "image/jpeg"
                 width, height = img.size
-        
         url = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
         headers = {
             "Content-Type": mime,
             "Authorization": client.headers.get("Authorization", "")
         }
-        
         r = await client.post(url, content=image_bytes, headers=headers, timeout=30)
-        
         if r.status_code != 200:
             logger.warning(f"[bsky] uploadBlob failed: {r.status_code} - {r.text[:300]}")
             return None
-            
         blob = r.json().get("blob")
         if not blob:
             logger.warning("[bsky] uploadBlob returned no blob")
             return None
-        
-        cfg_w, cfg_h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        
         logger.info(f"[bsky] Image uploaded, blob size: {blob.get('size')}")
-        
         return {
             "$type": "app.bsky.embed.images",
             "images": [{
                 "alt": alt or "Digest visualization",
                 "image": blob,
-                "aspectRatio": {"width": cfg_w, "height": cfg_h}
+                "aspectRatio": {"width": width, "height": height}
             }]
         }
     except Exception as e:
