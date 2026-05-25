@@ -61,7 +61,6 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
             logger.info(f"[image_gen] Native size: {img.size}")
             
-            # Сжатие для блюскай
             max_size = 900 * 1024
             buffer = io.BytesIO()
             img.save(buffer, format="PNG", optimize=True)
