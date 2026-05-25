@@ -6,7 +6,10 @@ on:
         description: 'Generate digest manually (optional)'
         required: false
         type: choice
-        options: [none, mini, full]
+        options:
+          - none
+          - mini
+          - full
         default: 'none'
 
 concurrency:
