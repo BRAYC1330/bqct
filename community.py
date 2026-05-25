@@ -67,7 +67,18 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
         reply = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
         reply, facets_list = facets.enhance_tickers(reply)
         final_text = reply + sig
-    actions.append({"type": "post_reply", "args": {"bot_did": config.BOT_DID, "text": final_text, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": uri, "parent_cid": parent_cid, "facets": facets_list}})
+    actions.append({
+        "type": "post_reply",
+        "args": {
+            "bot_did": config.BOT_DID,
+            "text": final_text,
+            "root_uri": root_uri,
+            "root_cid": root_cid,
+            "parent_uri": uri,
+            "parent_cid": parent_cid,
+            "facets": facets_list
+        }
+    })
     if ctx.like(uri):
         actions.append({"type": "post_like", "args": {"bot_did": config.BOT_DID, "subject_uri": uri, "subject_cid": parent_cid}})
     elif sentiment == "POSITIVE" and ctx.try_casual_like(uri):
