@@ -1,7 +1,6 @@
 import random
 import logging
 logger = logging.getLogger(__name__)
-
 STYLES = ["oil painting", "watercolor", "pencil sketch", "graffiti art", "pixel art", "ukiyo-e print", "cave painting style", "pop art", "charcoal drawing", "collage"]
 COLORS = ["monochrome with red accents", "black and white", "pastel tones", "gold and black luxury", "earthy tones", "vibrant rainbow", "sepia", "duotone blue and orange"]
 SETTINGS = [
@@ -23,9 +22,7 @@ ROBOT_ACTIONS = [
 ]
 ATMOSPHERE = ["cinematic lighting", "dramatic shadows", "volumetric fog", "clean minimalist lines", "dynamic motion blur", "sharp high-contrast focus", "soft dreamy haze", "neon reflections"]
 PERSPECTIVES = ["wide angle shot", "low angle hero shot", "isometric view", "close-up portrait", "bird's eye view", "symmetrical composition", "diagonal dynamic perspective", "over-the-shoulder shot"]
-
 ROBOT_DESC = "a small white and gray matte robot with a round head and expressive lens-eyes, solid mechanical joints, fully assembled, no extra limbs"
-
 def build_image_prompt(keyword: str) -> tuple[str, str]:
     style = random.choice(STYLES)
     color = random.choice(COLORS)
@@ -34,11 +31,16 @@ def build_image_prompt(keyword: str) -> tuple[str, str]:
     action = random.choice(ROBOT_ACTIONS)
     atmos = random.choice(ATMOSPHERE)
     persp = random.choice(PERSPECTIVES)
-
     prompt = (
-        f"{style} style, {color} palette. {setting} filled with {obj}, representing '{keyword}'. "
+        f"{style} style, {color} palette, landscape format, wide angle composition. "
+        f"{setting} filled with {obj}, representing '{keyword}'. "
         f"In the center, {ROBOT_DESC} is {action}. "
         f"{atmos}, {persp}, highly detailed, masterpiece."
     )
+    negative = (
+        "text, watermark, signature, blurry, low quality, extra limbs, multiple arms, missing legs, "
+        "deformed, mutation, ugly, disfigured, floating body parts, disconnected limbs, "
+        "neon glow, cyan highlights, green tints, cyberpunk lighting, realistic photo"
+    )
     logger.info(f"[prompt_engine] Scene: {style} | {setting} | {action} | {keyword}")
-    return prompt, ""
+    return prompt, negative
