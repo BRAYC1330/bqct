@@ -9,7 +9,7 @@ import io
 import bsky
 import prompt_engine
 logger = logging.getLogger(__name__)
-SIG_DIGEST = "\n\nQwen | Chainbase crypto TOPS " + config.SIGNATURE_ICONS
+SIG_DIGEST = "\n\nQwen | Chainbase TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
 SIG_CHAINBASE = "\n\nQwen | Chainbase"
 SIG_DEFAULT = "\n\nQwen"
@@ -47,20 +47,24 @@ async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None
     try:
         from huggingface_hub import InferenceClient
         if not config.HF_API_TOKEN: return None
+        
         client = InferenceClient(token=config.HF_API_TOKEN)
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+
         image = await asyncio.to_thread(
             client.text_to_image,
             prompt=prompt,
             negative_prompt=negative,
-            model="black-forest-labs/FLUX.1-dev",
-            width=w, height=h, guidance_scale=3.5,
-            num_inference_steps=28,
+            model=config.HF_IMAGE_MODEL,
+            width=w, height=h, guidance_scale=7.5,
+            num_inference_steps=30,
             seed=seed
         )
+        
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
         return buffer.getvalue()
+        
     except Exception as e:
         logger.warning(f"[image_gen] HF InferenceClient failed: {e}")
         return None
@@ -93,7 +97,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         summary = str(item.get("summary", ""))
         e = emojis.get(st.lower(), "")
         tr = f" {trophy}"
-        title = f"{(e + ' ') if e else ''}{kw} {sep} {sc} {stats_emoji}{tr}\n\n"
+        title = f"{(e + ' ') if e else ''}{kw} {sep} {sc} {stats_emoji}{tr}\n"
         fixed_len = len(title) + len(sig)
         max_desc = max_total - fixed_len
         if max_desc < 30:
