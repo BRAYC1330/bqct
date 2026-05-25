@@ -2,23 +2,12 @@ import os
 import json
 import logging
 import httpx
-import base64
-import time
 from datetime import datetime, timezone
 import config
 from retry import retry_async
 from PIL import Image
 import io
-
 logger = logging.getLogger(__name__)
-
-def _is_jwt_expired(token: str) -> bool:
-    try:
-        payload = json.loads(base64.urlsafe_b64decode(token.split('.')[1] + '=='))
-        return payload.get('exp', 0) < time.time() - 300
-    except Exception:
-        return True
-
 @retry_async()
 async def login_with_cache(client, handle, password):
     session_path = "session.json"
@@ -26,10 +15,9 @@ async def login_with_cache(client, handle, password):
         try:
             with open(session_path) as f:
                 sess = json.load(f)
-            if not _is_jwt_expired(sess['accessJwt']):
-                client.headers["Authorization"] = f"Bearer {sess['accessJwt']}"
-                return
-            os.remove(session_path)
+            client.headers["Authorization"] = f"Bearer {sess['accessJwt']}"
+            logger.info("[bsky] Session loaded from cache")
+            return
         except Exception:
             pass
     r = await client.post("https://bsky.social/xrpc/com.atproto.server.createSession", json={"identifier": handle, "password": password})
@@ -38,7 +26,7 @@ async def login_with_cache(client, handle, password):
     client.headers["Authorization"] = f"Bearer {sess['accessJwt']}"
     with open(session_path, "w") as f:
         json.dump(sess, f)
-
+    logger.info("[bsky] New session created and cached")
 @retry_async()
 async def post_root(client, bot_did, text, facets=None, embed=None):
     record = {"$type": "app.bsky.feed.post", "text": text, "createdAt": datetime.now(timezone.utc).isoformat()}
@@ -50,7 +38,6 @@ async def post_root(client, bot_did, text, facets=None, embed=None):
     r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
-
 @retry_async()
 async def post_reply(client, bot_did, text, root_uri, root_cid, parent_uri, parent_cid, facets=None, embed=None):
     reply = {"root": {"uri": root_uri, "cid": root_cid}, "parent": {"uri": parent_uri, "cid": parent_cid}}
@@ -63,19 +50,22 @@ async def post_reply(client, bot_did, text, root_uri, root_cid, parent_uri, pare
     r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
-
 @retry_async()
 async def post_like(client, bot_did, subject_uri, subject_cid):
-    record = {"$type": "app.bsky.feed.like", "subject": {"$type": "com.atproto.repo.strongRef", "uri": subject_uri, "cid": subject_cid}, "createdAt": datetime.now(timezone.utc).isoformat()}
+    record = {
+        "$type": "app.bsky.feed.like",
+        "subject": {"$type": "com.atproto.repo.strongRef", "uri": subject_uri, "cid": subject_cid},
+        "createdAt": datetime.now(timezone.utc).isoformat()
+    }
     body = {"repo": bot_did, "collection": "app.bsky.feed.like", "record": record}
     r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
-
 @retry_async()
 async def fetch_thread_chain(client, uri):
     r = await client.get("https://bsky.social/xrpc/app.bsky.feed.getPostThread", params={"uri": uri, "depth": 0, "parentHeight": 100})
     if r.status_code != 200:
+        logger.warning(f"[bsky] Thread fetch failed: {r.status_code}")
         return None
     data = r.json()
     thread = data.get("thread", {})
@@ -97,8 +87,14 @@ async def fetch_thread_chain(client, uri):
     chain = list(reversed(chain))
     root_post = chain[0] if chain else post
     root_text = root_post.get("record", {}).get("text", "")
-    return {"root_uri": root_uri, "root_cid": root_cid, "root_text": root_text, "parent_cid": parent_cid_ref, "cid": post.get("cid", ""), "chain": chain}
-
+    return {
+        "root_uri": root_uri,
+        "root_cid": root_cid,
+        "root_text": root_text,
+        "parent_cid": parent_cid_ref,
+        "cid": post.get("cid", ""),
+        "chain": chain
+    }
 @retry_async()
 async def fetch_notifications(client, limit=100, seen_at=None):
     params = {"limit": limit}
@@ -107,52 +103,40 @@ async def fetch_notifications(client, limit=100, seen_at=None):
     r = await client.get("https://bsky.social/xrpc/app.bsky.notification.listNotifications", params=params, timeout=15)
     r.raise_for_status()
     return r.json().get("notifications", [])
-
 def _extract_embed_text(embed):
     texts = []
-    if not embed:
-        return ""
+    if not embed: return ""
     et = embed.get("$type", "")
     if et == "app.bsky.embed.images":
         for img in embed.get("images", []):
-            if img.get("alt"):
-                texts.append(img["alt"])
+            if img.get("alt"): texts.append(img["alt"])
     elif et == "app.bsky.embed.external":
         ext = embed.get("external", {})
-        if ext.get("title"):
-            texts.append(ext["title"])
-        if ext.get("description"):
-            texts.append(ext["description"])
+        if ext.get("title"): texts.append(ext["title"])
+        if ext.get("description"): texts.append(ext["description"])
     elif et == "app.bsky.embed.record":
         val = embed.get("record", {}).get("value", {})
-        if val.get("text"):
-            texts.append(val["text"])
+        if val.get("text"): texts.append(val["text"])
     elif et == "app.bsky.embed.recordWithMedia":
         val = embed.get("record", {}).get("value", {})
-        if val.get("text"):
-            texts.append(val["text"])
+        if val.get("text"): texts.append(val["text"])
         med = embed.get("media", {})
         if med.get("$type") == "app.bsky.embed.images":
             for img in med.get("images", []):
-                if img.get("alt"):
-                    texts.append(img["alt"])
+                if img.get("alt"): texts.append(img["alt"])
     return " ".join(texts)
-
 async def _fetch_url_content(client, url):
     try:
         from trafilatura import extract as trafilatura_extract
         parsed = httpx.URL(url)
-        if parsed.netloc not in config.ALLOWED_LINK_DOMAINS:
-            return ""
+        if parsed.netloc not in config.ALLOWED_LINK_DOMAINS: return ""
         r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=config.REQUEST_TIMEOUT)
         if r.status_code == 200:
             txt = trafilatura_extract(r.text, include_tables=False, include_comments=False, output_format="txt")
-            if txt:
-                return txt
+            if txt: return txt
     except Exception:
         pass
     return ""
-
 async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png", alt: str = ""):
     try:
         img = Image.open(io.BytesIO(image_bytes))
@@ -181,7 +165,14 @@ async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png
         blob = r.json().get("blob")
         if not blob:
             return None
-        return {"$type": "app.bsky.embed.images", "images": [{"alt": alt or "Digest visualization", "image": blob, "aspectRatio": {"width": width, "height": height}}]}
+        return {
+            "$type": "app.bsky.embed.images",
+            "images": [{
+                "alt": alt or "Digest visualization",
+                "image": blob,
+                "aspectRatio": {"width": width, "height": height}
+            }]
+        }
     except Exception as e:
         logger.warning(f"[bsky] Digest image upload failed: {e}")
         return None
