@@ -48,7 +48,6 @@ async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None
     try:
         if not config.HF_API_TOKEN: return None
         
-        # Прямой вызов бесплатного инференс-эндпоинта (минуя провайдеров)
         url = f"https://api-inference.huggingface.co/models/{config.HF_IMAGE_MODEL}"
         headers = {
             "Authorization": f"Bearer {config.HF_API_TOKEN}",
@@ -76,7 +75,6 @@ async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None
                 logger.warning(f"[image_gen] API error {r.status_code}: {r.text[:200]}")
                 return None
             
-            # Конвертируем в правильный размер для Bluesky
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
             w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
             img.thumbnail((w, h), Image.Resampling.LANCZOS)
