@@ -36,4 +36,4 @@ LLM_TOKENS_REGEN = 15
 RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
 LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
-IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "600x400")
+IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1024x683")
