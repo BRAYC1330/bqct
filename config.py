@@ -35,6 +35,8 @@ LLM_TOKENS_KEYWORD = 10
 LLM_TOKENS_REGEN = 15
 RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
 LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
+SEARCH_CHAINBASE_ENABLED = os.getenv("ENABLE_CHAINBASE", "true").lower() == "true"
+SEARCH_TAVILY_ENABLED = os.getenv("ENABLE_TAVILY", "true").lower() == "true"
 
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1792x1024")
