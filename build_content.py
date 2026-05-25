@@ -32,6 +32,7 @@ async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", s
     else:
         ctx = thread_ctx
     reply = generator.get_answer(llm, ctx, query, max_chars=max_body, temperature=0.5)
+    reply = utils.compress_numbers(reply)
     return utils.truncate_text(reply, max_body).strip() + sig
 async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED: return None
@@ -110,6 +111,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         try:
             output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5)
             desc = output.get("choices", [{}])[0].get("text", "").strip()
+            desc = utils.compress_numbers(desc)
             if config.RAW_DEBUG:
                 logger.info("=== [DIGEST RAW OUTPUT] ===")
                 logger.info(desc)
