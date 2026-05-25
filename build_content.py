@@ -95,7 +95,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         summary = str(item.get("summary", ""))
         e = emojis.get(st.lower(), "")
         tr = f" {trophy}"
-        title = f"{(e + ' ') if e else ''}{kw} {sep} {sc} {stats_emoji}{tr}\n"
+        title = f"{(e + ' ') if e else ''}{kw} {sep} {sc} {stats_emoji}{tr}\n\n"
         fixed_len = len(title) + len(sig)
         max_desc = max_total - fixed_len
         if max_desc < 30:
