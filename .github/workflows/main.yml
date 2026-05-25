@@ -6,16 +6,16 @@ on:
         description: 'Generate digest manually (optional)'
         required: false
         type: choice
-        options: [none, mini, full]
+        options:
+          - none
+          - mini
+          - full
         default: 'none'
-
 concurrency:
   group: bluesky-bot-${{ github.ref }}
   cancel-in-progress: false
-
 permissions:
   contents: read
-
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -106,6 +106,6 @@ jobs:
         run: |
           if [ -n "${{ secrets.ALERT_WEBHOOK }}" ]; then
             curl -X POST -H "Content-Type: application/json" \
-              -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-              "${{ secrets.ALERT_WEBHOOK }}" || true
+            -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "${{ secrets.ALERT_WEBHOOK }}" || true
           fi
