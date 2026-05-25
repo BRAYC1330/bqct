@@ -40,10 +40,5 @@ def build_image_prompt(keyword: str) -> tuple[str, str]:
         f"In the center, {ROBOT_DESC} is {action}. "
         f"{atmos}, {persp}, highly detailed, masterpiece."
     )
-    negative = (
-        "text, watermark, signature, blurry, low quality, extra limbs, multiple arms, missing legs, "
-        "deformed, mutation, ugly, disfigured, floating body parts, disconnected limbs, "
-        "neon glow, cyan highlights, green tints, cyberpunk lighting, realistic photo"
-    )
     logger.info(f"[prompt_engine] Scene: {style} | {setting} | {action} | {keyword}")
-    return prompt, negative
+    return prompt, ""
