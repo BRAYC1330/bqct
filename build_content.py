@@ -50,25 +50,27 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
     try:
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         encoded = urllib.parse.quote(prompt, safe='')
-        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&model=flux"
+        url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&model=flux&nologo=true"
         
-        async with httpx.AsyncClient() as http:
-            r = await http.get(url, timeout=90)
-            if r.status_code != 200:
-                logger.warning(f"[image_gen] Pollinations error: {r.status_code}")
-                return None
-            
-            img = Image.open(io.BytesIO(r.content)).convert("RGB")
-            logger.info(f"[image_gen] Native size: {img.size}")
-            
-            max_size = 900 * 1024
-            buffer = io.BytesIO()
-            img.save(buffer, format="PNG", optimize=True)
-            if buffer.tell() > max_size:
-                buffer = io.BytesIO()
-                img.save(buffer, format="JPEG", quality=85, optimize=True)
-            
-            return buffer.getvalue()
+        for attempt in range(2):
+            async with httpx.AsyncClient() as http:
+                r = await http.get(url, timeout=90)
+                if r.status_code == 200:
+                    img = Image.open(io.BytesIO(r.content)).convert("RGB")
+                    logger.info(f"[image_gen] Native size: {img.size}")
+                    buffer = io.BytesIO()
+                    img.save(buffer, format="PNG", optimize=True)
+                    if buffer.tell() > 900 * 1024:
+                        buffer = io.BytesIO()
+                        img.save(buffer, format="JPEG", quality=85, optimize=True)
+                    return buffer.getvalue()
+                elif r.status_code == 500 and attempt == 0:
+                    logger.warning("[image_gen] Pollinations 500, retrying with default model...")
+                    url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&nologo=true"
+                    continue
+                else:
+                    logger.warning(f"[image_gen] Pollinations error: {r.status_code}")
+                    return None
     except Exception as e:
         logger.warning(f"[image_gen] Pollinations call failed: {type(e).__name__}: {e}")
         return None
