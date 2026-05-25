@@ -7,9 +7,9 @@ import httpx
 import asyncio
 import io
 import bsky
-import prompt_engine
 from PIL import Image
 import urllib.parse
+import sys
 logger = logging.getLogger(__name__)
 SIG_DIGEST = "\n\nQwen | Chainbase crypto TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
@@ -38,11 +38,14 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
     try:
         top_item = trends[0]
         keyword = top_item.get("keyword", "crypto market")
-        prompt, negative = prompt_engine.build_image_prompt(keyword)
+        summary = top_item.get("summary", "")
+        image_prompt = f"graffiti style. {keyword}. {summary}"
         seed = random.randint(0, 2**31 - 1)
-        image_bytes = await _call_image_gen(prompt, seed)
-        if not image_bytes: return None
-        return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Scene: {keyword}")
+        image_bytes = await _call_image_gen(image_prompt, seed)
+        if not image_bytes:
+            logger.warning("[digest] Image generation failed after all attempts")
+            return None
+        return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
@@ -50,28 +53,43 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
     try:
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         encoded = urllib.parse.quote(prompt, safe='')
-        
-        for attempt in range(2):
-            model = "sd-xl" if attempt == 0 else "flux"
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            model = "sd-xl"
             url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&model={model}&nologo=true"
-            
             async with httpx.AsyncClient() as http:
-                r = await http.get(url, timeout=90)
+                r = await http.get(url, timeout=120)
                 if r.status_code == 200:
                     img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                    logger.info(f"[image_gen] Native size: {img.size} (model: {model})")
+                    logger.info(f"[image_gen] Success: {img.size} (attempt {attempt+1})")
                     buffer = io.BytesIO()
                     img.save(buffer, format="PNG", optimize=True)
                     if buffer.tell() > 900 * 1024:
                         buffer = io.BytesIO()
                         img.save(buffer, format="JPEG", quality=85, optimize=True)
                     return buffer.getvalue()
-                elif r.status_code == 500 and attempt == 0:
-                    logger.warning(f"[image_gen] {model} failed (500), retrying with fallback model...")
-                    continue
+                elif r.status_code == 500:
+                    error_text = r.text[:300]
+                    if "Queue full" in error_text:
+                        if attempt < max_attempts - 1:
+                            wait_time = 60
+                            logger.warning(f"[image_gen] Queue full, attempt {attempt+1}/{max_attempts}, waiting {wait_time}s...")
+                            await asyncio.sleep(wait_time)
+                            continue
+                    else:
+                        logger.warning(f"[image_gen] {model} failed (500): {error_text}")
+                        if attempt < max_attempts - 1:
+                            await asyncio.sleep(60)
+                            continue
                 else:
-                    logger.warning(f"[image_gen] Error {r.status_code} with {model}")
-                    return None
+                    logger.warning(f"[image_gen] Error {r.status_code}: {r.text[:200]}")
+                    if attempt < max_attempts - 1:
+                        await asyncio.sleep(60)
+                        continue
+        logger.error("[image_gen] All 5 attempts failed, aborting")
+        sys.exit(1)
+    except SystemExit:
+        raise
     except Exception as e:
         logger.warning(f"[image_gen] Call failed: {type(e).__name__}: {e}")
         return None
