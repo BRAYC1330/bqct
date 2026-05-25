@@ -57,6 +57,7 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
                 logger.warning(f"[image_gen] Pollinations error: {r.status_code}")
                 return None
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
+            logger.info(f"[image_gen] Native size from API: {img.size}")
             if img.width == img.height:
                 target_ratio = w / h
                 new_w = img.width
@@ -64,12 +65,14 @@ async def _call_image_gen(prompt: str, seed: int) -> bytes | None:
                 left = 0
                 top = (img.height - new_h) // 2
                 img = img.crop((left, top, left + new_w, top + new_h))
+                logger.info(f"[image_gen] Cropped square to {img.size}")
             max_size = 900 * 1024
             buffer = io.BytesIO()
             img.save(buffer, format="PNG", optimize=True)
             if buffer.tell() > max_size:
                 buffer = io.BytesIO()
                 img.save(buffer, format="JPEG", quality=85, optimize=True)
+            logger.info(f"[image_gen] Final image size: {img.size}, file size: {buffer.tell()} bytes")
             return buffer.getvalue()
     except Exception as e:
         logger.warning(f"[image_gen] Pollinations call failed: {type(e).__name__}: {e}")
