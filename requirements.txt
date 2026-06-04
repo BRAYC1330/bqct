@@ -7,5 +7,4 @@ PyNaCl
 trafilatura
 regex
 huggingface_hub
-tweepy
-twikit>=2.0.0
+twikit>=2.3.3
