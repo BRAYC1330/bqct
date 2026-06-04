@@ -38,8 +38,8 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         top_item = trends[0]
         keyword = top_item.get("keyword", "crypto market")
         summary = top_item.get("summary", "")
-        image_prompt = f"graffiti style. Urban street art depicting: {keyword}. {summary}. Vibrant colors, spray paint texture, city wall aesthetic, no text, no people, no hands."
-        negative_prompt = "text, watermark, signature, blurry, low quality, realistic photo, people, humans, hands, fingers, faces, anatomy"
+        image_prompt = f"graffiti style. {config.ROBOT_DESC} and at least one human character interacting with: {keyword}. {summary}"
+        negative_prompt = "extra limbs, multiple arms, missing legs, deformed, mutation, ugly, disfigured, floating body parts, disconnected limbs, text, watermark, signature, blurry, low quality, realistic photo"
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
         if not image_bytes:
