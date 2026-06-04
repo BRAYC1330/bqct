@@ -3,6 +3,7 @@ import logging
 import asyncio
 import tempfile
 import os
+import json
 from twikit import Client
 logger = logging.getLogger(__name__)
 
@@ -14,22 +15,27 @@ async def get_x_client():
     async with _x_client_lock:
         if _x_client is not None:
             return _x_client
-        if not config.X_USERNAME or not config.X_PASSWORD or not config.X_EMAIL:
-            logger.warning("[x] X_USERNAME, X_EMAIL or X_PASSWORD not set")
+        if not config.X_USERNAME:
+            logger.warning("[x] X_USERNAME not set")
+            return None
+        if not config.X_COOKIES:
+            logger.warning("[x] X_COOKIES not set")
             return None
         try:
             logger.info(f"[x] Initializing twikit Client for @{config.X_USERNAME}...")
             client = Client('en-US')
-            await client.login(
-                auth_info_1=config.X_USERNAME,
-                auth_info_2=config.X_EMAIL,
-                password=config.X_PASSWORD
-            )
+            cookies = json.loads(config.X_COOKIES)
+            client.set_cookies(cookies)
+            try:
+                user = await client.user()
+                logger.info(f"[x] ✅ Session valid for @{user.screen_name}")
+            except Exception as e:
+                logger.error(f"[x] Session invalid: {type(e).__name__}: {repr(e)}")
+                return None
             _x_client = client
-            logger.info(f"[x] ✅ Twikit client logged in as @{config.X_USERNAME}")
             return client
         except Exception as e:
-            logger.error(f"[x] Twikit login failed: {type(e).__name__}: {repr(e)}")
+            logger.error(f"[x] Twikit init failed: {type(e).__name__}: {repr(e)}")
             return None
 
 async def post_to_x(text: str, image_bytes: bytes = None) -> str | None:
@@ -41,7 +47,6 @@ async def post_to_x(text: str, image_bytes: bytes = None) -> str | None:
         if not client:
             logger.warning("[x] No client available, aborting")
             return None
-        
         media_ids = []
         if image_bytes:
             logger.info(f"[x] Uploading image ({len(image_bytes)} bytes)...")
@@ -57,7 +62,6 @@ async def post_to_x(text: str, image_bytes: bytes = None) -> str | None:
             finally:
                 if os.path.exists(temp_path):
                     os.unlink(temp_path)
-        
         logger.info(f"[x] Creating tweet...")
         tweet = await client.create_tweet(text=text, media_ids=media_ids if media_ids else None)
         tweet_id = tweet.id if hasattr(tweet, 'id') else None
