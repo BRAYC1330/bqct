@@ -2,6 +2,7 @@ import logging
 import time
 from typing import List, Optional, Dict, Any
 import httpx
+import config
 from models import Task, TaskType, RunContext
 import bsky
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ class Dispatcher:
                 res = await bsky.post_root(self.client, **act["args"])
                 if act.get("track_uri"):
                     self.new_digest_uri = res.get("uri", "")
+                await self._mirror_to_x(act)
             elif act["type"] == "post_reply":
                 await bsky.post_reply(self.client, **act["args"])
             elif act["type"] == "post_like":
@@ -78,3 +80,15 @@ class Dispatcher:
         except Exception as e:
             logger.error(f"[DISPATCHER] Commit failed for {act['type']}: {repr(e)}")
             self.metrics["failed"] += 1
+    async def _mirror_to_x(self, act: Dict[str, Any]) -> None:
+        if not config.X_POSTING_ENABLED:
+            return
+        try:
+            import x_client
+            text = act["args"].get("text", "")
+            image_bytes = act.get("x_image_bytes")
+            tweet_id = await x_client.post_to_x(text, image_bytes)
+            if tweet_id:
+                logger.info(f"[DISPATCHER] Mirrored to X: {tweet_id}")
+        except Exception as e:
+            logger.warning(f"[DISPATCHER] X mirror failed (non-critical): {repr(e)}")
