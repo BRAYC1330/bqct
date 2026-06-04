@@ -32,15 +32,13 @@ async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", s
     reply = generator.get_answer(llm, ctx, query, max_chars=max_body, temperature=0.5)
     reply = utils.compress_numbers(reply)
     return utils.truncate_text(reply, max_body).strip() + sig
-async def _generate_digest_embed(client, trends: list, task_type: str, llm=None) -> dict | None:
-    if not config.DIGEST_IMAGE_ENABLED or not llm: return None
+async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
+    if not config.DIGEST_IMAGE_ENABLED: return None
     try:
         top_item = trends[0]
         keyword = top_item.get("keyword", "crypto market")
         summary = top_item.get("summary", "")
-        visual_scene = generator.generate_visual_scene(llm, keyword, summary)
-        logger.info(f"[image_gen] LLM scene: {visual_scene}")
-        image_prompt = f"graffiti style. {visual_scene}"
+        image_prompt = f"graffiti style. {config.ROBOT_DESC} and at least one human character interacting with: {keyword}. {summary}"
         negative_prompt = "extra limbs, multiple arms, missing legs, deformed, mutation, ugly, disfigured, floating body parts, disconnected limbs, text, watermark, signature, blurry, low quality, realistic photo"
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
@@ -53,13 +51,16 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
         return None
 async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None:
     try:
+        if not config.POLLINATIONS_API_KEY:
+            logger.error("[image_gen] POLLINATIONS_API_KEY not set in env")
+            return None
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         encoded = urllib.parse.quote(prompt, safe='')
         neg_encoded = urllib.parse.quote(negative, safe='')
-        max_attempts = 3
+        key_encoded = urllib.parse.quote(config.POLLINATIONS_API_KEY, safe='')
+        url = f"https://gen.pollinations.ai/image/{encoded}?width={w}&height={h}&seed={seed}&model=flux&enhance=true&nologo=true&negative_prompt={neg_encoded}&key={key_encoded}"
+        max_attempts = 2
         for attempt in range(max_attempts):
-            model = "sd-xl"
-            url = f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&seed={seed}&model={model}&nologo=true&negative_prompt={neg_encoded}"
             async with httpx.AsyncClient() as http:
                 r = await http.get(url, timeout=120)
                 if r.status_code == 200:
@@ -71,23 +72,15 @@ async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None
                         buffer = io.BytesIO()
                         img.save(buffer, format="JPEG", quality=85, optimize=True)
                     return buffer.getvalue()
-                elif r.status_code in (402, 500):
-                    error_text = r.text[:300]
-                    if "Queue full" in error_text or "402" in error_text:
-                        if attempt < max_attempts - 1:
-                            wait_time = 300 + random.randint(0, 60)
-                            logger.warning(f"[image_gen] Queue/rate limit, attempt {attempt+1}/{max_attempts}, waiting {wait_time}s...")
-                            await asyncio.sleep(wait_time)
-                            continue
-                    else:
-                        logger.warning(f"[image_gen] {model} failed ({r.status_code}): {error_text}")
-                        if attempt < max_attempts - 1:
-                            await asyncio.sleep(60)
-                            continue
+                elif r.status_code in (402, 429):
+                    logger.warning(f"[image_gen] Rate/balance limit ({r.status_code}): {r.text[:200]}")
+                    if attempt < max_attempts - 1:
+                        await asyncio.sleep(30)
+                        continue
                 else:
                     logger.warning(f"[image_gen] Error {r.status_code}: {r.text[:200]}")
                     if attempt < max_attempts - 1:
-                        await asyncio.sleep(60)
+                        await asyncio.sleep(30)
                         continue
         logger.warning("[image_gen] All attempts failed, returning None")
         return None
@@ -171,5 +164,5 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [END FINAL POST] ===")
     embed = None
     if client and task_type == "digest_full":
-        embed = await _generate_digest_embed(client, trends, task_type, llm=llm)
+        embed = await _generate_digest_embed(client, trends, task_type)
     return final, embed
