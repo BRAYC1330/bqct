@@ -87,10 +87,8 @@ class Dispatcher:
             logger.info("[x] X posting disabled, skipping")
             logger.info(f"[x] === X MIRROR END (disabled) ===")
             return
-        logger.info(f"[x] X_API_KEY set: {bool(config.X_API_KEY)}")
-        logger.info(f"[x] X_API_SECRET set: {bool(config.X_API_SECRET)}")
-        logger.info(f"[x] X_ACCESS_TOKEN set: {bool(config.X_ACCESS_TOKEN)}")
-        logger.info(f"[x] X_ACCESS_TOKEN_SECRET set: {bool(config.X_ACCESS_TOKEN_SECRET)}")
+        logger.info(f"[x] X_USERNAME set: {bool(config.X_USERNAME)}")
+        logger.info(f"[x] X_COOKIES set: {bool(config.X_COOKIES)}")
         try:
             import x_client
             text = act["args"].get("text", "")
@@ -100,7 +98,7 @@ class Dispatcher:
             if len(text) > 280:
                 original_len = len(text)
                 text = text[:277].rstrip() + "..."
-                logger.info(f"[x] Text truncated: {original_len} → {len(text)} (X Free tier limit: 280)")
+                logger.info(f"[x] Text truncated: {original_len} → {len(text)} (X limit: 280)")
             tweet_id = await x_client.post_to_x(text, image_bytes)
             if tweet_id:
                 logger.info(f"[x] ✅ Mirrored to X: tweet_id={tweet_id}")
