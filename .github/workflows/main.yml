@@ -103,8 +103,7 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
           X_USERNAME: ${{ secrets.X_USERNAME }}
-          X_EMAIL: ${{ secrets.X_EMAIL }}
-          X_PASSWORD: ${{ secrets.X_PASSWORD }}
+          X_COOKIES: ${{ secrets.X_COOKIES }}
         run: python bot.py
       - name: Health check alert
         if: failure()
