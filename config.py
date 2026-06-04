@@ -4,7 +4,6 @@ BOT_PASSWORD = os.getenv("BOT_PASSWORD", "")
 BOT_DID = os.getenv("BOT_DID", "")
 OWNER_DID = os.getenv("OWNER_DID", "")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
-POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY", "")
 PAT = os.getenv("PAT", "")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY", "")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "qwen2.5-coder-14b-instruct-q5_k_m.gguf")
@@ -38,3 +37,5 @@ RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
 LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1024x1024")
+ROBOT_DESC = "a small cute robot with a round white head, two expressive lens-eyes, a compact humanoid body with two arms and two legs, solid mechanical joints, fully assembled, no extra limbs, matte gray and white finish"
+POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY", "")
