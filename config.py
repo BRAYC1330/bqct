@@ -4,11 +4,6 @@ BOT_PASSWORD = os.getenv("BOT_PASSWORD", "")
 BOT_DID = os.getenv("BOT_DID", "")
 OWNER_DID = os.getenv("OWNER_DID", "")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
-X_API_KEY = os.getenv("X_API_KEY", "")
-X_API_SECRET = os.getenv("X_API_SECRET", "")
-X_ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN", "")
-X_ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_TOKEN_SECRET", "")
-X_POSTING_ENABLED = os.getenv("X_POSTING", "false").lower() == "true"
 PAT = os.getenv("PAT", "")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY", "")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "qwen2.5-coder-14b-instruct-q5_k_m.gguf")
@@ -43,3 +38,8 @@ LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1024x1024")
 POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY", "")
+X_API_KEY = os.getenv("X_API_KEY", "")
+X_API_SECRET = os.getenv("X_API_SECRET", "")
+X_ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN", "")
+X_ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_TOKEN_SECRET", "")
+X_POSTING_ENABLED = os.getenv("X_POSTING", "true").lower() == "true"
