@@ -107,6 +107,7 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          X_POSTING: ${{ vars.X_POSTING }}
         run: python bot.py
       - name: Health check alert
         if: failure()
