@@ -4,6 +4,7 @@ import asyncio
 import tempfile
 import os
 import json
+import httpx
 from twikit import Client
 logger = logging.getLogger(__name__)
 
@@ -24,14 +25,30 @@ async def get_x_client():
         try:
             logger.info(f"[x] Initializing twikit Client for @{config.X_USERNAME}...")
             client = Client('en-US')
-            cookies = json.loads(config.X_COOKIES)
-            client.set_cookies(cookies)
+            
+            cookies_list = json.loads(config.X_COOKIES)
+            logger.info(f"[x] Loaded {len(cookies_list)} cookies from JSON")
+            
+            httpx_cookies = httpx.Cookies()
+            for cookie in cookies_list:
+                name = cookie.get('name')
+                value = cookie.get('value')
+                domain = cookie.get('domain', '.x.com')
+                path = cookie.get('path', '/')
+                if name and value:
+                    httpx_cookies.set(name, value, domain=domain, path=path)
+                    logger.info(f"[x] Added cookie: {name} (len={len(value)})")
+            
+            client.set_cookies(httpx_cookies)
+            logger.info(f"[x] Cookies set in twikit client")
+            
             try:
                 user = await client.user()
                 logger.info(f"[x] ✅ Session valid for @{user.screen_name}")
             except Exception as e:
                 logger.error(f"[x] Session invalid: {type(e).__name__}: {repr(e)}")
                 return None
+            
             _x_client = client
             return client
         except Exception as e:
