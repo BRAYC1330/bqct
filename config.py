@@ -42,4 +42,4 @@ X_API_KEY = os.getenv("X_API_KEY", "")
 X_API_SECRET = os.getenv("X_API_SECRET", "")
 X_ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN", "")
 X_ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_TOKEN_SECRET", "")
-X_POSTING_ENABLED = os.getenv("X_POSTING", "true").lower() == "true"
+X_POSTING_ENABLED = True
