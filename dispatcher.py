@@ -81,14 +81,31 @@ class Dispatcher:
             logger.error(f"[DISPATCHER] Commit failed for {act['type']}: {repr(e)}")
             self.metrics["failed"] += 1
     async def _mirror_to_x(self, act: Dict[str, Any]) -> None:
+        logger.info(f"[x] === X MIRROR START ===")
+        logger.info(f"[x] X_POSTING_ENABLED: {config.X_POSTING_ENABLED}")
         if not config.X_POSTING_ENABLED:
+            logger.info("[x] X posting disabled, skipping")
+            logger.info(f"[x] === X MIRROR END (disabled) ===")
             return
+        logger.info(f"[x] X_API_KEY set: {bool(config.X_API_KEY)}")
+        logger.info(f"[x] X_API_SECRET set: {bool(config.X_API_SECRET)}")
+        logger.info(f"[x] X_ACCESS_TOKEN set: {bool(config.X_ACCESS_TOKEN)}")
+        logger.info(f"[x] X_ACCESS_TOKEN_SECRET set: {bool(config.X_ACCESS_TOKEN_SECRET)}")
         try:
             import x_client
             text = act["args"].get("text", "")
             image_bytes = act.get("x_image_bytes")
+            logger.info(f"[x] Text length: {len(text)} chars")
+            logger.info(f"[x] Has image: {image_bytes is not None} ({len(image_bytes) if image_bytes else 0} bytes)")
+            if len(text) > 280:
+                original_len = len(text)
+                text = text[:277].rstrip() + "..."
+                logger.info(f"[x] Text truncated: {original_len} → {len(text)} (X Free tier limit: 280)")
             tweet_id = await x_client.post_to_x(text, image_bytes)
             if tweet_id:
-                logger.info(f"[DISPATCHER] Mirrored to X: {tweet_id}")
+                logger.info(f"[x] ✅ Mirrored to X: tweet_id={tweet_id}")
+            else:
+                logger.warning("[x] ⚠️ post_to_x returned None (no tweet_id)")
         except Exception as e:
-            logger.warning(f"[DISPATCHER] X mirror failed (non-critical): {repr(e)}")
+            logger.warning(f"[x] ⚠️ X mirror failed (non-critical): {type(e).__name__}: {repr(e)}")
+        logger.info(f"[x] === X MIRROR END ===")
