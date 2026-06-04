@@ -40,17 +40,16 @@ jobs:
           BOT_DID: ${{ secrets.BOT_DID }}
           PAT: ${{ secrets.PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          LAST_PROCESSED: ${{ vars.LAST_PROCESSED }}
+          LAST_PROCESSED: ${{ secrets.LAST_PROCESSED }}
           MANUAL_DIGEST_TYPE: ${{ inputs.manual_digest }}
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python check.py
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex huggingface_hub "twikit>=2.3.3"
+          pip install pyyaml PyNaCl trafilatura regex huggingface_hub
       - name: Verify and Download Model
         if: steps.checker.outputs.status == 'true'
         run: |
@@ -102,8 +101,6 @@ jobs:
           LOG_PROMPTS: "false"
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
-          X_USERNAME: ${{ secrets.X_USERNAME }}
-          X_COOKIES: ${{ secrets.X_COOKIES }}
         run: python bot.py
       - name: Health check alert
         if: failure()
