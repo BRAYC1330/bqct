@@ -38,4 +38,3 @@ LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1024x1024")
 POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY", "")
-ROBOT_DESC = "a retro-futuristic graffiti robot with glowing neon eyes, spray can in hand, cyberpunk style, vibrant colors"
