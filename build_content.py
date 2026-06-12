@@ -38,8 +38,8 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         top_item = trends[0]
         keyword = top_item.get("keyword", "crypto market")
         summary = top_item.get("summary", "")
-        image_prompt = f"graffiti style. Urban street art depicting: {keyword}. {summary}. Vibrant colors, spray paint texture, city wall aesthetic, no text, no people, no hands."
-        negative_prompt = "text, watermark, signature, blurry, low quality, realistic photo, people, humans, hands, fingers, faces, anatomy"
+        image_prompt = f"vibrant graffiti street art on a concrete wall featuring the text '{keyword}' in bold spray-painted letters, surrounded by crypto symbols, blockchain icons, bitcoin logos, ethereum logos, neon colors, urban style, no people, no robots, no humans, no characters, wall art only, detailed textures, high quality"
+        negative_prompt = "people, humans, robots, characters, figures, faces, bodies, arms, legs, extra limbs, deformed, ugly, blurry, low quality, realistic photo, watermark, signature, text errors"
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
         if not image_bytes:
@@ -50,43 +50,45 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
 async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None:
-    try:
-        if not config.POLLINATIONS_API_KEY:
-            logger.error("[image_gen] POLLINATIONS_API_KEY not set in env")
-            return None
-        w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        encoded = urllib.parse.quote(prompt, safe='')
-        neg_encoded = urllib.parse.quote(negative, safe='')
-        key_encoded = urllib.parse.quote(config.POLLINATIONS_API_KEY, safe='')
-        url = f"https://gen.pollinations.ai/image/{encoded}?width={w}&height={h}&seed={seed}&model=flux&enhance=true&nologo=true&negative_prompt={neg_encoded}&key={key_encoded}"
+    models = ["flux", "turbo"]
+    w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+    encoded = urllib.parse.quote(prompt, safe='')
+    neg_encoded = urllib.parse.quote(negative, safe='')
+    key_encoded = urllib.parse.quote(config.POLLINATIONS_API_KEY, safe='')
+    for model in models:
+        url = f"https://gen.pollinations.ai/image/{encoded}?width={w}&height={h}&seed={seed}&model={model}&enhance=true&nologo=true&negative_prompt={neg_encoded}&key={key_encoded}"
         max_attempts = 2
         for attempt in range(max_attempts):
-            async with httpx.AsyncClient() as http:
-                r = await http.get(url, timeout=120)
-                if r.status_code == 200:
-                    img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                    logger.info(f"[image_gen] Success: {img.size} (attempt {attempt+1})")
-                    buffer = io.BytesIO()
-                    img.save(buffer, format="PNG", optimize=True)
-                    if buffer.tell() > 900 * 1024:
+            try:
+                async with httpx.AsyncClient() as http:
+                    r = await http.get(url, timeout=120)
+                    if r.status_code == 200:
+                        img = Image.open(io.BytesIO(r.content)).convert("RGB")
+                        logger.info(f"[image_gen] Success ({model}): {img.size} (attempt {attempt+1})")
                         buffer = io.BytesIO()
-                        img.save(buffer, format="JPEG", quality=85, optimize=True)
-                    return buffer.getvalue()
-                elif r.status_code in (402, 429):
-                    logger.warning(f"[image_gen] Rate/balance limit ({r.status_code}): {r.text[:200]}")
-                    if attempt < max_attempts - 1:
-                        await asyncio.sleep(30)
-                        continue
-                else:
-                    logger.warning(f"[image_gen] Error {r.status_code}: {r.text[:200]}")
-                    if attempt < max_attempts - 1:
-                        await asyncio.sleep(30)
-                        continue
-        logger.warning("[image_gen] All attempts failed, returning None")
-        return None
-    except Exception as e:
-        logger.warning(f"[image_gen] Call failed: {type(e).__name__}: {e}")
-        return None
+                        img.save(buffer, format="PNG", optimize=True)
+                        if buffer.tell() > 900 * 1024:
+                            buffer = io.BytesIO()
+                            img.save(buffer, format="JPEG", quality=85, optimize=True)
+                        return buffer.getvalue()
+                    elif r.status_code in (402, 429):
+                        logger.warning(f"[image_gen] Rate/balance limit ({r.status_code}, {model}): {r.text[:200]}")
+                        if attempt < max_attempts - 1:
+                            await asyncio.sleep(30)
+                            continue
+                    else:
+                        logger.warning(f"[image_gen] Error {r.status_code} ({model}): {r.text[:200]}")
+                        if attempt < max_attempts - 1:
+                            await asyncio.sleep(10)
+                            continue
+            except Exception as e:
+                logger.warning(f"[image_gen] Request failed ({model}): {type(e).__name__}: {e}")
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(10)
+                    continue
+        logger.warning(f"[image_gen] Model {model} exhausted, trying next...")
+    logger.warning("[image_gen] All models and attempts failed, returning None")
+    return None
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
     sig = SIG_DIGEST
