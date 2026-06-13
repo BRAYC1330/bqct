@@ -46,12 +46,16 @@ context_memory: |
   Summary:
 
 intent_check: |
-  Is this message substantive or casual?
-  SUBSTANTIVE = question about crypto/topic/info.
-  CASUAL = greeting, emoji, reaction, noise.
+  Classify this comment as CASUAL or SUBSTANTIVE.
+
+  CASUAL = reaction, acknowledgment, greeting, emoji, short phrase without information request, or message that does not semantically relate to the topic content.
+  SUBSTANTIVE = explicit question, request for data, analysis, explanation, or actionable information directly related to the topic.
+
+  Rule: If the message lacks an explicit information request or does not meaningfully engage with the topic content, classify as CASUAL regardless of individual words.
+
   Message: "{message}"
   Topic: "{root_topic}"
-  Output ONE word: SUBSTANTIVE or CASUAL.
+  Output ONE word: CASUAL or SUBSTANTIVE
   Result:
 
 sentiment_check: |
@@ -92,8 +96,9 @@ dyor_fallback: |
 
 casual_reply: |
   User sent a casual message.
-  Task: Send one short, friendly acknowledgment.
+  Task: Send one short, neutral-positive acknowledgment.
   Guidelines:
-  - No questions, no conversation starters.
+  - Friendly but generic tone.
+  - No questions, no conversation starters, no search triggers.
   - End after the statement.
   Reply:
