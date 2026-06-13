@@ -17,11 +17,7 @@ SIG_DEFAULT = "\n\nQwen"
 def _get_signature(source: str, has_search: bool) -> str:
     if source == "tavily": return SIG_TAVILY
     if source == "chainbase": return SIG_CHAINBASE
-    if has_search: return SIG_CHAINBASE
-    return SIG_DEFAULT
-def get_no_data_response(keyword: str) -> str:
-    body = f'No data found for "{keyword}". Try rephrasing your query in a new comment or DYOR.'
-    return f"{body}{SIG_DEFAULT}"
+    if has_search: return SIG_DEFAULT
 async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", source: str = "", max_total: int = config.MAX_COMMENT_CHARS) -> str:
     sig = _get_signature(source, bool(search_data))
     max_body = max_total - len(sig)
@@ -36,10 +32,12 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
     if not config.DIGEST_IMAGE_ENABLED: return None
     try:
         top_item = trends[0]
-        keyword = top_item.get("keyword", "crypto market")
+        keyword = top_item.get("keyword", "news")
         summary = top_item.get("summary", "")
-        image_prompt = f"vibrant graffiti street art on a concrete wall featuring the text '{keyword}' in bold spray-painted letters, surrounded by crypto symbols, blockchain icons, bitcoin logos, ethereum logos, neon colors, urban style, no people, no robots, no humans, no characters, wall art only, detailed textures, high quality"
-        negative_prompt = "people, humans, robots, characters, figures, faces, bodies, arms, legs, extra limbs, deformed, ugly, blurry, low quality, realistic photo, watermark, signature, text errors"
+        safe_keyword = keyword.replace("'", "").replace('"', '')[:80]
+        safe_summary = summary.replace("'", "").replace('"', '')[:200]
+        image_prompt = f"vibrant graffiti street art on a concrete wall featuring the text '{safe_keyword}' in bold spray-painted letters, create a visual scene that captures the essence of: {safe_summary}, if the topic involves recognizable logos emblems symbols or icons naturally incorporate them into the mural composition as part of the wall art, colorful urban style, no people, no robots, no humans, no characters, wall art only, detailed textures, high quality"
+        negative_prompt = "people, humans, robots, characters, figures, faces, bodies, arms, legs, extra limbs, deformed, ugly, blurry, low quality, realistic photo, watermark, signature, text errors, floating icons, separate symbols overlay"
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
         if not image_bytes:
