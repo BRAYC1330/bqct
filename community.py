@@ -26,40 +26,43 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
     sentiment = generator.classify_sentiment(llm, user_text, clean_root)
     clean_query = utils.clean_for_llm(user_text)
     intent = generator.classify_intent(llm, user_text, clean_root)
-    original_keyword = generator.extract_chainbase_keyword(llm, clean_query, clean_root)
     search_data = ""
-    kw = original_keyword
-    tried_keywords = set()
-    for attempt in range(3):
-        if kw:
-            tried_keywords.add(kw.lower())
-        logger.info(f"[search] Attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
-        if not kw:
-            tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
-            kw = generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str)
+    source = ""
+    original_keyword = ""
+    if intent != "CASUAL":
+        original_keyword = generator.extract_chainbase_keyword(llm, clean_query, clean_root)
+        kw = original_keyword
+        tried_keywords = set()
+        for attempt in range(3):
+            if kw:
+                tried_keywords.add(kw.lower())
+            logger.info(f"[search] Attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
             if not kw:
-                logger.info(f"[search] Cannot regenerate keyword (attempt {attempt+1})")
-                break
-            if kw.lower() in tried_keywords:
-                logger.info(f"[search] Regenerated keyword '{kw}' was already tried, skipping")
-                kw = ""
-                continue
-            logger.info(f"[search] Regenerated keyword: '{kw}'")
-            tried_keywords.add(kw.lower())
-        search_data = await fetch_chainbase(kw)
-        if search_data:
-            logger.info(f"[search] Fetched {len(search_data.split(chr(10)))} results for '{kw}'")
-            sample = "\n".join(search_data.split("\n")[:3])
-            if generator.validate_search_results(llm, clean_query, sample):
-                logger.info(f"[search] Validation passed for '{kw}' ✓")
-                break
-            logger.info(f"[search] Validation failed for '{kw}' (irrelevant), retrying...")
-            search_data = ""
-        else:
-            logger.info(f"[search] No results for '{kw}'")
-        kw = ""
-    if not search_data:
-        logger.info(f"[search] All 3 attempts failed, proceeding without search data")
+                tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
+                kw = generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str)
+                if not kw:
+                    logger.info(f"[search] Cannot regenerate keyword (attempt {attempt+1})")
+                    break
+                if kw.lower() in tried_keywords:
+                    logger.info(f"[search] Regenerated keyword '{kw}' was already tried, skipping")
+                    kw = ""
+                    continue
+                logger.info(f"[search] Regenerated keyword: '{kw}'")
+                tried_keywords.add(kw.lower())
+            search_data = await fetch_chainbase(kw)
+            if search_data:
+                logger.info(f"[search] Fetched {len(search_data.split(chr(10)))} results for '{kw}'")
+                sample = "\n".join(search_data.split("\n")[:3])
+                if generator.validate_search_results(llm, clean_query, sample):
+                    logger.info(f"[search] Validation passed for '{kw}' ✓")
+                    break
+                logger.info(f"[search] Validation failed for '{kw}' (irrelevant), retrying...")
+                search_data = ""
+            else:
+                logger.info(f"[search] No results for '{kw}'")
+            kw = ""
+        if not search_data:
+            logger.info(f"[search] All 3 attempts failed, proceeding without search data")
     if intent == "CASUAL":
         sig = build_content.SIG_DEFAULT
     else:
