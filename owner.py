@@ -131,17 +131,25 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
         logger.info("=== [END CONTEXT] ===")
     sig = build_content._get_signature(source, bool(search_data))
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
-    reply = generator.get_answer(llm, model_ctx, clean_query, max_chars=max_reply_chars, temperature=0.5, prompt_key="owner_reply")
-    if not reply:
-        logger.warning("[owner] LLM returned empty/None reply, skipping")
-        return []
-    reply = reply.strip()
-    if reply.startswith("```") and reply.endswith("```"):
-        reply = reply[3:-3].strip()
-    reply, facets_list = facets.enhance_tickers(reply)
-    final_text = reply + sig
-    if utils.count_graphemes(final_text) > config.MAX_COMMENT_CHARS:
-        reply = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
+    try:
+        reply = generator.get_answer(llm, model_ctx, clean_query, max_chars=max_reply_chars, temperature=0.5, prompt_key="owner_reply")
+        if not reply or not isinstance(reply, str):
+            logger.warning("[owner] LLM returned empty/non-string reply, using fallback")
+            reply = "Interesting perspective. Let me think about this more deeply."
+        reply = reply.strip()
+        if reply.startswith("```") and reply.endswith("```"):
+            reply = reply[3:-3].strip()
+        reply, facets_list = facets.enhance_tickers(reply)
+        final_text = reply + sig
+        if utils.count_graphemes(final_text) > config.MAX_COMMENT_CHARS:
+            reply = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
+            if not reply or not isinstance(reply, str):
+                reply = "Interesting perspective. Let me think about this more deeply."
+            reply, facets_list = facets.enhance_tickers(reply)
+            final_text = reply + sig
+    except Exception as e:
+        logger.error(f"[owner] Reply generation failed: {type(e).__name__}: {repr(e)}")
+        reply = "Interesting perspective. Let me think about this more deeply."
         reply, facets_list = facets.enhance_tickers(reply)
         final_text = reply + sig
     if config.RAW_DEBUG:
