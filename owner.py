@@ -45,118 +45,120 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     uri = task["uri"]
     user_text = task["text"]
     embed = task.get("embed")
-    chain = await bsky.fetch_thread_chain(client, uri)
-    if not chain: return []
-    root_uri = chain.get("root_uri", uri)
-    root_cid = chain.get("root_cid", "")
-    parent_uri = uri
-    parent_cid = chain.get("cid", "")
-    if not parent_cid: return []
-    root_record = chain.get("root_record", {})
-    root_text_raw = root_record.get("text", "")
-    if not root_text_raw:
-        chain_posts = chain.get("chain", [])
-        if chain_posts:
-            first_post = chain_posts[0]
-            first_record = first_post.get("record", {})
-            root_text_raw = first_record.get("text", "")
-            if not root_cid:
-                root_cid = first_post.get("cid", "")
-            if not root_uri:
-                root_uri = first_post.get("uri", uri)
-    root_embed = root_record.get("embed")
-    root_text_clean = utils.clean_for_llm(root_text_raw)
-    root_embed_context = await extract_embed_context(root_embed, client)
-    root_context = root_text_clean
-    if root_embed_context:
-        root_context = f"{root_text_clean}\n{root_embed_context}"
-    posts = chain.get("chain", [])
-    history_lines = []
-    for post in posts[1:]:
-        rec = post.get("record", {})
-        author = post.get("author", {})
-        did = author.get("did", "")
-        text = utils.clean_for_llm(rec.get("text", ""))
-        if not text: continue
-        if did == config.OWNER_DID: prefix = "OWNER:"
-        elif did == config.BOT_DID: prefix = "BOT:"
-        else: prefix = "USER:"
-        history_lines.append(f"{prefix} {text}")
-    history_block = "\n".join(history_lines[-5:]) if history_lines else "No history."
-    clean_query = utils.clean_for_llm(user_text)
-    search_data = ""
-    source = ""
-    do_search = "!t" in user_text.lower() or "!c" in user_text.lower()
-    if do_search:
-        clean_text = re.sub(r'(!t|!c)', '', user_text, flags=re.I).strip()
-        topic_context = f"{root_context}\n{history_block}".strip()
-        if "!c" in user_text.lower():
-            kw = generator.extract_chainbase_keyword(llm, clean_text, topic_context)
-            if kw:
-                search_data = await search.fetch_chainbase(kw)
-                source = "chainbase"
-        else:
-            q, t = generator.extract_search_intent(llm, clean_text)
-            if q:
-                if root_text_clean:
-                    snippet = root_text_clean[:200]
-                    enriched_query = f"{q} in context: {snippet}"
-                else:
-                    enriched_query = q
-                if config.RAW_DEBUG:
-                    logger.info(f"=== [SEARCH QUERY] ===")
-                    logger.info(f"Original: {clean_text}")
-                    logger.info(f"Extracted: {q} | Time: {t or 'none'}")
-                    logger.info(f"Enriched: {enriched_query}")
-                    logger.info("=== [END SEARCH QUERY] ===")
-                search_data = await search.fetch_tavily(enriched_query, t)
-                source = "tavily"
-                if config.RAW_DEBUG and search_data:
-                    logger.info(f"=== [SEARCH RAW RESULTS] ===")
-                    logger.info(search_data[:1500] + ("..." if len(search_data) > 1500 else ""))
-                    logger.info("=== [END SEARCH RESULTS] ===")
-    clean_search = utils.clean_for_llm(search_data) if search_data else ""
-    current_embed_context = await extract_embed_context(embed, client)
-    model_ctx = (
-        f"[QUERY]\n{clean_query}\n"
-        f"[CONVERSATION]\n"
-        f"[ROOT]\n{root_context}\n"
-        f"[HISTORY]\n{history_block}\n"
-        f"[SEARCH]\n{clean_search if clean_search else 'No external data'}\n"
-        f"{current_embed_context}"
-    )
-    if config.RAW_DEBUG:
-        logger.info("=== [OWNER CONTEXT] ===")
-        logger.info(model_ctx)
-        logger.info("=== [END CONTEXT] ===")
-    sig = build_content._get_signature(source, bool(search_data))
-    max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
+    fallback_reply = "Interesting perspective. Let me think about this more deeply."
     try:
+        chain = await bsky.fetch_thread_chain(client, uri)
+        if not chain: return []
+        root_uri = chain.get("root_uri", uri)
+        root_cid = chain.get("root_cid", "")
+        parent_uri = uri
+        parent_cid = chain.get("cid", "")
+        if not parent_cid: return []
+        root_record = chain.get("root_record", {})
+        root_text_raw = root_record.get("text", "")
+        if not root_text_raw:
+            chain_posts = chain.get("chain", [])
+            if chain_posts:
+                first_post = chain_posts[0]
+                first_record = first_post.get("record", {})
+                root_text_raw = first_record.get("text", "")
+                if not root_cid:
+                    root_cid = first_post.get("cid", "")
+                if not root_uri:
+                    root_uri = first_post.get("uri", uri)
+        root_embed = root_record.get("embed")
+        root_text_clean = utils.clean_for_llm(root_text_raw) if root_text_raw else ""
+        root_embed_context = await extract_embed_context(root_embed, client)
+        root_context = root_text_clean
+        if root_embed_context:
+            root_context = f"{root_text_clean}\n{root_embed_context}"
+        posts = chain.get("chain", [])
+        history_lines = []
+        for post in posts[1:]:
+            rec = post.get("record", {})
+            author = post.get("author", {})
+            did = author.get("did", "")
+            text = utils.clean_for_llm(rec.get("text", ""))
+            if not text: continue
+            if did == config.OWNER_DID: prefix = "OWNER:"
+            elif did == config.BOT_DID: prefix = "BOT:"
+            else: prefix = "USER:"
+            history_lines.append(f"{prefix} {text}")
+        history_block = "\n".join(history_lines[-5:]) if history_lines else "No history."
+        clean_query = utils.clean_for_llm(user_text)
+        search_data = ""
+        source = ""
+        do_search = "!t" in user_text.lower() or "!c" in user_text.lower()
+        if do_search:
+            clean_text = re.sub(r'(!t|!c)', '', user_text, flags=re.I).strip()
+            topic_context = f"{root_context}\n{history_block}".strip()
+            if "!c" in user_text.lower():
+                kw = generator.extract_chainbase_keyword(llm, clean_text, topic_context)
+                if kw:
+                    search_data = await search.fetch_chainbase(kw)
+                    source = "chainbase"
+            else:
+                q, t = generator.extract_search_intent(llm, clean_text)
+                if q:
+                    if root_text_clean:
+                        snippet = root_text_clean[:200]
+                        enriched_query = f"{q} in context: {snippet}"
+                    else:
+                        enriched_query = q
+                    search_data = await search.fetch_tavily(enriched_query, t)
+                    source = "tavily"
+        clean_search = utils.clean_for_llm(search_data) if search_data else ""
+        current_embed_context = await extract_embed_context(embed, client)
+        model_ctx = (
+            f"[QUERY]\n{clean_query}\n"
+            f"[CONVERSATION]\n"
+            f"[ROOT]\n{root_context}\n"
+            f"[HISTORY]\n{history_block}\n"
+            f"[SEARCH]\n{clean_search if clean_search else 'No external data'}\n"
+            f"{current_embed_context}"
+        )
+        if config.RAW_DEBUG:
+            logger.info("=== [OWNER CONTEXT] ===")
+            logger.info(model_ctx)
+            logger.info("=== [END CONTEXT] ===")
+        sig = build_content._get_signature(source, bool(search_data))
+        max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
         reply = generator.get_answer(llm, model_ctx, clean_query, max_chars=max_reply_chars, temperature=0.5, prompt_key="owner_reply")
         if not reply or not isinstance(reply, str):
             logger.warning("[owner] LLM returned empty/non-string reply, using fallback")
-            reply = "Interesting perspective. Let me think about this more deeply."
+            reply = fallback_reply
         reply = reply.strip()
         if reply.startswith("```") and reply.endswith("```"):
             reply = reply[3:-3].strip()
         reply, facets_list = facets.enhance_tickers(reply)
         final_text = reply + sig
         if utils.count_graphemes(final_text) > config.MAX_COMMENT_CHARS:
-            reply = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
-            if not reply or not isinstance(reply, str):
-                reply = "Interesting perspective. Let me think about this more deeply."
+            truncated = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
+            if truncated and isinstance(truncated, str):
+                reply = truncated
             reply, facets_list = facets.enhance_tickers(reply)
             final_text = reply + sig
+        if config.RAW_DEBUG:
+            logger.info("=== [FINAL POST] ===")
+            logger.info(final_text)
+            logger.info("=== [END POST] ===")
+        return [{
+            "type": "post_reply",
+            "args": {"bot_did": config.BOT_DID, "text": final_text, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": parent_uri, "parent_cid": parent_cid, "facets": facets_list}
+        }]
     except Exception as e:
-        logger.error(f"[owner] Reply generation failed: {type(e).__name__}: {repr(e)}")
-        reply = "Interesting perspective. Let me think about this more deeply."
-        reply, facets_list = facets.enhance_tickers(reply)
-        final_text = reply + sig
-    if config.RAW_DEBUG:
-        logger.info("=== [FINAL POST] ===")
-        logger.info(final_text)
-        logger.info("=== [END POST] ===")
-    return [{
-        "type": "post_reply",
-        "args": {"bot_did": config.BOT_DID, "text": final_text, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": parent_uri, "parent_cid": parent_cid, "facets": facets_list}
-    }]
+        logger.error(f"[owner] prepare() crashed: {type(e).__name__}: {repr(e)}", exc_info=True)
+        try:
+            chain = await bsky.fetch_thread_chain(client, uri)
+            root_uri = chain.get("root_uri", uri) if chain else uri
+            root_cid = chain.get("root_cid", "") if chain else ""
+            parent_cid = chain.get("cid", "") if chain else ""
+            sig = build_content.SIG_DEFAULT
+            fallback, fl = facets.enhance_tickers(fallback_reply)
+            return [{
+                "type": "post_reply",
+                "args": {"bot_did": config.BOT_DID, "text": fallback + sig, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": uri, "parent_cid": parent_cid, "facets": fl}
+            }]
+        except Exception as e2:
+            logger.error(f"[owner] Even fallback failed: {type(e2).__name__}: {repr(e2)}")
+            return []
