@@ -15,9 +15,16 @@ SIG_TAVILY = "\n\nQwen | Tavily"
 SIG_CHAINBASE = "\n\nQwen | Chainbase"
 SIG_DEFAULT = "\n\nQwen"
 def _get_signature(source: str, has_search: bool) -> str:
-    if source == "tavily": return SIG_TAVILY
-    if source == "chainbase": return SIG_CHAINBASE
-    if has_search: return SIG_DEFAULT
+    if source == "tavily":
+        return SIG_TAVILY
+    if source == "chainbase":
+        return SIG_CHAINBASE
+    if has_search:
+        return SIG_CHAINBASE
+    return SIG_DEFAULT
+def get_no_data_response(keyword: str) -> str:
+    body = f'No data found for "{keyword}". Try rephrasing your query in a new comment or DYOR.'
+    return f"{body}{SIG_DEFAULT}"
 async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", source: str = "", max_total: int = config.MAX_COMMENT_CHARS) -> str:
     sig = _get_signature(source, bool(search_data))
     max_body = max_total - len(sig)
