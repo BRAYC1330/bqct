@@ -18,25 +18,48 @@ async def fetch_trends() -> list:
 @retry_async()
 async def fetch_chainbase(keyword: str) -> str:
     async with httpx.AsyncClient(timeout=config.SEARCH_TIMEOUT) as c:
-        r = await c.get("https://api.chainbase.com/tops/v1/tool/search-narrative-candidates", params={"keyword": keyword})
-        if r.status_code != 200:
-            return ""
-        items = r.json().get("data", r.json().get("items", []))
-        if not isinstance(items, list):
-            return ""
-        seen, valid = set(), []
-        for i in items:
-            kw, sm = str(i.get("keyword") or "").strip(), str(i.get("summary") or "").strip()
-            if not kw or not sm or not utils.is_english(sm):
-                continue
-            key = (kw.lower(), sm[:50].lower())
-            if key in seen:
-                continue
-            seen.add(key)
-            valid.append((kw, sm))
-            if len(valid) >= config.MAX_SEARCH_RESULTS:
-                break
-        return "\n".join(f"{kw}: {sm}" for kw, sm in valid) if valid else ""
+        try:
+            r = await c.get("https://api.chainbase.com/tops/v1/tool/search-narrative-candidates", params={"keyword": keyword})
+            if r.status_code == 200:
+                items = r.json().get("data", r.json().get("items", []))
+                if isinstance(items, list) and items:
+                    seen, valid = set(), []
+                    for i in items:
+                        kw = str(i.get("keyword") or i.get("narrative") or "").strip()
+                        sm = str(i.get("summary") or i.get("description") or "").strip()
+                        if not kw or not sm or not utils.is_english(sm):
+                            continue
+                        key = (kw.lower(), sm[:50].lower())
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        valid.append((kw, sm))
+                        if len(valid) >= config.MAX_SEARCH_RESULTS:
+                            break
+                    if valid:
+                        return "\n".join(f"{kw}: {sm}" for kw, sm in valid)
+        except Exception as e:
+            logger.warning(f"[search] Narrative search error: {e}")
+
+        try:
+            r = await c.get("https://api.chainbase.com/tops/v1/tool/search-mentions", params={"keyword": keyword})
+            if r.status_code == 200:
+                items = r.json().get("items", [])
+                mentions, seen_ids = [], set()
+                for i in items[:5]:
+                    if i.get("id") in seen_ids:
+                        continue
+                    seen_ids.add(i["id"])
+                    txt = i.get("text", "").replace("\n", " ").strip()
+                    if len(txt) < 20:
+                        continue
+                    mentions.append(f"@{i.get('user', {}).get('screen_name', 'unknown')}: {txt[:277] + '...' if len(txt) > 280 else txt}")
+                if mentions:
+                    return "Recent mentions:\n" + "\n\n".join(mentions)
+        except Exception as e:
+            logger.warning(f"[search] Mentions fallback error: {e}")
+
+        return ""
 
 @retry_async()
 async def fetch_mentions(keyword: str) -> str:
@@ -60,4 +83,4 @@ async def fetch_mentions(keyword: str) -> str:
                     mentions.append(f"@{i.get('user', {}).get('screen_name', 'unknown')}: {txt[:277] + '...' if len(txt) > 280 else txt}")
             except Exception:
                 pass
-    return f"Recent mentions:\n" + "\n".join(mentions[:5]) if mentions else ""
+    return "Recent mentions:\n" + "\n\n".join(mentions[:5]) if mentions else ""
