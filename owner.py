@@ -3,7 +3,7 @@ import re
 import config
 import bsky
 import generator
-import search
+from search_tavily import fetch_tavily
 import utils
 import facets
 import build_content
