@@ -26,5 +26,5 @@ async def prepare(llm, task_type: str, client=None) -> Optional[Dict[str, Any]]:
         action["args"]["embed"] = embed
     return action
 async def _fetch_trends():
-    import search
-    return await search.get_trending_topics_raw()
+    from search_chainbase import fetch_trends
+    return await fetch_trends()
