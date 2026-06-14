@@ -132,6 +132,9 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     sig = build_content._get_signature(source, bool(search_data))
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
     reply = generator.get_answer(llm, model_ctx, clean_query, max_chars=max_reply_chars, temperature=0.5, prompt_key="owner_reply")
+    if not reply:
+        logger.warning("[owner] LLM returned empty/None reply, skipping")
+        return []
     reply = reply.strip()
     if reply.startswith("```") and reply.endswith("```"):
         reply = reply[3:-3].strip()
