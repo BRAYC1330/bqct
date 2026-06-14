@@ -34,18 +34,21 @@ class Dispatcher:
                     logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
                     self.metrics["failed"] += 1
                     continue
-                if action and (not isinstance(action, list) or len(action) > 0):
-                    if isinstance(action, list):
-                        self.actions.extend(action)
-                    else:
-                        self.actions.append(action)
+
+                if isinstance(action, list) and len(action) > 0:
+                    self.actions.extend(action)
+                    self.metrics["success"] += 1
+                elif isinstance(action, dict):
+                    self.actions.append(action)
                     self.metrics["success"] += 1
                 else:
-                    logger.warning(f"[DISPATCHER] Task {task.type} returned empty result")
+                    logger.warning(f"[DISPATCHER] Task {task.type} returned empty/None result")
                     self.metrics["failed"] += 1
+
             except Exception as e:
                 logger.error(f"[DISPATCHER] Task {task.type} preparation failed: {repr(e)}")
                 self.metrics["failed"] += 1
+
         self.metrics["execution_time"] = round(time.monotonic() - exec_start, 2)
         if self.metrics["failed"] == 0 and self.actions:
             logger.info(f"[DISPATCHER] Committing {len(self.actions)} actions...")
@@ -56,6 +59,7 @@ class Dispatcher:
         elif self.metrics["failed"] > 0:
             logger.warning(f"[DISPATCHER] Aborting commit due to {self.metrics['failed']} failed tasks")
             self.actions.clear()
+
     async def _execute_action(self, act: Dict[str, Any]) -> None:
         try:
             if act["type"] == "post_root":
