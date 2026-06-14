@@ -2,7 +2,7 @@ import logging
 import config
 import bsky
 import generator
-import search
+from search_chainbase import fetch_chainbase
 import utils
 import facets
 import build_content
