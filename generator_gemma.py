@@ -6,11 +6,6 @@ import config
 from prompts import load_prompt
 logger = logging.getLogger(__name__)
 
-GEMMA_TEMPLATE = "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"
-
-def _wrap(prompt: str) -> str:
-    return GEMMA_TEMPLATE.format(prompt=prompt)
-
 def get_model():
     model_path = config.GEMMA_MODEL_PATH
     if not os.path.exists(model_path):
@@ -33,12 +28,13 @@ def get_model():
         return None
 
 def _call(llm, prompt: str, max_tokens: int, temperature: float) -> str:
-    wrapped = _wrap(prompt)
     try:
-        output = llm(wrapped, max_tokens=max_tokens, temperature=temperature)
-        if isinstance(output, dict):
-            return output.get("choices", [{}])[0].get("text", "")
-        return ""
+        response = llm.create_chat_completion(
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
+        return response.get("choices", [{}])[0].get("message", {}).get("content", "")
     except Exception as e:
         logger.warning(f"[gemma] Call failed: {type(e).__name__}: {e}")
         return ""
