@@ -48,10 +48,10 @@ context_memory: |
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
 
-  CASUAL = reaction, acknowledgment, greeting, emoji, short phrase without information request, or message that does not semantically relate to the topic content.
-  SUBSTANTIVE = explicit question, request for data, analysis, explanation, or actionable information directly related to the topic.
+  CASUAL = message consisting solely of reactions, acknowledgments, greetings, or emojis without any informational content, question, opinion, or statement related to the topic.
+  SUBSTANTIVE = message containing any meaningful text that engages with the topic, asks a question, expresses an opinion, requests information, or makes a statement, regardless of whether emojis or reaction words are also present.
 
-  Rule: If the message lacks an explicit information request or does not meaningfully engage with the topic content, classify as CASUAL regardless of individual words.
+  Rule: Presence of emojis or reaction words does not make a message CASUAL if it also contains substantive textual content. Only messages with zero substantive content are CASUAL.
 
   Message: "{message}"
   Topic: "{root_topic}"
