@@ -17,6 +17,32 @@ async def _fetch_link_content(url: str, client) -> str:
     except Exception as e:
         logger.warning(f"[owner] Link fetch failed {url}: {e}")
     return ""
+def _extract_urls_from_post(record: dict) -> list:
+    urls = set()
+    raw_text = record.get("text", "")
+    for u in re.findall(r'https?://\S+', raw_text):
+        urls.add(u.rstrip('.,;:)'))
+    post_facets = record.get("facets", [])
+    for facet in post_facets:
+        features = facet.get("features", [])
+        for f in features:
+            if f.get("$type") == "app.bsky.richtext.facet#link":
+                uri = f.get("uri", "")
+                if uri.startswith("http"):
+                    urls.add(uri)
+    embed = record.get("embed", {})
+    etype = embed.get("$type", "")
+    if etype == "app.bsky.embed.external":
+        ext_uri = embed.get("external", {}).get("uri", "")
+        if ext_uri.startswith("http"):
+            urls.add(ext_uri)
+    elif etype == "app.bsky.embed.recordWithMedia":
+        media = embed.get("media", {})
+        if media.get("$type") == "app.bsky.embed.external":
+            ext_uri = media.get("external", {}).get("uri", "")
+            if ext_uri.startswith("http"):
+                urls.add(ext_uri)
+    return list(urls)[:3]
 async def _extract_embed_text(embed: dict, client) -> str:
     if not embed:
         return ""
@@ -30,11 +56,20 @@ async def _extract_embed_text(embed: dict, client) -> str:
         rec = embed.get("record", {}).get("value", {})
         if rec and rec.get("text"):
             parts.append(rec["text"])
-    urls = re.findall(r'https?://\S+', " ".join(parts))
-    for u in list(set(urls))[:2]:
-        lc = await _fetch_link_content(u, client)
-        if lc:
-            parts.append(lc)
+    elif etype == "app.bsky.embed.external":
+        ext = embed.get("external", {})
+        title = ext.get("title", "")
+        desc = ext.get("description", "")
+        if title or desc:
+            parts.append(f"{title}: {desc}".strip())
+    elif etype == "app.bsky.embed.recordWithMedia":
+        media = embed.get("media", {})
+        if media.get("$type") == "app.bsky.embed.external":
+            ext = media.get("external", {})
+            title = ext.get("title", "")
+            desc = ext.get("description", "")
+            if title or desc:
+                parts.append(f"{title}: {desc}".strip())
     return "\n".join(parts)
 async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     uri = task["uri"]
@@ -54,9 +89,9 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
         text = utils.clean_for_llm(rec.get("text", ""))
         embed = rec.get("embed")
         embed_text = await _extract_embed_text(embed, client)
-        urls_in_text = re.findall(r'https?://\S+', text)
+        urls = _extract_urls_from_post(rec)
         link_texts = []
-        for u in list(set(urls_in_text))[:2]:
+        for u in urls:
             lc = await _fetch_link_content(u, client)
             if lc:
                 link_texts.append(lc)
