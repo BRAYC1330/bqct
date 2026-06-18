@@ -65,13 +65,10 @@ async def run():
                     logger.info(f"[checker] Skipping nested owner reply in digest thread: root={state.digest_uri}, parent={parent_uri}")
                     continue
 
-                if state.digest_uri and "/app.bsky.feed.post/" in root_uri:
-                    if root_uri == state.digest_uri:
-                        tasks.append(Task(type=TaskType.digest_comment, uri=uri, text=text, author_did=author_did, parent_uri=parent_uri, embed=embed))
-                        digest_comment_count += 1
-                        logger.info(f"[debug] queued digest_comment (owner in CURRENT digest) | uri={uri}")
-                    else:
-                        logger.info(f"[checker] Skipping owner reply to OLD digest thread: root={root_uri}, current={state.digest_uri}")
+                if state.digest_uri and root_uri == state.digest_uri:
+                    tasks.append(Task(type=TaskType.digest_comment, uri=uri, text=text, author_did=author_did, parent_uri=parent_uri, embed=embed))
+                    digest_comment_count += 1
+                    logger.info(f"[debug] queued digest_comment (owner in CURRENT digest) | uri={uri}")
                     continue
 
                 parent_author_did = _did_from_uri(parent_uri)
@@ -83,8 +80,12 @@ async def run():
                 elif f"@{config.BOT_HANDLE.replace('@', '')}" in text:
                     tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
                     owner_count += 1
+                    logger.info(f"[debug] queued owner_command (owner @mention outside digest) | uri={uri}")
                     continue
                 else:
+                    tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
+                    owner_count += 1
+                    logger.info(f"[debug] queued owner_command (owner reply outside digest, no @mention) | uri={uri}")
                     continue
 
             if state.digest_uri and root_uri == state.digest_uri:
