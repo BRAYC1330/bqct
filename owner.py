@@ -11,38 +11,49 @@ from typing import List, Dict, Any
 logger = logging.getLogger(__name__)
 async def _fetch_link_content(url: str, client) -> str:
     try:
+        logger.info(f"[owner] Fetching link content: {url}")
         content = await bsky._fetch_url_content(client, url)
         if content:
+            logger.info(f"[owner] Fetched {len(content)} chars from {url}")
             return content[:1000]
+        logger.warning(f"[owner] Empty content from {url}")
     except Exception as e:
         logger.warning(f"[owner] Link fetch failed {url}: {e}")
     return ""
 def _extract_urls_from_post(record: dict) -> list:
-    urls = set()
-    raw_text = record.get("text", "")
-    for u in re.findall(r'https?://\S+', raw_text):
-        urls.add(u.rstrip('.,;:)'))
+    urls = []
+    seen = set()
     post_facets = record.get("facets", [])
     for facet in post_facets:
         features = facet.get("features", [])
         for f in features:
             if f.get("$type") == "app.bsky.richtext.facet#link":
                 uri = f.get("uri", "")
-                if uri.startswith("http"):
-                    urls.add(uri)
+                if uri.startswith("http") and uri not in seen:
+                    seen.add(uri)
+                    urls.append(uri)
     embed = record.get("embed", {})
     etype = embed.get("$type", "")
     if etype == "app.bsky.embed.external":
         ext_uri = embed.get("external", {}).get("uri", "")
-        if ext_uri.startswith("http"):
-            urls.add(ext_uri)
+        if ext_uri.startswith("http") and ext_uri not in seen:
+            seen.add(ext_uri)
+            urls.append(ext_uri)
     elif etype == "app.bsky.embed.recordWithMedia":
         media = embed.get("media", {})
         if media.get("$type") == "app.bsky.embed.external":
             ext_uri = media.get("external", {}).get("uri", "")
-            if ext_uri.startswith("http"):
-                urls.add(ext_uri)
-    return list(urls)[:3]
+            if ext_uri.startswith("http") and ext_uri not in seen:
+                seen.add(ext_uri)
+                urls.append(ext_uri)
+    raw_text = record.get("text", "")
+    for u in re.findall(r'https?://\S+', raw_text):
+        clean_u = u.rstrip('.,;:)')
+        if clean_u not in seen:
+            seen.add(clean_u)
+            urls.append(clean_u)
+    logger.info(f"[owner] Extracted URLs from post: {urls}")
+    return urls[:3]
 async def _extract_embed_text(embed: dict, client) -> str:
     if not embed:
         return ""
@@ -56,7 +67,7 @@ async def _extract_embed_text(embed: dict, client) -> str:
         rec = embed.get("record", {}).get("value", {})
         if rec and rec.get("text"):
             parts.append(rec["text"])
-    elif etype == "app.bsky.embed.external":
+    if etype == "app.bsky.embed.external":
         ext = embed.get("external", {})
         title = ext.get("title", "")
         desc = ext.get("description", "")
