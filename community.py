@@ -52,7 +52,7 @@ async def prepare(ctx: RunContext, client, llm, task) -> List[Dict[str, Any]]:
             search_data = await fetch_chainbase(kw)
             if search_data:
                 logger.info(f"[search] Fetched {len(search_data.split(chr(10)))} results for '{kw}'")
-                sample = "\n".join(search_data.split("\n")[:3])
+                sample = "\n".join(search_data.split("\n")[:6])
                 if generator.validate_search_results(llm, clean_query, sample):
                     logger.info(f"[search] Validation passed for '{kw}' ✓")
                     break
