@@ -69,10 +69,14 @@ sentiment_check: |
   Result:
 
 validate_search: |
-  Are these results relevant to the query?
+  Are these search results topically related to the query?
   Query: "{query}"
   Sample: {sample}
-  Output ONE word: RELEVANT or IRRELEVANT.
+  Rules:
+  - RELEVANT if results discuss the same topic, event, entity, or theme as the query, even if details differ.
+  - IRRELEVANT only if results are about a completely unrelated subject.
+  - Partial topical overlap is RELEVANT.
+  Output ONE word: RELEVANT or IRRELEVANT
   Result:
 
 keyword_regenerate: |
@@ -85,11 +89,9 @@ keyword_regenerate: |
   Keyword:
 
 dyor_fallback: |
-  No search data for "{keyword}".
-  Answer based on context only.
-  Guidelines:
-  - Be helpful and concise.
-  - If unsure, suggest DYOR.
+  No search data found for "{keyword}".
+  Answer based ONLY on the provided context. Do NOT invent facts, dates, names, or details that are not explicitly present in the context.
+  If the context does not contain enough information to answer meaningfully, say so briefly and suggest DYOR.
   Context: {context}
   Query: {query}
   Reply:
