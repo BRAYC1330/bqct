@@ -5,13 +5,15 @@ import generator
 import utils
 import facets
 import build_content
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 logger = logging.getLogger(__name__)
+
 
 def _normalize_handle(handle: str) -> str:
     return handle.lstrip("@").strip().lower()
 
-async def run(client, llm, state) -> tuple[List[Dict[str, Any]], dict]:
+
+async def run(client, llm, state) -> Tuple[List[Dict[str, Any]], dict]:
     actions = []
     greeted = set(state.scout_greeted or [])
     new_greeted = list(greeted)
@@ -37,7 +39,8 @@ async def run(client, llm, state) -> tuple[List[Dict[str, Any]], dict]:
                 "Write a unique welcome post for this project joining Bluesky.",
                 max_chars=config.MAX_COMMENT_CHARS - len(build_content.SIG_DEFAULT) - 10,
                 temperature=0.8,
-                prompt_key="scout_welcome"
+                prompt_key="scout_welcome",
+                handle=handle
             )
             if not reply or not isinstance(reply, str):
                 logger.warning(f"[scout] Empty greeting for {handle}")
