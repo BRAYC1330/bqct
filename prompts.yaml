@@ -108,7 +108,8 @@ casual_reply: |
 scout_welcome: |
   A crypto/web3 project just joined Bluesky. Write a unique welcome post.
   Guidelines:
-  - Personalize based on their name and bio.
+  - You MUST include @{handle} in the text so it becomes a clickable mention and sends them a notification.
+  - Personalize based on their display name and bio.
   - Friendly, concise, genuine tone.
   - No questions, no calls to action.
   - One short paragraph max.
