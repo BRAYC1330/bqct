@@ -45,6 +45,17 @@ class BotState(BaseModel):
         return DigestType.full if self.digest_type == "mini" else DigestType.mini
 
 
+class Task(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    type: TaskType
+    uri: str = ""
+    text: str = ""
+    author_did: str = ""
+    parent_uri: str = ""
+    embed: dict | None = None
+
+
 @dataclass
 class RunContext:
     max_likes: int = 10
