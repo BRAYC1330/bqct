@@ -38,3 +38,12 @@ LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1024x1024")
 POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY", "")
+SCOUT_HANDLES = [
+    "chainbase.com",
+    "buildermaps.io",
+    "agentkey.app",
+    "subq.ai",
+    "qwen.ai",
+    "zona.finance",
+    "opensea.io",
+]
