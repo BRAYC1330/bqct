@@ -104,3 +104,13 @@ casual_reply: |
   - No questions, no conversation starters, no search triggers.
   - End after the statement.
   Reply:
+
+scout_welcome: |
+  A crypto/web3 project just joined Bluesky. Write a unique welcome post.
+  Guidelines:
+  - Personalize based on their name and bio.
+  - Friendly, concise, genuine tone.
+  - No questions, no calls to action.
+  - One short paragraph max.
+  Project info: {context}
+  Welcome post:
