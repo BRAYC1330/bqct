@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import config
 import bsky
 import generator
@@ -44,9 +45,19 @@ async def prepare(ctx: RunContext, client, llm, task: Task) -> List[Dict[str, An
             if kw:
                 tried_keywords.add(kw.lower())
             logger.info(f"[search] Attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
+            
+            search_task = None
+            regen_task = None
+            
             if not kw:
                 tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
-                kw = generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str)
+                regen_task = asyncio.create_task(generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str))
+            
+            if kw:
+                search_task = asyncio.create_task(fetch_chainbase(kw))
+            
+            if regen_task:
+                kw = await regen_task
                 if not kw:
                     logger.info(f"[search] Cannot regenerate keyword (attempt {attempt+1})")
                     break
@@ -56,7 +67,11 @@ async def prepare(ctx: RunContext, client, llm, task: Task) -> List[Dict[str, An
                     continue
                 logger.info(f"[search] Regenerated keyword: '{kw}'")
                 tried_keywords.add(kw.lower())
-            search_data = await fetch_chainbase(kw)
+                search_task = asyncio.create_task(fetch_chainbase(kw))
+                
+            if search_task:
+                search_data = await search_task
+            
             if search_data:
                 logger.info(f"[search] Fetched {len(search_data.split(chr(10)))} results for '{kw}'")
                 sample = "\n".join(search_data.split("\n")[:6])

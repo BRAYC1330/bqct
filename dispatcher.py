@@ -1,5 +1,6 @@
 import logging
 import time
+import asyncio
 from typing import List, Optional, Dict, Any
 import httpx
 import config
@@ -20,36 +21,35 @@ class Dispatcher:
         self.actions: List[Dict[str, Any]] = []
         self.new_digest_uri = ""
 
+    async def _prepare_single_task(self, task: Task):
+        try:
+            if task.type in (TaskType.digest_mini, TaskType.digest_full):
+                return await digest.prepare(self.llm, task.type, client=self.client)
+            elif task.type == TaskType.digest_comment:
+                return await community.prepare(self.ctx, self.client, self.llm, task)
+            elif task.type == TaskType.owner_command:
+                return await owner.prepare(self.client, self.llm, task)
+            else:
+                logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
+                return None
+        except Exception as e:
+            logger.error(f"[DISPATCHER] Task {task.type} preparation failed: {repr(e)}")
+            return None
+
     async def run(self, tasks: List[Task]) -> None:
         self.metrics["total_tasks"] = len(tasks)
         exec_start = time.monotonic()
-        for idx, task in enumerate(tasks):
-            logger.info(f"[DISPATCHER] Preparing task #{idx}: {task.type}")
-            try:
-                action = None
-                if task.type in (TaskType.digest_mini, TaskType.digest_full):
-                    action = await digest.prepare(self.llm, task.type, client=self.client)
-                elif task.type == TaskType.digest_comment:
-                    action = await community.prepare(self.ctx, self.client, self.llm, task)
-                elif task.type == TaskType.owner_command:
-                    action = await owner.prepare(self.client, self.llm, task)
-                else:
-                    logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
-                    self.metrics["failed"] += 1
-                    continue
-
-                if isinstance(action, list) and len(action) > 0:
-                    self.actions.extend(action)
-                    self.metrics["success"] += 1
-                elif isinstance(action, dict):
-                    self.actions.append(action)
-                    self.metrics["success"] += 1
-                else:
-                    logger.warning(f"[DISPATCHER] Task {task.type} returned empty/None result")
-                    self.metrics["failed"] += 1
-
-            except Exception as e:
-                logger.error(f"[DISPATCHER] Task {task.type} preparation failed: {repr(e)}")
+        
+        results = await asyncio.gather(*[self._prepare_single_task(t) for t in tasks])
+        
+        for res in results:
+            if isinstance(res, list) and len(res) > 0:
+                self.actions.extend(res)
+                self.metrics["success"] += 1
+            elif isinstance(res, dict):
+                self.actions.append(res)
+                self.metrics["success"] += 1
+            else:
                 self.metrics["failed"] += 1
 
         self.metrics["execution_time"] = round(time.monotonic() - exec_start, 2)

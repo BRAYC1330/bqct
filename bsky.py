@@ -63,7 +63,6 @@ async def post_like(client, bot_did, subject_uri, subject_cid):
     r.raise_for_status()
     return r.json()
 
-@retry_async()
 async def fetch_thread_chain(client, uri):
     r = await client.get(f"{config.BSKY_PDS_URL}/xrpc/app.bsky.feed.getPostThread", params={"uri": uri, "depth": 0, "parentHeight": 100})
     if r.status_code != 200:
