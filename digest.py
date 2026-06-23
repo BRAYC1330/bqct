@@ -3,8 +3,10 @@ import config
 import utils
 import facets
 import build_content
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Dict, Any
+
 logger = logging.getLogger(__name__)
+
 async def prepare(llm, task_type: str, client=None) -> Optional[Dict[str, Any]]:
     trends = await _fetch_trends()
     if not trends:
@@ -25,6 +27,7 @@ async def prepare(llm, task_type: str, client=None) -> Optional[Dict[str, Any]]:
     if embed:
         action["args"]["embed"] = embed
     return action
+
 async def _fetch_trends():
     from search_chainbase import fetch_trends
     return await fetch_trends()

@@ -9,6 +9,8 @@ import config
 import bsky
 from models import BotState, Task, TaskType
 from logging_config import setup_logging
+from gh_output import write_outputs
+
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,7 @@ async def run():
     try:
         state_data = json.loads(last_processed_raw) if last_processed_raw else {}
     except json.JSONDecodeError:
+        logger.warning("[checker] Failed to parse LAST_PROCESSED, using empty state")
         state_data = {}
     state = BotState(**state_data)
     logger.info(f"[checker] LAST_PROCESSED state: {state.model_dump_json()}")
@@ -128,14 +131,15 @@ async def run():
 
     state.seen_at = now_utc_str
     tasks_json = json.dumps([t.model_dump() for t in tasks], ensure_ascii=False)
-    out_path = os.getenv("GITHUB_OUTPUT")
     has_tasks = len(tasks) > 0
-    if out_path:
-        with open(out_path, "a", encoding="utf-8") as f:
-            f.write(f"status={'true' if has_tasks else 'false'}\n")
-            f.write(f"tasks={tasks_json}\n")
-            f.write(f"state_json={state.model_dump_json()}\n")
-            f.write(f"scheduled_type={scheduled_type or ''}\n")
+    
+    write_outputs(
+        status='true' if has_tasks else 'false',
+        tasks=tasks_json,
+        state_json=state.model_dump_json(),
+        scheduled_type=scheduled_type or ''
+    )
+    
     logger.info(f"[checker] Tasks: {len(tasks)} (Owner: {owner_count}, Community: {digest_comment_count}, Digest: {scheduled_type or 'none'})")
     if not has_tasks:
         sys.exit(0)

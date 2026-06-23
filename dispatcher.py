@@ -5,7 +5,12 @@ import httpx
 import config
 from models import Task, TaskType, RunContext
 import bsky
+import digest
+import community
+import owner
+
 logger = logging.getLogger(__name__)
+
 class Dispatcher:
     def __init__(self, client: httpx.AsyncClient, llm: Optional[object] = None):
         self.client = client
@@ -14,6 +19,7 @@ class Dispatcher:
         self.metrics = {"total_tasks": 0, "success": 0, "failed": 0, "execution_time": 0.0}
         self.actions: List[Dict[str, Any]] = []
         self.new_digest_uri = ""
+
     async def run(self, tasks: List[Task]) -> None:
         self.metrics["total_tasks"] = len(tasks)
         exec_start = time.monotonic()
@@ -22,14 +28,11 @@ class Dispatcher:
             try:
                 action = None
                 if task.type in (TaskType.digest_mini, TaskType.digest_full):
-                    import digest
                     action = await digest.prepare(self.llm, task.type, client=self.client)
                 elif task.type == TaskType.digest_comment:
-                    import community
-                    action = await community.prepare(self.ctx, self.client, self.llm, task.model_dump())
+                    action = await community.prepare(self.ctx, self.client, self.llm, task)
                 elif task.type == TaskType.owner_command:
-                    import owner
-                    action = await owner.prepare(self.client, self.llm, task.model_dump())
+                    action = await owner.prepare(self.client, self.llm, task)
                 else:
                     logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
                     self.metrics["failed"] += 1

@@ -12,6 +12,8 @@ import bsky
 from models import Task, TaskType
 from dispatcher import Dispatcher
 from logging_config import setup_logging
+from gh_output import write_outputs
+
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -24,17 +26,11 @@ async def main() -> None:
         tasks: List[Task] = [Task(**t) for t in raw_tasks]
     except (json.JSONDecodeError, TypeError, ValueError) as e:
         logger.error(f"[BOT] Invalid TASKS_JSON: {e}")
-        out_path = os.getenv("GITHUB_OUTPUT")
-        if out_path:
-            with open(out_path, "a", encoding="utf-8") as f:
-                f.write("new_digest_uri=\nbot_status=failure\n")
+        write_outputs(new_digest_uri="", bot_status="failure")
         return
     if not tasks:
         logger.warning("[BOT] Task list empty")
-        out_path = os.getenv("GITHUB_OUTPUT")
-        if out_path:
-            with open(out_path, "a", encoding="utf-8") as f:
-                f.write("new_digest_uri=\nbot_status=success\n")
+        write_outputs(new_digest_uri="", bot_status="success")
         return
     logger.info(f"[BOT] Loaded {len(tasks)} tasks")
     limits = httpx.Limits(max_connections=20, max_keepalive_connections=5)
@@ -50,21 +46,14 @@ async def main() -> None:
                 llm = generator.get_model()
             except Exception as e:
                 logger.error(f"[BOT] Model load failed: {e}")
-                out_path = os.getenv("GITHUB_OUTPUT")
-                if out_path:
-                    with open(out_path, "a", encoding="utf-8") as f:
-                        f.write("new_digest_uri=\nbot_status=failure\n")
+                write_outputs(new_digest_uri="", bot_status="failure")
                 return
             logger.info(f"[BOT] Model loaded in {round(time.monotonic() - model_start, 2)}s")
         dispatcher = Dispatcher(client, llm)
         await dispatcher.run(tasks)
         logger.info(f"[BOT] Metrics: {dispatcher.metrics['success']} ok, {dispatcher.metrics['failed']} fail")
-        out_path = os.getenv("GITHUB_OUTPUT")
         status = 'failure' if dispatcher.metrics['failed'] > 0 else 'success'
-        if out_path:
-            with open(out_path, "a", encoding="utf-8") as f:
-                f.write(f"new_digest_uri={dispatcher.new_digest_uri}\n")
-                f.write(f"bot_status={status}\n")
+        write_outputs(new_digest_uri=dispatcher.new_digest_uri, bot_status=status)
         if status == 'success':
             try:
                 state = json.loads(os.environ.get("PREV_STATE_JSON", "{}"))

@@ -7,7 +7,9 @@ import config
 from retry import retry_async
 from PIL import Image
 import io
+
 logger = logging.getLogger(__name__)
+
 @retry_async()
 async def login_with_cache(client, handle, password):
     session_path = "session.json"
@@ -20,36 +22,35 @@ async def login_with_cache(client, handle, password):
             return
         except Exception:
             pass
-    r = await client.post("https://bsky.social/xrpc/com.atproto.server.createSession", json={"identifier": handle, "password": password})
+    r = await client.post(f"{config.BSKY_PDS_URL}/xrpc/com.atproto.server.createSession", json={"identifier": handle, "password": password})
     r.raise_for_status()
     sess = r.json()
     client.headers["Authorization"] = f"Bearer {sess['accessJwt']}"
     with open(session_path, "w") as f:
         json.dump(sess, f)
     logger.info("[bsky] New session created and cached")
+
 @retry_async()
 async def post_root(client, bot_did, text, facets=None, embed=None):
     record = {"$type": "app.bsky.feed.post", "text": text, "createdAt": datetime.now(timezone.utc).isoformat()}
-    if facets:
-        record["facets"] = facets
-    if embed:
-        record["embed"] = embed
+    if facets: record["facets"] = facets
+    if embed: record["embed"] = embed
     body = {"repo": bot_did, "collection": "app.bsky.feed.post", "record": record}
-    r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
+    r = await client.post(f"{config.BSKY_PDS_URL}/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
+
 @retry_async()
 async def post_reply(client, bot_did, text, root_uri, root_cid, parent_uri, parent_cid, facets=None, embed=None):
     reply = {"root": {"uri": root_uri, "cid": root_cid}, "parent": {"uri": parent_uri, "cid": parent_cid}}
     record = {"$type": "app.bsky.feed.post", "text": text, "createdAt": datetime.now(timezone.utc).isoformat(), "reply": reply}
-    if facets:
-        record["facets"] = facets
-    if embed:
-        record["embed"] = embed
+    if facets: record["facets"] = facets
+    if embed: record["embed"] = embed
     body = {"repo": bot_did, "collection": "app.bsky.feed.post", "record": record}
-    r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
+    r = await client.post(f"{config.BSKY_PDS_URL}/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
+
 @retry_async()
 async def post_like(client, bot_did, subject_uri, subject_cid):
     record = {
@@ -58,12 +59,13 @@ async def post_like(client, bot_did, subject_uri, subject_cid):
         "createdAt": datetime.now(timezone.utc).isoformat()
     }
     body = {"repo": bot_did, "collection": "app.bsky.feed.like", "record": record}
-    r = await client.post("https://bsky.social/xrpc/com.atproto.repo.createRecord", json=body)
+    r = await client.post(f"{config.BSKY_PDS_URL}/xrpc/com.atproto.repo.createRecord", json=body)
     r.raise_for_status()
     return r.json()
+
 @retry_async()
 async def fetch_thread_chain(client, uri):
-    r = await client.get("https://bsky.social/xrpc/app.bsky.feed.getPostThread", params={"uri": uri, "depth": 0, "parentHeight": 100})
+    r = await client.get(f"{config.BSKY_PDS_URL}/xrpc/app.bsky.feed.getPostThread", params={"uri": uri, "depth": 0, "parentHeight": 100})
     if r.status_code != 200:
         logger.warning(f"[bsky] Thread fetch failed: {r.status_code}")
         return None
@@ -81,29 +83,26 @@ async def fetch_thread_chain(client, uri):
     current = thread
     while current and isinstance(current, dict):
         p = current.get("post")
-        if p:
-            chain.append(p)
+        if p: chain.append(p)
         current = current.get("parent")
     chain = list(reversed(chain))
     root_post = chain[0] if chain else post
     root_text = root_post.get("record", {}).get("text", "")
     return {
-        "root_uri": root_uri,
-        "root_cid": root_cid,
-        "root_text": root_text,
-        "parent_cid": parent_cid_ref,
-        "cid": post.get("cid", ""),
-        "chain": chain
+        "root_uri": root_uri, "root_cid": root_cid, "root_text": root_text,
+        "parent_cid": parent_cid_ref, "cid": post.get("cid", ""), "chain": chain
     }
+
 @retry_async()
 async def fetch_notifications(client, limit=100, seen_at=None):
     params = {"limit": limit}
     if seen_at and seen_at not in ("{}", "null", "none"):
         params["seen_at"] = seen_at
-    r = await client.get("https://bsky.social/xrpc/app.bsky.notification.listNotifications", params=params, timeout=15)
+    r = await client.get(f"{config.BSKY_PDS_URL}/xrpc/app.bsky.notification.listNotifications", params=params, timeout=15)
     r.raise_for_status()
     return r.json().get("notifications", [])
-def _extract_embed_text(embed):
+
+def extract_embed_text(embed):
     texts = []
     if not embed: return ""
     et = embed.get("$type", "")
@@ -125,7 +124,8 @@ def _extract_embed_text(embed):
             for img in med.get("images", []):
                 if img.get("alt"): texts.append(img["alt"])
     return " ".join(texts)
-async def _fetch_url_content(client, url):
+
+async def fetch_url_content(client, url):
     try:
         from trafilatura import extract as trafilatura_extract
         parsed = httpx.URL(url)
@@ -137,6 +137,7 @@ async def _fetch_url_content(client, url):
     except Exception:
         pass
     return ""
+
 async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png", alt: str = ""):
     try:
         logger.info(f"[bsky] Uploading image: {len(image_bytes)} bytes, mime={mime}")
@@ -162,7 +163,7 @@ async def upload_digest_image(client, image_bytes: bytes, mime: str = "image/png
                 image_bytes = buf.getvalue()
                 mime = "image/jpeg"
                 width, height = img.size
-        url = "https://bsky.social/xrpc/com.atproto.repo.uploadBlob"
+        url = f"{config.BSKY_PDS_URL}/xrpc/com.atproto.repo.uploadBlob"
         headers = {
             "Content-Type": mime,
             "Authorization": client.headers.get("Authorization", "")

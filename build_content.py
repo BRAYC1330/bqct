@@ -9,22 +9,24 @@ import io
 import bsky
 from PIL import Image
 import urllib.parse
+
 logger = logging.getLogger(__name__)
+
 SIG_DIGEST = "\n\nQwen | Chainbase TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
 SIG_CHAINBASE = "\n\nQwen | Chainbase"
 SIG_DEFAULT = "\n\nQwen"
+
 def _get_signature(source: str, has_search: bool) -> str:
-    if source == "tavily":
-        return SIG_TAVILY
-    if source == "chainbase":
-        return SIG_CHAINBASE
-    if has_search:
-        return SIG_CHAINBASE
+    if source == "tavily": return SIG_TAVILY
+    if source == "chainbase": return SIG_CHAINBASE
+    if has_search: return SIG_CHAINBASE
     return SIG_DEFAULT
+
 def get_no_data_response(keyword: str) -> str:
     body = f'No data found for "{keyword}". Try rephrasing your query in a new comment or DYOR.'
     return f"{body}{SIG_DEFAULT}"
+
 async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", source: str = "", max_total: int = config.MAX_COMMENT_CHARS) -> str:
     sig = _get_signature(source, bool(search_data))
     max_body = max_total - len(sig)
@@ -35,6 +37,7 @@ async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", s
     reply = generator.get_answer(llm, ctx, query, max_chars=max_body, temperature=0.5)
     reply = utils.compress_numbers(reply)
     return utils.truncate_text(reply, max_body).strip() + sig
+
 async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED: return None
     try:
@@ -54,6 +57,7 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
+
 async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None:
     models = ["flux", "turbo"]
     w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
@@ -94,6 +98,7 @@ async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None
         logger.warning(f"[image_gen] Model {model} exhausted, trying next...")
     logger.warning("[image_gen] All models and attempts failed, returning None")
     return None
+
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends: return None, None
     sig = SIG_DIGEST
@@ -134,7 +139,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         if config.RAW_DEBUG:
             logger.info("=== [DIGEST PROMPT] ===")
             logger.info(prompt_text)
-            logger.info("=== [DIGEST PROMPT] END ===")
+            logger.info("=== [DIGEST PROMPT END ===")
         try:
             output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5)
             desc = output.get("choices", [{}])[0].get("text", "").strip()
@@ -144,10 +149,10 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
                 logger.info(desc)
                 logger.info("=== [END DIGEST OUTPUT] ===")
         except TypeError as e:
-            logger.error(f"[digest] LLM TypeError: {e} | prompt_type={type(prompt_text)} | len={len(prompt_text)}")
+            logger.error(f"[digest] LLM TypeError: {repr(e)} | prompt_type={type(prompt_text)} | len={len(prompt_text)}")
             desc = summary[:max_desc] if summary else "No summary available."
         except Exception as e:
-            logger.error(f"[digest] LLM failed")
+            logger.error(f"[digest] LLM failed: {repr(e)}")
             desc = summary[:max_desc] if summary else "No summary available."
         desc_chars = utils.count_graphemes(desc)
         desc_limit = min(max_desc, config.DIGEST_DESC_MAX_CHARS)
