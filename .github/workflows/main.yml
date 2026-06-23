@@ -33,12 +33,11 @@ jobs:
       - name: Acquire Lock
         id: lock
         run: |
-          if [ "${{ secrets.BOT_LOCK }}" = "locked" ]; then
+          if [ "$BOT_LOCK" = "locked" ]; then
             echo "status=skipped" >> $GITHUB_OUTPUT
             echo "Bot is already running in another workflow. Exiting."
             exit 0
           fi
-          echo "BOT_LOCK=locked" >> $GITHUB_ENV
 
       - name: Install checker deps
         if: steps.lock.outputs.status != 'skipped'
@@ -132,17 +131,6 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python bot.py
-        
-      - name: Release Lock
-        if: always()
-        env:
-          PAT: ${{ secrets.PAT }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ -n "$PAT" ]; then
-            echo "Releasing lock..."
-            gh secret set BOT_LOCK --body "unlocked" --repo $GITHUB_REPOSITORY || true
-          fi
 
       - name: Health check alert
         if: failure()
