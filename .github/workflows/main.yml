@@ -11,6 +11,8 @@ on:
           - mini
           - full
         default: 'none'
+  repository_dispatch:
+    types: [trigger]
 concurrency:
   group: bluesky-bot-${{ github.ref }}
   cancel-in-progress: false
@@ -30,22 +32,11 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
           
-      - name: Acquire Lock
-        id: lock
-        run: |
-          if [ "$BOT_LOCK" = "locked" ]; then
-            echo "status=skipped" >> $GITHUB_OUTPUT
-            echo "Bot is already running in another workflow. Exiting."
-            exit 0
-          fi
-
       - name: Install checker deps
-        if: steps.lock.outputs.status != 'skipped'
         run: pip install httpx pydantic Pillow
         
       - name: Check
         id: checker
-        if: steps.lock.outputs.status != 'skipped'
         env:
           BOT_HANDLE: ${{ secrets.BOT_HANDLE }}
           BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
