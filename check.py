@@ -43,6 +43,16 @@ async def run():
     try:
         await bsky.login_with_cache(client, config.BOT_HANDLE, config.BOT_PASSWORD)
         notifs = await bsky.fetch_notifications(client, limit=100, seen_at=state.seen_at)
+        
+        if not notifs:
+            write_outputs(
+                status='false',
+                tasks="[]",
+                state_json=state.model_dump_json(),
+                scheduled_type=''
+            )
+            sys.exit(0)
+
         for n in notifs:
             idx = n.get("indexedAt", "")
             if idx <= state.seen_at: continue
@@ -101,6 +111,7 @@ async def run():
             if author_did == config.OWNER_DID:
                 tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
                 owner_count += 1
+                
     finally:
         await client.aclose()
 
