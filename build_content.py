@@ -27,17 +27,6 @@ def get_no_data_response(keyword: str) -> str:
     body = f'No data found for "{keyword}". Try rephrasing your query in a new comment or DYOR.'
     return f"{body}{SIG_DEFAULT}"
 
-async def build_reply(llm, thread_ctx: str, query: str, search_data: str = "", source: str = "", max_total: int = config.MAX_COMMENT_CHARS) -> str:
-    sig = _get_signature(source, bool(search_data))
-    max_body = max_total - len(sig)
-    if search_data:
-        ctx = f"{search_data}\n{thread_ctx}"
-    else:
-        ctx = thread_ctx
-    reply = generator.get_answer(llm, ctx, query, max_chars=max_body, temperature=0.5)
-    reply = utils.compress_numbers(reply)
-    return utils.truncate_text(reply, max_body).strip() + sig
-
 async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED: return None
     try:
@@ -46,8 +35,10 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         summary = top_item.get("summary", "")
         safe_keyword = keyword.replace("'", "").replace('"', '')[:80]
         safe_summary = summary.replace("'", "").replace('"', '')[:200]
-        image_prompt = f"vibrant graffiti street art on a concrete wall featuring the text '{safe_keyword}' in bold spray-painted letters, create a visual scene that captures the essence of: {safe_summary}, if the topic involves recognizable logos emblems symbols or icons naturally incorporate them into the mural composition as part of the wall art, colorful urban style, no people, no robots, no humans, no characters, wall art only, detailed textures, high quality"
-        negative_prompt = "people, humans, robots, characters, figures, faces, bodies, arms, legs, extra limbs, deformed, ugly, blurry, low quality, realistic photo, watermark, signature, text errors, floating icons, separate symbols overlay"
+        
+        image_prompt = f"vibrant street art graffiti mural on a concrete wall. The artwork visually represents this scene: {safe_summary}. Instead of just text, draw creative graffiti illustrations, characters, or symbols showing this concept (e.g., if it's about growth, draw graffiti rockets or ascending charts; if it's about security, draw a graffiti lock or shield). Integrate the text '{safe_keyword}' naturally into the artwork, like on a banner, a spray can label, or a stylized tag next to the illustration. Colorful urban style, highly detailed wall textures, no people, no humans, no robots, no realistic photos, purely artistic graffiti mural"
+        
+        negative_prompt = "people, humans, robots, characters with faces, figures, bodies, arms, legs, extra limbs, deformed, ugly, blurry, low quality, realistic photo, watermark, signature, text errors, floating icons, plain text without illustration, boring blank wall with only letters"
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
         if not image_bytes:
