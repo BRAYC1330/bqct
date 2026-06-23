@@ -29,10 +29,24 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
+          
+      - name: Acquire Lock
+        id: lock
+        run: |
+          if [ "${{ secrets.BOT_LOCK }}" = "locked" ]; then
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "Bot is already running in another workflow. Exiting."
+            exit 0
+          fi
+          echo "BOT_LOCK=locked" >> $GITHUB_ENV
+
       - name: Install checker deps
+        if: steps.lock.outputs.status != 'skipped'
         run: pip install httpx pydantic Pillow
+        
       - name: Check
         id: checker
+        if: steps.lock.outputs.status != 'skipped'
         env:
           BOT_HANDLE: ${{ secrets.BOT_HANDLE }}
           BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
@@ -45,12 +59,14 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python check.py
+        
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
-          CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
+          pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex huggingface_hub
+          
       - name: Verify and Download Model
         if: steps.checker.outputs.status == 'true'
         run: |
@@ -91,6 +107,7 @@ jobs:
               echo "$EXPECTED_SHA256  $FILE" | sha256sum -c -
             fi
           fi
+          
       - name: Run Bot
         id: run
         if: steps.checker.outputs.status == 'true'
@@ -115,6 +132,18 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python bot.py
+        
+      - name: Release Lock
+        if: always()
+        env:
+          PAT: ${{ secrets.PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ -n "$PAT" ]; then
+            echo "Releasing lock..."
+            gh secret set BOT_LOCK --body "unlocked" --repo $GITHUB_REPOSITORY || true
+          fi
+
       - name: Health check alert
         if: failure()
         run: |
