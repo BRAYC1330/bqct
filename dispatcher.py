@@ -28,7 +28,7 @@ class Dispatcher:
             elif task.type == TaskType.digest_comment:
                 return await community.prepare(self.ctx, self.client, self.llm, task)
             elif task.type == TaskType.owner_command:
-                return await owner.prepare(self.client, self.llm, task.model_dump())
+                return await owner.prepare(self.client, self.llm, task)
             else:
                 logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
                 return None
