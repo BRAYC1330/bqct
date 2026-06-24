@@ -4,11 +4,15 @@ import config
 import bsky
 import generator
 from search_tavily import fetch_tavily
+from search_chainbase import fetch_chainbase
 import utils
 import facets
 import build_content
+from models import Task
 from typing import List, Dict, Any
+
 logger = logging.getLogger(__name__)
+
 async def _fetch_link_content(url: str, client) -> str:
     try:
         logger.info(f"[owner] Fetching link content: {url}")
@@ -20,6 +24,7 @@ async def _fetch_link_content(url: str, client) -> str:
     except Exception as e:
         logger.warning(f"[owner] Link fetch failed {url}: {e}")
     return ""
+
 def _extract_urls_from_post(record: dict) -> list:
     urls = []
     seen = set()
@@ -54,6 +59,7 @@ def _extract_urls_from_post(record: dict) -> list:
             urls.append(clean_u)
     logger.info(f"[owner] Extracted URLs from post: {urls}")
     return urls[:3]
+
 async def _extract_embed_text(embed: dict, client) -> str:
     if not embed:
         return ""
@@ -82,9 +88,10 @@ async def _extract_embed_text(embed: dict, client) -> str:
             if title or desc:
                 parts.append(f"{title}: {desc}".strip())
     return "\n".join(parts)
-async def prepare(client, llm, task) -> List[Dict[str, Any]]:
-    uri = task["uri"]
-    user_text = task["text"]
+
+async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
+    uri = task.uri
+    user_text = task.text
     chain = await bsky.fetch_thread_chain(client, uri)
     if not chain:
         return []
@@ -116,9 +123,13 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
     last_three = context_parts[-3:] if len(context_parts) >= 3 else context_parts
     recent_context = "\n\n".join(last_three)
     clean_query = utils.clean_for_llm(user_text)
+    
     search_data = ""
     source = ""
+    
     do_tavily = "!t" in user_text.lower()
+    do_chainbase = "!c" in user_text.lower()
+
     if do_tavily:
         clean_text = re.sub(r'!t', '', user_text, flags=re.I).strip()
         q, t = generator.extract_search_intent(llm, clean_text)
@@ -127,6 +138,45 @@ async def prepare(client, llm, task) -> List[Dict[str, Any]]:
             enriched = f"{q} in context: {snippet}"
             search_data = await fetch_tavily(enriched, t)
             source = "tavily"
+            
+    elif do_chainbase:
+        clean_text = re.sub(r'!c', '', user_text, flags=re.I).strip()
+        clean_text = utils.clean_for_llm(clean_text)
+        original_keyword = generator.extract_chainbase_keyword(llm, clean_text, recent_context)
+        kw = original_keyword
+        tried_keywords = set()
+        for attempt in range(3):
+            if kw:
+                tried_keywords.add(kw.lower())
+            logger.info(f"[owner] Chainbase attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
+            if not kw:
+                tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
+                kw = generator.regenerate_keyword(llm, original_keyword, clean_text, recent_context, tried_keywords=tried_str)
+                if not kw:
+                    logger.info(f"[owner] Cannot regenerate keyword (attempt {attempt+1})")
+                    break
+                if kw.lower() in tried_keywords:
+                    logger.info(f"[owner] Regenerated keyword '{kw}' was already tried, skipping")
+                    kw = ""
+                    continue
+                logger.info(f"[owner] Regenerated keyword: '{kw}'")
+                tried_keywords.add(kw.lower())
+            search_data = await fetch_chainbase(kw)
+            if search_data:
+                logger.info(f"[owner] Fetched {len(search_data.split(chr(10)))} results for '{kw}'")
+                sample = "\n".join(search_data.split("\n")[:6])
+                if generator.validate_search_results(llm, clean_text, sample):
+                    logger.info(f"[owner] Validation passed for '{kw}' ✓")
+                    break
+                logger.info(f"[owner] Validation failed for '{kw}' (irrelevant), retrying...")
+                search_data = ""
+            else:
+                logger.info(f"[owner] No results for '{kw}'")
+            kw = ""
+        if not search_data:
+            logger.info(f"[owner] All 3 attempts failed, proceeding without Chainbase data")
+        source = "chainbase"
+
     sig = build_content._get_signature(source, bool(search_data))
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
     model_ctx = f"[FULL THREAD CONTEXT]\n{full_context}\n\n[RECENT COMMENTS]\n{recent_context}\n\n[USER QUERY]\n{clean_query}"
