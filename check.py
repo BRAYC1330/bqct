@@ -71,11 +71,7 @@ async def run():
 
             if author_did == config.OWNER_DID and reason == "reply":
                 if uri == root_uri and f"@{config.BOT_HANDLE.replace('@', '')}" not in text:
-                    logger.info(f"[checker] Skipping owner branch-start reply (uri==root_uri, no @mention): {uri}")
-                    continue
-
-                if state.digest_uri and root_uri == state.digest_uri and parent_uri != state.digest_uri:
-                    logger.info(f"[checker] Skipping nested owner reply in digest thread: root={state.digest_uri}, parent={parent_uri}")
+                    logger.info(f"[checker] Skipping owner branch-start reply (no @mention): {uri}")
                     continue
 
                 if state.digest_uri and root_uri == state.digest_uri:
@@ -85,21 +81,16 @@ async def run():
                     continue
 
                 parent_author_did = _did_from_uri(parent_uri)
-                if parent_author_did == config.BOT_DID:
+                is_mention = f"@{config.BOT_HANDLE.replace('@', '')}" in text
+                is_reply_to_bot = (parent_author_did == config.BOT_DID)
+
+                if is_mention or is_reply_to_bot:
                     tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
                     owner_count += 1
                     logger.info(f"[debug] queued owner_command (owner->bot outside digest) | uri={uri}")
-                    continue
-                elif f"@{config.BOT_HANDLE.replace('@', '')}" in text:
-                    tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
-                    owner_count += 1
-                    logger.info(f"[debug] queued owner_command (owner @mention outside digest) | uri={uri}")
-                    continue
                 else:
-                    tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
-                    owner_count += 1
-                    logger.info(f"[debug] queued owner_command (owner reply outside digest, no @mention) | uri={uri}")
-                    continue
+                    logger.info(f"[checker] Skipping owner reply to third party (no @mention, not replying to bot): {uri}")
+                continue
 
             if state.digest_uri and root_uri == state.digest_uri:
                 if parent_uri and parent_uri != state.digest_uri and parent_uri.startswith(f"at://{config.BOT_DID}/"):
@@ -107,10 +98,6 @@ async def run():
                 tasks.append(Task(type=TaskType.digest_comment, uri=uri, text=text, author_did=author_did, parent_uri=parent_uri, embed=embed))
                 digest_comment_count += 1
                 continue
-
-            if author_did == config.OWNER_DID:
-                tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
-                owner_count += 1
                 
     finally:
         await client.aclose()
