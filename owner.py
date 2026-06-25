@@ -116,7 +116,6 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
         return []
     posts = chain.get("chain", [])
     context_parts = []
-    all_failed_urls = []
     for post in posts:
         rec = post.get("record", {})
         text = utils.clean_for_llm(rec.get("text", ""))
@@ -128,8 +127,6 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             lc = await _fetch_link_content(u, client)
             if lc:
                 link_texts.append(lc)
-            else:
-                all_failed_urls.append(u)
         entry = text
         if embed_text:
             entry += f"\n[EMBEDDED CONTENT]\n{embed_text}"
