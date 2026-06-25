@@ -11,8 +11,6 @@ on:
           - mini
           - full
         default: 'none'
-  repository_dispatch:
-    types: [trigger]
 concurrency:
   group: bluesky-bot-${{ github.ref }}
   cancel-in-progress: false
@@ -31,10 +29,8 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
-          
       - name: Install checker deps
         run: pip install httpx pydantic Pillow
-        
       - name: Check
         id: checker
         env:
@@ -49,14 +45,12 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python check.py
-        
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install --prefer-binary llama-cpp-python==0.3.20
+          CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex huggingface_hub
-          
       - name: Verify and Download Model
         if: steps.checker.outputs.status == 'true'
         run: |
@@ -97,7 +91,6 @@ jobs:
               echo "$EXPECTED_SHA256  $FILE" | sha256sum -c -
             fi
           fi
-          
       - name: Run Bot
         id: run
         if: steps.checker.outputs.status == 'true'
@@ -122,7 +115,6 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python bot.py
-
       - name: Health check alert
         if: failure()
         run: |
