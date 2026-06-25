@@ -21,7 +21,11 @@ async def _fetch_link_content(url: str, client) -> str:
         if content:
             logger.info(f"[owner] Fetched {len(content)} chars from {url}")
             return content[:1000]
-        logger.warning(f"[owner] Empty content from {url}")
+        logger.warning(f"[owner] Empty content from {url}, trying Tavily extract")
+        tavily_content = await fetch_tavily(f"site:{url}", "")
+        if tavily_content:
+            logger.info(f"[owner] Tavily extracted {len(tavily_content)} chars for {url}")
+            return tavily_content[:1000]
     except Exception as e:
         logger.warning(f"[owner] Link fetch failed {url}: {e}")
     return ""
@@ -93,6 +97,12 @@ async def _extract_embed_text(embed: dict, client) -> str:
     return "\n".join(parts)
 
 
+def _clean_operators(text: str) -> str:
+    cleaned = re.sub(r'!\s*t\b', '', text, flags=re.I)
+    cleaned = re.sub(r'!\s*c\b', '', cleaned, flags=re.I)
+    return cleaned.strip()
+
+
 async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     uri = task.uri
     user_text = task.text
@@ -106,6 +116,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
         return []
     posts = chain.get("chain", [])
     context_parts = []
+    all_failed_urls = []
     for post in posts:
         rec = post.get("record", {})
         text = utils.clean_for_llm(rec.get("text", ""))
@@ -117,6 +128,8 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             lc = await _fetch_link_content(u, client)
             if lc:
                 link_texts.append(lc)
+            else:
+                all_failed_urls.append(u)
         entry = text
         if embed_text:
             entry += f"\n[EMBEDDED CONTENT]\n{embed_text}"
@@ -126,28 +139,36 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     full_context = "\n\n".join(context_parts)
     last_three = context_parts[-3:] if len(context_parts) >= 3 else context_parts
     recent_context = "\n\n".join(last_three)
-    clean_query = utils.clean_for_llm(user_text)
+    clean_query = utils.clean_for_llm(_clean_operators(user_text))
 
     search_data = ""
     source = ""
 
-    do_tavily = "!t" in user_text.lower()
-    do_chainbase = "!c" in user_text.lower()
+    do_tavily = bool(re.search(r'!\s*t\b', user_text, re.I))
+    do_chainbase = bool(re.search(r'!\s*c\b', user_text, re.I))
 
     if do_tavily:
-        clean_text = re.sub(r'!t', '', user_text, flags=re.I).strip()
-        q, t = generator.extract_search_intent(llm, clean_text)
+        q, t = generator.extract_search_intent(llm, clean_query)
         if q:
             snippet = full_context[:300]
             enriched = f"{q} in context: {snippet}"
             search_data = await fetch_tavily(enriched, t)
             if search_data:
                 source = "tavily"
+            else:
+                logger.info("[owner] Tavily returned empty, falling back to Chainbase")
+                kw = generator.extract_chainbase_keyword(llm, clean_query, recent_context)
+                if kw:
+                    search_data = await fetch_chainbase(kw)
+                    if search_data:
+                        sample = "\n".join(search_data.split("\n")[:6])
+                        if generator.validate_search_results(llm, clean_query, sample):
+                            source = "chainbase"
+                        else:
+                            search_data = ""
 
     elif do_chainbase:
-        clean_text = re.sub(r'!c', '', user_text, flags=re.I).strip()
-        clean_text = utils.clean_for_llm(clean_text)
-        original_keyword = generator.extract_chainbase_keyword(llm, clean_text, recent_context)
+        original_keyword = generator.extract_chainbase_keyword(llm, clean_query, recent_context)
         kw = original_keyword
         tried_keywords = set()
         for attempt in range(3):
@@ -156,7 +177,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             logger.info(f"[owner] Chainbase attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
             if not kw:
                 tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
-                kw = generator.regenerate_keyword(llm, original_keyword, clean_text, recent_context, tried_keywords=tried_str)
+                kw = generator.regenerate_keyword(llm, original_keyword, clean_query, recent_context, tried_keywords=tried_str)
                 if not kw:
                     logger.info(f"[owner] Cannot regenerate keyword (attempt {attempt+1})")
                     break
@@ -170,7 +191,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             if search_data:
                 logger.info(f"[owner] Fetched {len(search_data.split(chr(10)))} results for '{kw}'")
                 sample = "\n".join(search_data.split("\n")[:6])
-                if generator.validate_search_results(llm, clean_text, sample):
+                if generator.validate_search_results(llm, clean_query, sample):
                     logger.info(f"[owner] Validation passed for '{kw}' ✓")
                     break
                 logger.info(f"[owner] Validation failed for '{kw}' (irrelevant), retrying...")
