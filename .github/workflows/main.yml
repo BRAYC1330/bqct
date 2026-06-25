@@ -30,13 +30,6 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: Cache model file
-        id: model-cache
-        uses: actions/cache@v4
-        with:
-          path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
-          key: qwen-model-v1
-
       - name: Install checker deps
         run: pip install httpx pydantic Pillow
 
@@ -61,6 +54,13 @@ jobs:
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex huggingface_hub
+
+      - name: Cache model file
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
+          key: qwen-model-v1
 
       - name: Verify and Download Model
         if: steps.checker.outputs.status == 'true'
