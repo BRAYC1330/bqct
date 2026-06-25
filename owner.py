@@ -13,10 +13,11 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 async def _fetch_link_content(url: str, client) -> str:
     try:
         logger.info(f"[owner] Fetching link content: {url}")
-        content = await bsky._fetch_url_content(client, url)
+        content = await bsky.fetch_url_content(client, url)
         if content:
             logger.info(f"[owner] Fetched {len(content)} chars from {url}")
             return content[:1000]
@@ -24,6 +25,7 @@ async def _fetch_link_content(url: str, client) -> str:
     except Exception as e:
         logger.warning(f"[owner] Link fetch failed {url}: {e}")
     return ""
+
 
 def _extract_urls_from_post(record: dict) -> list:
     urls = []
@@ -60,6 +62,7 @@ def _extract_urls_from_post(record: dict) -> list:
     logger.info(f"[owner] Extracted URLs from post: {urls}")
     return urls[:3]
 
+
 async def _extract_embed_text(embed: dict, client) -> str:
     if not embed:
         return ""
@@ -88,6 +91,7 @@ async def _extract_embed_text(embed: dict, client) -> str:
             if title or desc:
                 parts.append(f"{title}: {desc}".strip())
     return "\n".join(parts)
+
 
 async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     uri = task.uri
@@ -123,10 +127,10 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     last_three = context_parts[-3:] if len(context_parts) >= 3 else context_parts
     recent_context = "\n\n".join(last_three)
     clean_query = utils.clean_for_llm(user_text)
-    
+
     search_data = ""
     source = ""
-    
+
     do_tavily = "!t" in user_text.lower()
     do_chainbase = "!c" in user_text.lower()
 
@@ -137,8 +141,9 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             snippet = full_context[:300]
             enriched = f"{q} in context: {snippet}"
             search_data = await fetch_tavily(enriched, t)
-            source = "tavily"
-            
+            if search_data:
+                source = "tavily"
+
     elif do_chainbase:
         clean_text = re.sub(r'!c', '', user_text, flags=re.I).strip()
         clean_text = utils.clean_for_llm(clean_text)
@@ -175,7 +180,8 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             kw = ""
         if not search_data:
             logger.info(f"[owner] All 3 attempts failed, proceeding without Chainbase data")
-        source = "chainbase"
+        if search_data:
+            source = "chainbase"
 
     sig = build_content._get_signature(source, bool(search_data))
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
