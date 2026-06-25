@@ -20,11 +20,13 @@ class Dispatcher:
         self.metrics = {"total_tasks": 0, "success": 0, "failed": 0, "execution_time": 0.0}
         self.actions: List[Dict[str, Any]] = []
         self.new_digest_uri = ""
+        self._llm_lock = asyncio.Lock()
 
     async def _prepare_single_task(self, task: Task):
         try:
             if task.type in (TaskType.digest_mini, TaskType.digest_full):
-                return await digest.prepare(self.llm, task.type, client=self.client)
+                async with self._llm_lock:
+                    return await digest.prepare(self.llm, task.type, client=self.client)
             elif task.type == TaskType.digest_comment:
                 return await community.prepare(self.ctx, self.client, self.llm, task)
             elif task.type == TaskType.owner_command:
