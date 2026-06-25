@@ -48,19 +48,19 @@ jobs:
           POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python check.py
 
+      - name: Cache model file
+        if: steps.checker.outputs.status == 'true'
+        uses: actions/cache@v4
+        with:
+          path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
+          key: qwen-model-v1
+
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex huggingface_hub
-
-      - name: Cache model file
-        id: model-cache
-        uses: actions/cache@v4
-        with:
-          path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
-          key: qwen-model-v1
 
       - name: Verify and Download Model
         if: steps.checker.outputs.status == 'true'
@@ -70,6 +70,12 @@ jobs:
           FILE="models/qwen2.5-coder-14b-instruct-q5_k_m.gguf"
           EXPECTED_SHA256="${{ secrets.MODEL_SHA256 }}"
           MIN_SIZE=100000000
+
+          if [ -z "$EXPECTED_SHA256" ]; then
+            echo "[WARN] MODEL_SHA256 secret is empty or not set!"
+          else
+            echo "[OK] MODEL_SHA256 secret is set (length: ${#EXPECTED_SHA256})"
+          fi
 
           if [ -f "$FILE" ]; then
             FILE_SIZE=$(stat -c%s "$FILE" 2>/dev/null || echo 0)
