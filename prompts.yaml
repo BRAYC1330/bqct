@@ -26,7 +26,7 @@ owner_reply: |
   Guidelines:
   - Keep it concise and easy to read.
   - Stay on topic; if unsure, give your best guess.
-  - Output plain text only, no code blocks.
+  - Output ONLY the final answer text. Do NOT include prefixes like "[ANSWER]", "Response:", or code blocks.
   Reply:
 
 digest_refine: |
