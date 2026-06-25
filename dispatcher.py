@@ -53,15 +53,11 @@ class Dispatcher:
                 self.metrics["failed"] += 1
 
         self.metrics["execution_time"] = round(time.monotonic() - exec_start, 2)
-        if self.metrics["failed"] == 0 and self.actions:
-            logger.info(f"[DISPATCHER] Committing {len(self.actions)} actions...")
+        
+        if self.actions:
+            logger.info(f"[DISPATCHER] Committing {len(self.actions)} successful actions (ignoring {self.metrics['failed']} failed)...")
             for act in self.actions:
                 await self._execute_action(act)
-            if self.metrics["failed"] > 0:
-                logger.warning("[DISPATCHER] Commit partially failed")
-        elif self.metrics["failed"] > 0:
-            logger.warning(f"[DISPATCHER] Aborting commit due to {self.metrics['failed']} failed tasks")
-            self.actions.clear()
 
     async def _execute_action(self, act: Dict[str, Any]) -> None:
         try:

@@ -51,7 +51,7 @@ async def prepare(ctx: RunContext, client, llm, task: Task) -> List[Dict[str, An
             
             if not kw:
                 tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
-                regen_task = asyncio.create_task(generator.regenerate_keyword(llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str))
+                regen_task = asyncio.create_task(asyncio.to_thread(generator.regenerate_keyword, llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str))
             
             if kw:
                 search_task = asyncio.create_task(fetch_chainbase(kw))
