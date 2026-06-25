@@ -1,3 +1,4 @@
+cat << 'EOF' > .github/workflows/main.yml
 name: Bluesky AI Bot
 on:
   workflow_dispatch:
@@ -54,7 +55,7 @@ jobs:
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install --prefer-binary llama-cpp-python==0.3.20
+          CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex huggingface_hub
           
       - name: Verify and Download Model
@@ -131,3 +132,4 @@ jobs:
             -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
             "${{ secrets.ALERT_WEBHOOK }}" || true
           fi
+EOF
