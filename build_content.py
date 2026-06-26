@@ -33,19 +33,6 @@ def get_no_data_response(keyword: str) -> str:
     return f"{body}{SIG_DEFAULT}"
 
 
-def _truncate_sentences(text: str, max_chars: int) -> str:
-    if len(text) <= max_chars:
-        return text
-    truncated = text[:max_chars]
-    last_period = truncated.rfind('. ')
-    if last_period > max_chars // 3:
-        return truncated[:last_period + 1]
-    last_space = truncated.rfind(' ')
-    if last_space > max_chars // 2:
-        return truncated[:last_space] + '...'
-    return truncated + '...'
-
-
 def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
     words = keyword.split()
     if len(words) <= max_words:
@@ -53,19 +40,18 @@ def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
     return ' '.join(words[:max_words])
 
 
-async def _generate_digest_embed(client, trends: list, task_type: str, llm=None) -> dict | None:
+async def _generate_digest_embed(client, trends: list, task_type: str, llm=None, refined_desc: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
-        summary = top_item.get("summary", "")
 
         short_keyword = _shorten_keyword(keyword, 3)
         safe_keyword = short_keyword.replace("'", "").replace('"', '')[:50]
 
-        visual_prompt = _truncate_sentences(summary, 150)
-        safe_visual = visual_prompt.replace("'", "").replace('"', '')
+        visual_source = refined_desc if refined_desc else top_item.get("summary", "")
+        safe_visual = visual_source.replace("'", "").replace('"', '')
 
         image_prompt = (
             f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
@@ -147,6 +133,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     stats_emoji = config.TREND_STATS_EMOJI
     sep = config.TREND_SCORE_SEPARATOR
     trophy = config.TREND_TROPHY
+    refined_desc = ""
     if task_type == "digest_mini":
         lines = []
         for idx, item in enumerate(trends[:6]):
@@ -206,6 +193,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         if desc_chars > desc_limit:
             logger.warning(f"[digest] Still too long after truncation, returning None")
             return None, None
+        refined_desc = desc
         body = title + desc
     final = body + sig
     final_len = utils.count_graphemes(final)
@@ -218,5 +206,5 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [END FINAL POST] ===")
     embed = None
     if client and task_type == "digest_full":
-        embed = await _generate_digest_embed(client, trends, task_type, llm=llm)
+        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, refined_desc=refined_desc)
     return final, embed
