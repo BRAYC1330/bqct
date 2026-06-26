@@ -67,14 +67,14 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
         visual_prompt = _truncate_sentences(summary, 150)
         safe_visual = visual_prompt.replace("'", "").replace('"', '')
 
-image_prompt = (
-    f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
-    f"The artwork depicts this scene: {safe_visual}. "
-    f"Monochrome stencil with selective color accents, satirical and thought-provoking composition. "
-    f"The word '{safe_keyword}' appears as a small hand-painted tag in the corner. "
-    f"If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. "
-    f"Drips, overspray, raw urban texture."
-)
+        image_prompt = (
+            f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
+            f"The artwork depicts this scene: {safe_visual}. "
+            f"Monochrome stencil with selective color accents, satirical and thought-provoking composition. "
+            f"The word '{safe_keyword}' appears as a small hand-painted tag in the corner. "
+            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. "
+            f"Drips, overspray, raw urban texture."
+        )
 
         negative_prompt = (
             "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
