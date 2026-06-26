@@ -28,17 +28,25 @@ def get_no_data_response(keyword: str) -> str:
     return f"{body}{SIG_DEFAULT}"
 
 async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
-    if not config.DIGEST_IMAGE_ENABLED: return None
+    if not config.DIGEST_IMAGE_ENABLED:
+        return None
     try:
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
         summary = top_item.get("summary", "")
         safe_keyword = keyword.replace("'", "").replace('"', '')[:80]
         safe_summary = summary.replace("'", "").replace('"', '')[:200]
-        
-        image_prompt = f"vibrant street art graffiti mural on a concrete wall. The artwork visually represents this scene: {safe_summary}. Instead of just text, draw creative graffiti illustrations, characters, or symbols showing this concept (e.g., if it's about growth, draw graffiti rockets or ascending charts; if it's about security, draw a graffiti lock or shield). Integrate the text '{safe_keyword}' naturally into the artwork, like on a banner, a spray can label, or a stylized tag next to the illustration. Colorful urban style, highly detailed wall textures, no people, no humans, no robots, no realistic photos, purely artistic graffiti mural"
-        
-        negative_prompt = "people, humans, robots, characters with faces, figures, bodies, arms, legs, extra limbs, deformed, ugly, blurry, low quality, realistic photo, watermark, signature, text errors, floating icons, plain text without illustration, boring blank wall with only letters"
+
+        image_prompt = (
+            f"Authentic street art graffiti mural on a rough concrete wall. "
+            f"The artwork depicts this scene: {safe_summary}. "
+            f"The text '{safe_keyword}' is integrated as a stylized graffiti tag or banner within the mural. "
+            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their logos or symbols naturally into the graffiti composition as stickers, stencils, or painted tags. "
+            f"Bold colors, spray paint drips, urban texture, highly detailed."
+        )
+
+        negative_prompt = "blurry, low quality, watermark, signature, text errors, blank wall"
+
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
         if not image_bytes:
