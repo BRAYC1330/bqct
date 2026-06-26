@@ -17,17 +17,23 @@ SIG_TAVILY = "\n\nQwen | Tavily"
 SIG_CHAINBASE = "\n\nQwen | Chainbase"
 SIG_DEFAULT = "\n\nQwen"
 
+
 def _get_signature(source: str, has_search: bool) -> str:
-    if source == "tavily": return SIG_TAVILY
-    if source == "chainbase": return SIG_CHAINBASE
-    if has_search: return SIG_CHAINBASE
+    if source == "tavily":
+        return SIG_TAVILY
+    if source == "chainbase":
+        return SIG_CHAINBASE
+    if has_search:
+        return SIG_CHAINBASE
     return SIG_DEFAULT
+
 
 def get_no_data_response(keyword: str) -> str:
     body = f'No data found for "{keyword}". Try rephrasing your query in a new comment or DYOR.'
     return f"{body}{SIG_DEFAULT}"
 
-async def _generate_digest_embed(client, trends: list, task_type: str) -> dict | None:
+
+async def _generate_digest_embed(client, trends: list, task_type: str, llm=None) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
@@ -35,17 +41,37 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
         keyword = top_item.get("keyword", "news")
         summary = top_item.get("summary", "")
         safe_keyword = keyword.replace("'", "").replace('"', '')[:80]
-        safe_summary = summary.replace("'", "").replace('"', '')[:200]
+
+        visual_prompt = summary
+        if llm and len(summary) > 100:
+            try:
+                extract = llm(
+                    f"Extract ONE short visual scene description (max 30 words) from this news summary. Focus on objects, actions, and setting. No abstract concepts. Summary: {summary}",
+                    max_tokens=60,
+                    temperature=0.3
+                )
+                extracted = extract.get("choices", [{}])[0].get("text", "").strip()
+                if extracted and len(extracted) < 200:
+                    visual_prompt = extracted
+                    logger.info(f"[digest] Visual prompt extracted: {visual_prompt}")
+            except Exception as e:
+                logger.warning(f"[digest] Visual extraction failed: {e}")
+
+        safe_visual = visual_prompt.replace("'", "").replace('"', '')[:150]
 
         image_prompt = (
-            f"Authentic street art graffiti mural on a rough concrete wall. "
-            f"The artwork depicts this scene: {safe_summary}. "
-            f"The text '{safe_keyword}' is integrated as a stylized graffiti tag or banner within the mural. "
-            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their logos or symbols naturally into the graffiti composition as stickers, stencils, or painted tags. "
-            f"Bold colors, spray paint drips, urban texture, highly detailed."
+            f"A large street art graffiti mural painted on a rough concrete wall. "
+            f"The mural illustrates this scene: {safe_visual}. "
+            f"The composition is primarily a detailed illustrative scene with characters, objects, and environment. "
+            f"The word '{safe_keyword}' appears as a small secondary tag in the corner, not the main focus. "
+            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their logos or symbols naturally into the graffiti composition. "
+            f"Spray paint texture, bold colors, urban aesthetic."
         )
 
-        negative_prompt = "blurry, low quality, watermark, signature, text errors, blank wall"
+        negative_prompt = "blurry, low quality, watermark, signature, text errors, blank wall, only text, typography only, letters without illustration"
+
+        logger.info(f"[digest] Image prompt: {image_prompt}")
+        logger.info(f"[digest] Negative prompt: {negative_prompt}")
 
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
@@ -56,6 +82,7 @@ async def _generate_digest_embed(client, trends: list, task_type: str) -> dict |
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
+
 
 async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None:
     models = ["flux", "turbo"]
@@ -98,8 +125,10 @@ async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None
     logger.warning("[image_gen] All models and attempts failed, returning None")
     return None
 
+
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
-    if not trends: return None, None
+    if not trends:
+        return None, None
     sig = SIG_DIGEST
     emojis = config.TREND_EMOJIS
     stats_emoji = config.TREND_STATS_EMOJI
@@ -117,7 +146,8 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             if len("\n".join(lines)) + len(sig) > max_total:
                 lines.pop()
                 break
-        if not lines: return None, None
+        if not lines:
+            return None, None
         body = "\n".join(lines)
     else:
         item = trends[0]
@@ -175,5 +205,5 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [END FINAL POST] ===")
     embed = None
     if client and task_type == "digest_full":
-        embed = await _generate_digest_embed(client, trends, task_type)
+        embed = await _generate_digest_embed(client, trends, task_type, llm=llm)
     return final, embed
