@@ -33,6 +33,16 @@ def get_no_data_response(keyword: str) -> str:
     return f"{body}{SIG_DEFAULT}"
 
 
+def _truncate_words(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+    truncated = text[:max_chars]
+    last_space = truncated.rfind(' ')
+    if last_space > max_chars // 2:
+        return truncated[:last_space]
+    return truncated
+
+
 async def _generate_digest_embed(client, trends: list, task_type: str, llm=None) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
@@ -43,6 +53,7 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
         safe_keyword = keyword.replace("'", "").replace('"', '')[:80]
 
         visual_prompt = summary
+        extraction_used = False
         if llm and len(summary) > 100:
             try:
                 extract = llm(
@@ -50,14 +61,22 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
                     max_tokens=60,
                     temperature=0.3
                 )
-                extracted = extract.get("choices", [{}])[0].get("text", "").strip()
-                if extracted and len(extracted) < 200:
-                    visual_prompt = extracted
+                raw = extract.get("choices", [{}])[0].get("text", "").strip()
+                logger.info(f"[digest] LLM visual extraction raw output: '{raw}'")
+                if raw and 10 < len(raw) < 200:
+                    visual_prompt = raw
+                    extraction_used = True
                     logger.info(f"[digest] Visual prompt extracted: {visual_prompt}")
+                else:
+                    logger.warning(f"[digest] LLM extraction too short or empty, using summary fallback")
             except Exception as e:
-                logger.warning(f"[digest] Visual extraction failed: {e}")
+                logger.warning(f"[digest] Visual extraction failed: {type(e).__name__}: {e}")
 
-        safe_visual = visual_prompt.replace("'", "").replace('"', '')[:150]
+        if not extraction_used:
+            visual_prompt = _truncate_words(summary, 150)
+            logger.info(f"[digest] Using truncated summary as visual prompt: {visual_prompt}")
+
+        safe_visual = visual_prompt.replace("'", "").replace('"', '')
 
         image_prompt = (
             f"A large street art graffiti mural painted on a rough concrete wall. "
