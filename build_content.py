@@ -43,6 +43,13 @@ def _truncate_words(text: str, max_chars: int) -> str:
     return truncated
 
 
+def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
+    words = keyword.split()
+    if len(words) <= max_words:
+        return keyword
+    return ' '.join(words[:max_words])
+
+
 async def _generate_digest_embed(client, trends: list, task_type: str, llm=None) -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
@@ -50,32 +57,11 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
         summary = top_item.get("summary", "")
-        safe_keyword = keyword.replace("'", "").replace('"', '')[:80]
-
-        visual_prompt = summary
-        extraction_used = False
-        if llm and len(summary) > 100:
-            try:
-                extract = llm(
-                    f"Extract ONE short visual scene description (max 30 words) from this news summary. Focus on objects, actions, and setting. No abstract concepts. Summary: {summary}",
-                    max_tokens=60,
-                    temperature=0.3
-                )
-                raw = extract.get("choices", [{}])[0].get("text", "").strip()
-                logger.info(f"[digest] LLM visual extraction raw output: '{raw}'")
-                if raw and 10 < len(raw) < 200:
-                    visual_prompt = raw
-                    extraction_used = True
-                    logger.info(f"[digest] Visual prompt extracted: {visual_prompt}")
-                else:
-                    logger.warning(f"[digest] LLM extraction too short or empty, using summary fallback")
-            except Exception as e:
-                logger.warning(f"[digest] Visual extraction failed: {type(e).__name__}: {e}")
-
-        if not extraction_used:
-            visual_prompt = _truncate_words(summary, 150)
-            logger.info(f"[digest] Using truncated summary as visual prompt: {visual_prompt}")
-
+        
+        short_keyword = _shorten_keyword(keyword, 3)
+        safe_keyword = short_keyword.replace("'", "").replace('"', '')[:50]
+        
+        visual_prompt = _truncate_words(summary, 150)
         safe_visual = visual_prompt.replace("'", "").replace('"', '')
 
         image_prompt = (
@@ -89,8 +75,9 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
 
         negative_prompt = "blurry, low quality, watermark, signature, text errors, blank wall, only text, typography only, letters without illustration"
 
+        logger.info(f"[digest] Visual prompt: {safe_visual}")
+        logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt: {image_prompt}")
-        logger.info(f"[digest] Negative prompt: {negative_prompt}")
 
         seed = random.randint(0, 2**31 - 1)
         image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
