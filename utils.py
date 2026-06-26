@@ -1,8 +1,7 @@
 import re
 import logging
-import httpx
 import config
-import bsky
+
 logger = logging.getLogger(__name__)
 
 def clean_for_llm(text: str) -> str:
@@ -58,34 +57,3 @@ def is_english(text: str) -> bool:
     alpha_chars = [c for c in text if c.isalpha()]
     if not alpha_chars: return True
     return (sum(1 for c in alpha_chars if c.isascii()) / len(alpha_chars)) >= 0.7
-
-async def _format_thread_for_llm(chain: dict, owner_did: str, bot_did: str, client: httpx.AsyncClient, max_recent: int = 5) -> str:
-    if not chain: return ""
-    root = clean_for_llm(chain.get("root_text", ""))
-    posts = chain.get("chain", [])
-    recent_posts = posts[-max_recent:] if len(posts) > max_recent else posts
-    dialogue = []
-    seen_hashes = set()
-    seen_hashes.add(hash(root))
-    for post in recent_posts:
-        rec = post.get("record", {})
-        author = post.get("author", {})
-        did = author.get("did", "")
-        raw_text = rec.get("text", "")
-        text = clean_for_llm(raw_text)
-        if not text or hash(text) in seen_hashes: continue
-        seen_hashes.add(hash(text))
-        embed = rec.get("embed")
-        embed_txt = bsky._extract_embed_text(embed)
-        if embed_txt: text += f" [EMBED: {embed_txt}]"
-        urls = re.findall(r'https?://\S+', raw_text)
-        for u in urls:
-            content = await bsky._fetch_url_content(client, u)
-            if content: text += f" [LINK: {content[:config.MAX_LINK_CONTENT_SIZE]}]"
-        if did == owner_did: prefix = "OWNER:"
-        elif did == bot_did: prefix = "BOT:"
-        else: prefix = "USER:"
-        dialogue.append(f"{prefix} {text}")
-    parts = [f"[ROOT]\n{root}"]
-    if dialogue: parts.append(f"[RECENT]\n" + "\n".join(dialogue))
-    return "\n".join(parts)

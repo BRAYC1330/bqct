@@ -10,6 +10,14 @@ chainbase_keyword: |
   Output ONLY one word.
   Result:
 
+community_classify_combined: |
+  Analyze the user message and root topic.
+  Message: "{message}"
+  Topic: "{root_topic}"
+  Query: "{query}"
+  Output strictly in JSON format:
+  {{"intent": "CASUAL" or "SUBSTANTIVE", "sentiment": "POSITIVE" or "NEGATIVE" or "NEUTRAL", "keyword": "one_word_keyword_or_empty"}}
+
 community_reply: |
   Query: {query}
   Context: conversation root and relevant data below.
@@ -47,12 +55,9 @@ context_memory: |
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
-
   CASUAL = message consisting solely of reactions, acknowledgments, greetings, or emojis without any informational content, question, opinion, or statement related to the topic.
   SUBSTANTIVE = message containing any meaningful text that engages with the topic, asks a question, expresses an opinion, requests information, or makes a statement, regardless of whether emojis or reaction words are also present.
-
   Rule: Presence of emojis or reaction words does not make a message CASUAL if it also contains substantive textual content. Only messages with zero substantive content are CASUAL.
-
   Message: "{message}"
   Topic: "{root_topic}"
   Output ONE word: CASUAL or SUBSTANTIVE
@@ -82,10 +87,8 @@ validate_search: |
 keyword_regenerate: |
   From the QUERY below, extract ONE specific keyword.
   Ignore generic words. NEVER use: {tried_keywords}
-  
   QUERY: {query}
   Context: {root_topic}
-  
   Keyword:
 
 dyor_fallback: |
