@@ -33,14 +33,17 @@ def get_no_data_response(keyword: str) -> str:
     return f"{body}{SIG_DEFAULT}"
 
 
-def _truncate_words(text: str, max_chars: int) -> str:
+def _truncate_sentences(text: str, max_chars: int) -> str:
     if len(text) <= max_chars:
         return text
     truncated = text[:max_chars]
+    last_period = truncated.rfind('. ')
+    if last_period > max_chars // 3:
+        return truncated[:last_period + 1]
     last_space = truncated.rfind(' ')
     if last_space > max_chars // 2:
-        return truncated[:last_space]
-    return truncated
+        return truncated[:last_space] + '...'
+    return truncated + '...'
 
 
 def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
@@ -57,11 +60,11 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
         summary = top_item.get("summary", "")
-        
+
         short_keyword = _shorten_keyword(keyword, 3)
         safe_keyword = short_keyword.replace("'", "").replace('"', '')[:50]
-        
-        visual_prompt = _truncate_words(summary, 150)
+
+        visual_prompt = _truncate_sentences(summary, 150)
         safe_visual = visual_prompt.replace("'", "").replace('"', '')
 
         image_prompt = (
@@ -73,7 +76,11 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None)
             f"Spray paint texture, bold colors, urban aesthetic."
         )
 
-        negative_prompt = "blurry, low quality, watermark, signature, text errors, blank wall, only text, typography only, letters without illustration"
+        negative_prompt = (
+            "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
+            "letters without illustration, random words, gibberish text, unrelated text, "
+            "stray letters, nonsense words"
+        )
 
         logger.info(f"[digest] Visual prompt: {safe_visual}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
