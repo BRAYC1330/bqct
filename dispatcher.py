@@ -8,6 +8,7 @@ import bsky
 import digest
 import community
 import owner
+import scout
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class Dispatcher:
         self.metrics = {"total_tasks": 0, "success": 0, "failed": 0, "execution_time": 0.0}
         self.actions: List[Dict[str, Any]] = []
         self.new_digest_uri = ""
+        self.greeted_handles: List[str] = []
 
     async def run(self, tasks: List[Task]) -> None:
         self.metrics["total_tasks"] = len(tasks)
@@ -34,6 +36,8 @@ class Dispatcher:
                     action = await community.prepare(self.ctx, self.client, self.llm, task)
                 elif task.type == TaskType.owner_command:
                     action = await owner.prepare(self.client, self.llm, task)
+                elif task.type == TaskType.scout:
+                    action = await scout.prepare(self.client, self.llm, task)
                 else:
                     logger.warning(f"[DISPATCHER] Unknown task type: {task.type}")
                     self.metrics["failed"] += 1
@@ -48,12 +52,12 @@ class Dispatcher:
                 else:
                     logger.warning(f"[DISPATCHER] Task {task.type} returned empty/None result")
                     self.metrics["failed"] += 1
-
             except Exception as e:
                 logger.error(f"[DISPATCHER] Task {task.type} preparation failed: {repr(e)}")
                 self.metrics["failed"] += 1
 
         self.metrics["execution_time"] = round(time.monotonic() - exec_start, 2)
+        
         if self.actions:
             logger.info(f"[DISPATCHER] Committing {len(self.actions)} actions...")
             for act in self.actions:
@@ -69,6 +73,8 @@ class Dispatcher:
                 await bsky.post_reply(self.client, **act["args"])
             elif act["type"] == "post_like":
                 await bsky.post_like(self.client, **act["args"])
+            elif act["type"] == "track_scout":
+                self.greeted_handles.append(act["args"]["handle"])
         except Exception as e:
             logger.error(f"[DISPATCHER] Commit failed for {act['type']}: {repr(e)}")
             self.metrics["failed"] += 1

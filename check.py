@@ -26,19 +26,20 @@ async def run():
     except json.JSONDecodeError:
         logger.warning("[checker] Failed to parse LAST_PROCESSED, using empty state")
         state_data = {}
+        
     state = BotState(**state_data)
     logger.info(f"[checker] LAST_PROCESSED state: {state.model_dump_json()}")
-
+    
     tasks = []
     seen_uris = set()
     now_utc = datetime.now(timezone.utc)
     now_utc_str = now_utc.isoformat().replace("+00:00", "Z")
     owner_count = 0
     digest_comment_count = 0
-
+    
     if not state.seen_at:
         state.seen_at = now_utc_str
-
+        
     client = httpx.AsyncClient(timeout=30)
     try:
         await bsky.login_with_cache(client, config.BOT_HANDLE, config.BOT_PASSWORD)
@@ -52,7 +53,7 @@ async def run():
                 scheduled_type=''
             )
             sys.exit(0)
-
+            
         for n in notifs:
             idx = n.get("indexedAt", "")
             if idx <= state.seen_at: continue
@@ -61,6 +62,7 @@ async def run():
             seen_uris.add(uri)
             reason = n.get("reason", "")
             if reason not in ("reply", "mention"): continue
+            
             author_did = n.get("author", {}).get("did", "")
             record = n.get("record", {})
             text = (record.get("text") or "").strip()
@@ -68,22 +70,22 @@ async def run():
             reply_data = record.get("reply", {}) if isinstance(record, dict) else {}
             parent_uri = reply_data.get("parent", {}).get("uri", "")
             root_uri = reply_data.get("root", {}).get("uri", "")
-
+            
             if author_did == config.OWNER_DID and reason == "reply":
                 if uri == root_uri and f"@{config.BOT_HANDLE.replace('@', '')}" not in text:
                     logger.info(f"[checker] Skipping owner branch-start reply (no @mention): {uri}")
                     continue
-
+                    
                 if state.digest_uri and root_uri == state.digest_uri:
                     tasks.append(Task(type=TaskType.digest_comment, uri=uri, text=text, author_did=author_did, parent_uri=parent_uri, embed=embed))
                     digest_comment_count += 1
                     logger.info(f"[debug] queued digest_comment (owner in CURRENT digest) | uri={uri}")
                     continue
-
+                    
                 parent_author_did = _did_from_uri(parent_uri)
                 is_mention = f"@{config.BOT_HANDLE.replace('@', '')}" in text
                 is_reply_to_bot = (parent_author_did == config.BOT_DID)
-
+                
                 if is_mention or is_reply_to_bot:
                     tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
                     owner_count += 1
@@ -91,14 +93,26 @@ async def run():
                 else:
                     logger.info(f"[checker] Skipping owner reply to third party (no @mention, not replying to bot): {uri}")
                 continue
-
+                
             if state.digest_uri and root_uri == state.digest_uri:
                 if parent_uri and parent_uri != state.digest_uri and parent_uri.startswith(f"at://{config.BOT_DID}/"):
                     continue
                 tasks.append(Task(type=TaskType.digest_comment, uri=uri, text=text, author_did=author_did, parent_uri=parent_uri, embed=embed))
                 digest_comment_count += 1
                 continue
-                
+
+        for raw_handle in config.SCOUT_HANDLES:
+            handle = raw_handle.lstrip("@").lower()
+            if handle in [h.lower() for h in state.scout_greeted]:
+                continue
+            try:
+                profile = await bsky.get_profile(client, handle)
+                if profile:
+                    tasks.append(Task(type=TaskType.scout, text=handle))
+                    logger.info(f"[scout] Found profile for @{handle}, queued welcome task")
+            except Exception as e:
+                logger.info(f"[scout] Error checking @{handle}: {e}")
+
     finally:
         await client.aclose()
 
@@ -139,6 +153,7 @@ async def run():
     )
     
     logger.info(f"[checker] Tasks: {len(tasks)} (Owner: {owner_count}, Community: {digest_comment_count}, Digest: {scheduled_type or 'none'})")
+    
     if not has_tasks:
         sys.exit(0)
 
