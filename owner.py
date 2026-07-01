@@ -166,7 +166,8 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
         if embed_text:
             entry += f"\n<embed>{embed_text}</embed>"
         if link_texts:
-            entry += f"\n<linked_content note=\"truncated, may be incomplete\">\n{'---\n'.join(link_texts)}\n</linked_content>"
+            joined_links = "---\n".join(link_texts)
+            entry += f"\n<linked_content note=\"truncated, may be incomplete\">\n{joined_links}\n</linked_content>"
         context_parts.append(entry)
         logger.info(f"[owner] Processed post #{i+1}: text={len(text)} chars, embed={len(embed_text)} chars, links={len(link_texts)}")
     
