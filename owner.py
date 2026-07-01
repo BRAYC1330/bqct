@@ -34,19 +34,27 @@ async def _fetch_link_content(url: str, client) -> str:
 def _extract_urls_from_post(record: dict) -> list:
     urls = []
     seen = set()
+    
+    embed = record.get("embed", {})
+    etype = embed.get("$type", "")
+    logger.info(f"[owner] Post embed type: {etype}")
+    
     post_facets = record.get("facets", [])
+    logger.info(f"[owner] Post has {len(post_facets)} facets")
     for facet in post_facets:
         features = facet.get("features", [])
         for f in features:
-            if f.get("$type") == "app.bsky.richtext.facet#link":
+            ftype = f.get("$type", "")
+            logger.info(f"[owner] Facet feature type: {ftype}")
+            if ftype == "app.bsky.richtext.facet#link":
                 uri = f.get("uri", "")
                 if uri.startswith("http") and uri not in seen:
                     seen.add(uri)
                     urls.append(uri)
-    embed = record.get("embed", {})
-    etype = embed.get("$type", "")
+    
     if etype == "app.bsky.embed.external":
         ext_uri = embed.get("external", {}).get("uri", "")
+        logger.info(f"[owner] Embed external URI: {ext_uri}")
         if ext_uri.startswith("http") and ext_uri not in seen:
             seen.add(ext_uri)
             urls.append(ext_uri)
@@ -54,15 +62,18 @@ def _extract_urls_from_post(record: dict) -> list:
         media = embed.get("media", {})
         if media.get("$type") == "app.bsky.embed.external":
             ext_uri = media.get("external", {}).get("uri", "")
+            logger.info(f"[owner] RecordWithMedia external URI: {ext_uri}")
             if ext_uri.startswith("http") and ext_uri not in seen:
                 seen.add(ext_uri)
                 urls.append(ext_uri)
+    
     raw_text = record.get("text", "")
     for u in re.findall(r'https?://\S+', raw_text):
         clean_u = u.rstrip('.,;:)')
         if clean_u not in seen:
             seen.add(clean_u)
             urls.append(clean_u)
+    
     logger.info(f"[owner] Extracted URLs from post: {urls}")
     return urls[:3]
 
@@ -115,8 +126,10 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     if not parent_cid:
         return []
     posts = chain.get("chain", [])
+    logger.info(f"[owner] Thread chain has {len(posts)} posts")
+    
     context_parts = []
-    for post in posts:
+    for i, post in enumerate(posts):
         rec = post.get("record", {})
         text = utils.clean_for_llm(rec.get("text", ""))
         embed = rec.get("embed")
@@ -133,6 +146,8 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
         if link_texts:
             entry += f"\n[LINK CONTENT]\n" + "\n---\n".join(link_texts)
         context_parts.append(entry)
+        logger.info(f"[owner] Processed post #{i+1}: text={len(text)} chars, embed={len(embed_text)} chars, links={len(link_texts)}")
+    
     full_context = "\n\n".join(context_parts)
     last_three = context_parts[-3:] if len(context_parts) >= 3 else context_parts
     recent_context = "\n\n".join(last_three)
@@ -143,6 +158,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
 
     do_tavily = bool(re.search(r'!\s*t\b', user_text, re.I))
     do_chainbase = bool(re.search(r'!\s*c\b', user_text, re.I))
+    logger.info(f"[owner] Operators: do_tavily={do_tavily}, do_chainbase={do_chainbase}")
 
     if do_tavily:
         q, t = generator.extract_search_intent(llm, clean_query, full_context)
@@ -151,6 +167,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             search_data = await fetch_tavily(q, t)
             if search_data:
                 source = "tavily"
+                logger.info(f"[owner] Tavily returned {len(search_data)} chars")
             else:
                 logger.info("[owner] Tavily returned empty, falling back to Chainbase")
                 kw = generator.extract_chainbase_keyword(llm, clean_query, recent_context)
