@@ -9,7 +9,6 @@ import io
 import bsky
 from PIL import Image
 import urllib.parse
-import local_image_gen
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +44,8 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None,
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
+        import local_image_gen
+        
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
 
