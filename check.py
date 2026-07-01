@@ -4,7 +4,7 @@ import json
 import asyncio
 import logging
 import httpx
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import config
 import bsky
 from models import BotState, Task, TaskType
@@ -33,7 +33,10 @@ async def run():
     tasks = []
     seen_uris = set()
     now_utc = datetime.now(timezone.utc)
-    now_utc_str = now_utc.isoformat().replace("+00:00", "Z")
+    
+    seen_at_delay_minutes = 3
+    now_utc_str = (now_utc - timedelta(minutes=seen_at_delay_minutes)).isoformat().replace("+00:00", "Z")
+    
     owner_count = 0
     digest_comment_count = 0
     
@@ -61,8 +64,6 @@ async def run():
             if uri in seen_uris: continue
             seen_uris.add(uri)
             reason = n.get("reason", "")
-            if reason not in ("reply", "mention"): continue
-            
             author_did = n.get("author", {}).get("did", "")
             record = n.get("record", {})
             text = (record.get("text") or "").strip()
@@ -70,30 +71,21 @@ async def run():
             reply_data = record.get("reply", {}) if isinstance(record, dict) else {}
             parent_uri = reply_data.get("parent", {}).get("uri", "")
             root_uri = reply_data.get("root", {}).get("uri", "")
-            
-            if author_did == config.OWNER_DID and reason == "reply":
-                if uri == root_uri and f"@{config.BOT_HANDLE.replace('@', '')}" not in text:
-                    logger.info(f"[checker] Skipping owner branch-start reply (no @mention): {uri}")
-                    continue
-                    
+
+            if author_did == config.OWNER_DID and reason not in ("like", "follow", "repost"):
+                logger.info(f"[debug] owner notification | reason={reason} uri={uri}")
                 if state.digest_uri and root_uri == state.digest_uri:
                     tasks.append(Task(type=TaskType.digest_comment, uri=uri, text=text, author_did=author_did, parent_uri=parent_uri, embed=embed))
                     digest_comment_count += 1
                     logger.info(f"[debug] queued digest_comment (owner in CURRENT digest) | uri={uri}")
                     continue
-                    
-                parent_author_did = _did_from_uri(parent_uri)
-                is_mention = f"@{config.BOT_HANDLE.replace('@', '')}" in text
-                is_reply_to_bot = (parent_author_did == config.BOT_DID)
-                
-                if is_mention or is_reply_to_bot:
-                    tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
-                    owner_count += 1
-                    logger.info(f"[debug] queued owner_command (owner->bot outside digest) | uri={uri}")
-                else:
-                    logger.info(f"[checker] Skipping owner reply to third party (no @mention, not replying to bot): {uri}")
+                tasks.append(Task(type=TaskType.owner_command, uri=uri, text=text, author_did=author_did, embed=embed))
+                owner_count += 1
+                logger.info(f"[debug] queued owner_command (owner, reason={reason}) | uri={uri}")
                 continue
-                
+
+            if reason not in ("reply", "mention"): continue
+
             if state.digest_uri and root_uri == state.digest_uri:
                 if parent_uri and parent_uri != state.digest_uri and parent_uri.startswith(f"at://{config.BOT_DID}/"):
                     continue
