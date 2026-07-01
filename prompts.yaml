@@ -3,7 +3,7 @@ tavily_intent: |
   Generate a SHORT search query (3-6 keywords) to find factual information.
   DO NOT copy the user's message. DO NOT write full sentences.
   
-  Note: <linked_content> tags contain truncated web page excerpts (first 600 chars only), they may be incomplete.
+  Note: [linked content] tags contain truncated web page excerpts (first 600 chars only), they may be incomplete.
   
   Thread context:
   {context}
@@ -40,14 +40,23 @@ owner_reply: |
   Message:
 
 digest_refine: |
-  Write a concise news insight based on the context.
-  Topic reference: {keyword} (do not repeat in output).
+  Write a concise news insight.
+  Topic: {keyword} — DO NOT use any of these exact words in your output: {keyword}
   Guidelines:
   - 2-3 sentences max. Focus on key facts, metrics, and impact.
   - Start with the core fact, end with a period.
   - Maximum {max_chars} characters total.
+  - Use entirely different vocabulary than the topic name.
   Context: {summary}
   Insight:
+
+banksy_scene: |
+  Convert this news summary into a SHORT visual scene description (max 25 words) 
+  suitable for a Banksy-style street art mural on a concrete wall.
+  Focus on concrete visual elements: people, objects, actions, symbols.
+  Do NOT use abstract terms like "policy", "signals", "shift", "conflicting", "uncertainty", "volatility".
+  News: {summary}
+  Visual scene:
 
 context_memory: |
   Summarize the conversation history.
