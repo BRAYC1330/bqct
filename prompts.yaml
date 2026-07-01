@@ -3,6 +3,8 @@ tavily_intent: |
   Generate a SHORT search query (3-6 keywords) to find factual information.
   DO NOT copy the user's message. DO NOT write full sentences.
   
+  Note: <linked_content> tags contain truncated web page excerpts (first 600 chars only), they may be incomplete.
+  
   Thread context:
   {context}
   
@@ -20,11 +22,12 @@ chainbase_keyword: |
 community_reply: |
   Query: {query}
   Context: conversation root and relevant data below.
-  Task: Answer naturally using the context.
+  Task: Respond naturally using the context.
   Guidelines:
   - Keep it concise and easy to read.
   - Focus on confirmed facts; if data is incomplete, say so briefly.
-  Reply:
+  - Write ONLY the message text directly. No labels, no markers, no prefixes, no code blocks.
+  Message:
 
 owner_reply: |
   Query: {query}
@@ -97,11 +100,11 @@ keyword_regenerate: |
 
 dyor_fallback: |
   No search data found for "{keyword}".
-  Answer based ONLY on the provided context. Do NOT invent facts, dates, names, or details that are not explicitly present in the context.
-  If the context does not contain enough information to answer meaningfully, say so briefly and suggest DYOR.
+  Respond based ONLY on the provided context. Do NOT invent facts, dates, names, or details that are not explicitly present in the context.
+  If the context does not contain enough information to respond meaningfully, say so briefly and suggest DYOR.
   Context: {context}
   Query: {query}
-  Reply:
+  Message:
 
 casual_reply: |
   User sent a casual message.
@@ -110,7 +113,8 @@ casual_reply: |
   - Friendly but generic tone.
   - No questions, no conversation starters, no search triggers.
   - End after the statement.
-  Reply:
+  - Write ONLY the message text directly. No labels, no prefixes.
+  Message:
 
 scout_welcome: |
   A crypto/web3 project just joined Bluesky. Write a unique welcome post.
