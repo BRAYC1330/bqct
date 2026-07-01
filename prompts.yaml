@@ -29,12 +29,12 @@ community_reply: |
 owner_reply: |
   Query: {query}
   Context: conversation history below.
-  Task: Answer naturally as a helpful assistant.
+  Task: Respond naturally as a helpful assistant.
   Guidelines:
   - Keep it concise and easy to read.
   - Stay on topic; if unsure, give your best guess.
-  - Output ONLY the final answer text. Do NOT include prefixes like "[ANSWER]", "Response:", or code blocks.
-  Reply:
+  - Write ONLY the message text directly. No labels, no markers, no prefixes, no code blocks.
+  Message:
 
 digest_refine: |
   Write a concise news insight based on the context.
