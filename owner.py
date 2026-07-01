@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 def _strip_reply_prefix(text: str) -> str:
     prefixes = [
+        r'^\s*</?\w+>?\s*',
+        r'^\s*\[?ANSWER\]?\s*:?\s*',
+        r'^\s*\[?RESPONSE\]?\s*:?\s*',
+        r'^\s*\[?REPLY\]?\s*:?\s*',
+        r'^\s*\[?MESSAGE\]?\s*:?\s*',
         r'^\s*Answer\s*:\s*',
         r'^\s*Response\s*:\s*',
         r'^\s*Reply\s*:\s*',
@@ -160,10 +165,10 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
                 link_texts.append(lc)
         entry = text
         if embed_text:
-            entry += f"\n<embed>{embed_text}</embed>"
+            entry += f"\n[embed: {embed_text}]"
         if link_texts:
-            joined_links = "---\n".join(link_texts)
-            entry += f"\n<linked_content note=\"truncated, may be incomplete\">\n{joined_links}\n</linked_content>"
+            joined_links = "\n---\n".join(link_texts)
+            entry += f"\n[linked content, truncated — may be incomplete: {joined_links}]"
         context_parts.append(entry)
         logger.info(f"[owner] Processed post #{i+1}: text={len(text)} chars, embed={len(embed_text)} chars, links={len(link_texts)}")
     
@@ -248,24 +253,21 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     sig = build_content._get_signature(source, bool(search_data))
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
     
-    model_ctx = f"""<context>
-<root_post>
+    model_ctx = f"""[ROOT POST]
 {root_post}
-</root_post>
-<thread>
+
+[THREAD]
 {thread_content}
-</thread>
-<recent_replies>
+
+[RECENT REPLIES]
 {recent_replies}
-</recent_replies>
-</context>
-<current_query>
-{clean_query}
-</current_query>"""
+
+[CURRENT QUERY]
+{clean_query}"""
 
     if search_data:
         clean_search = utils.clean_for_llm(search_data)
-        model_ctx += f"\n<search_results>\n{clean_search}\n</search_results>"
+        model_ctx += f"\n\n[SEARCH RESULTS]\n{clean_search}"
 
     if config.RAW_DEBUG:
         logger.info("=== [OWNER CONTEXT] ===")
