@@ -16,10 +16,6 @@ logger = logging.getLogger(__name__)
 
 def _strip_reply_prefix(text: str) -> str:
     prefixes = [
-        r'^\s*\[?ANSWER\]?\s*:?\s*',
-        r'^\s*\[?RESPONSE\]?\s*:?\s*',
-        r'^\s*\[?REPLY\]?\s*:?\s*',
-        r'^\s*\[?MESSAGE\]?\s*:?\s*',
         r'^\s*Answer\s*:\s*',
         r'^\s*Response\s*:\s*',
         r'^\s*Reply\s*:\s*',
