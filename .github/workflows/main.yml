@@ -123,19 +123,26 @@ jobs:
             fi
           fi
 
-      - name: Verify and Download SDXL-Turbo Model
+      - name: Cache SDXL-Base model
+        if: steps.checker.outputs.has_full == 'true'
+        uses: actions/cache@v4
+        with:
+          path: models/sdxl-base
+          key: sdxl-base-v1
+
+      - name: Verify and Download SDXL-Base Model
         if: steps.checker.outputs.has_full == 'true'
         run: |
           set -e
-          mkdir -p models/sdxl-turbo
-          if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
-            echo "[INFO] Downloading SDXL-Turbo model..."
-            python -c "from huggingface_hub import snapshot_download; snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo')"
-            echo "[OK] SDXL-Turbo model downloaded"
+          mkdir -p models/sdxl-base
+          if [ ! -f "models/sdxl-base/model_index.json" ]; then
+            echo "[INFO] Downloading SDXL-Base model..."
+            python -c "from huggingface_hub import snapshot_download; snapshot_download('stabilityai/stable-diffusion-xl-base-1.0', local_dir='models/sdxl-base')"
+            echo "[OK] SDXL-Base model downloaded"
           else
-            echo "[OK] SDXL-Turbo model cached"
+            echo "[OK] SDXL-Base model cached"
           fi
-
+          
       - name: Run Bot
         id: run
         if: steps.checker.outputs.status == 'true'
