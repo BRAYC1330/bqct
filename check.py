@@ -53,7 +53,8 @@ async def run():
                 status='false',
                 tasks="[]",
                 state_json=state.model_dump_json(),
-                scheduled_type=''
+                scheduled_type='',
+                has_full='false'
             )
             sys.exit(0)
             
@@ -136,15 +137,17 @@ async def run():
     state.seen_at = now_utc_str
     tasks_json = json.dumps([t.model_dump() for t in tasks], ensure_ascii=False)
     has_tasks = len(tasks) > 0
+    has_full = any(t.type == TaskType.digest_full for t in tasks)
     
     write_outputs(
         status='true' if has_tasks else 'false',
         tasks=tasks_json,
         state_json=state.model_dump_json(),
-        scheduled_type=scheduled_type or ''
+        scheduled_type=scheduled_type or '',
+        has_full='true' if has_full else 'false'
     )
     
-    logger.info(f"[checker] Tasks: {len(tasks)} (Owner: {owner_count}, Community: {digest_comment_count}, Digest: {scheduled_type or 'none'})")
+    logger.info(f"[checker] Tasks: {len(tasks)} (Owner: {owner_count}, Community: {digest_comment_count}, Digest: {scheduled_type or 'none'}, HasFull: {has_full})")
     
     if not has_tasks:
         sys.exit(0)
