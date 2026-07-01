@@ -4,7 +4,7 @@ import json
 import asyncio
 import logging
 import httpx
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 import config
 import bsky
 from models import BotState, Task, TaskType
@@ -33,10 +33,7 @@ async def run():
     tasks = []
     seen_uris = set()
     now_utc = datetime.now(timezone.utc)
-    
-    seen_at_delay_minutes = 3
-    now_utc_str = (now_utc - timedelta(minutes=seen_at_delay_minutes)).isoformat().replace("+00:00", "Z")
-    
+    now_utc_str = now_utc.isoformat().replace("+00:00", "Z")
     owner_count = 0
     digest_comment_count = 0
     
