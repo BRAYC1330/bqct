@@ -1,3 +1,4 @@
+import os
 import torch
 from diffusers import StableDiffusionXLPipeline
 from PIL import Image
@@ -18,11 +19,13 @@ def _load_model():
     logger.info(f"[local_image] Loading model from {_model_path}...")
     
     try:
+        hf_token = os.getenv("HF_API_TOKEN", "")
+        
         _model = StableDiffusionXLPipeline.from_pretrained(
             _model_path,
             torch_dtype=torch.float32,
             use_safetensors=True,
-            local_files_only=True
+            token=hf_token if hf_token else None
         )
         _model.to("cpu")
         logger.info("[local_image] Model loaded successfully")
@@ -42,7 +45,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
         guidance = 0.0 if steps == 1 else 1.0
         logger.info(f"[local_image] Generating image ({steps} steps): {prompt[:100]}...")
         
-        enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
+        enhanced_negative = (
             "blurry, low quality, watermark, signature, distorted, deformed, "
             "bad anatomy, wrong proportions, extra limbs, mutated hands, "
             "poorly drawn face, mutation, ugly, duplicate, morbid, "
