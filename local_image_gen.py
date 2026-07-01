@@ -8,7 +8,7 @@ import os
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_path = "models/sdxl-turbo"
+_model_path = "models/sdxl-base"
 
 def _load_model():
     global _model
@@ -39,11 +39,20 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
         
         logger.info(f"[local_image] Generating image: {prompt[:100]}...")
         
+        enhanced_negative = (
+            "blurry, low quality, watermark, signature, distorted, deformed, "
+            "bad anatomy, wrong proportions, extra limbs, mutated hands, "
+            "poorly drawn face, mutation, ugly, duplicate, morbid, "
+            "out of frame, cropped, dark, low contrast"
+        )
+        if negative_prompt:
+            enhanced_negative = f"{negative_prompt}, {enhanced_negative}"
+        
         image = pipe(
             prompt=prompt,
-            negative_prompt=negative_prompt if negative_prompt else None,
-            num_inference_steps=1,
-            guidance_scale=0.0,
+            negative_prompt=enhanced_negative,
+            num_inference_steps=25,
+            guidance_scale=7.5,
             width=width,
             height=height
         ).images[0]
