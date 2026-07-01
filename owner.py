@@ -111,6 +111,9 @@ async def _extract_embed_text(embed: dict, client) -> str:
 def _clean_operators(text: str) -> str:
     cleaned = re.sub(r'!\s*t\b', '', text, flags=re.I)
     cleaned = re.sub(r'!\s*c\b', '', cleaned, flags=re.I)
+    bot_handle = config.BOT_HANDLE.replace('@', '')
+    cleaned = re.sub(rf'@\b{re.escape(bot_handle)}\b(\.\w+)?', '', cleaned, flags=re.I)
+    cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned.strip()
 
 
