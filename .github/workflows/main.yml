@@ -56,7 +56,7 @@ jobs:
           key: qwen-model-v1
 
       - name: Cache SDXL-Turbo model
-        if: steps.checker.outputs.status == 'true'
+        if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
           path: models/sdxl-turbo
@@ -68,6 +68,10 @@ jobs:
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex huggingface_hub
+
+      - name: Install PyTorch and diffusers
+        if: steps.checker.outputs.has_full == 'true'
+        run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install diffusers transformers accelerate safetensors
 
@@ -120,7 +124,7 @@ jobs:
           fi
 
       - name: Verify and Download SDXL-Turbo Model
-        if: steps.checker.outputs.status == 'true'
+        if: steps.checker.outputs.has_full == 'true'
         run: |
           set -e
           mkdir -p models/sdxl-turbo
