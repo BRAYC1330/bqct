@@ -3,12 +3,12 @@ from diffusers import StableDiffusionXLPipeline
 from PIL import Image
 import io
 import logging
-import os
+import config
 
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_path = "models/sdxl-base"
+_model_path = "models/sdxl-turbo"
 
 def _load_model():
     global _model
@@ -37,7 +37,9 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             logger.warning("[local_image] Model not loaded")
             return None
         
-        logger.info(f"[local_image] Generating image: {prompt[:100]}...")
+        steps = config.IMAGE_INFERENCE_STEPS
+        guidance = 0.0 if steps == 1 else 1.0
+        logger.info(f"[local_image] Generating image ({steps} steps): {prompt[:100]}...")
         
         enhanced_negative = (
             "blurry, low quality, watermark, signature, distorted, deformed, "
@@ -51,8 +53,8 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
         image = pipe(
             prompt=prompt,
             negative_prompt=enhanced_negative,
-            num_inference_steps=25,
-            guidance_scale=7.5,
+            num_inference_steps=steps,
+            guidance_scale=guidance,
             width=width,
             height=height
         ).images[0]
