@@ -1,14 +1,13 @@
+import re
 import config
 import utils
 import generator
 import logging
-import random
 import httpx
 import asyncio
 import io
 import bsky
 from PIL import Image
-import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +15,12 @@ SIG_DIGEST = "\n\nQwen | Chainbase TOPS " + config.SIGNATURE_ICONS
 SIG_TAVILY = "\n\nQwen | Tavily"
 SIG_CHAINBASE = "\n\nQwen | Chainbase"
 SIG_DEFAULT = "\n\nQwen"
+
+
+def _get_llm_text(response) -> str:
+    if isinstance(response, str): return response.strip()
+    if not isinstance(response, dict): return ""
+    return response.get("choices", [{}])[0].get("text", "").strip()
 
 
 def _get_signature(source: str, has_search: bool) -> str:
@@ -40,7 +45,28 @@ def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
     return ' '.join(words[:max_words])
 
 
-async def _generate_digest_embed(client, trends: list, task_type: str, llm=None, refined_desc: str = "") -> dict | None:
+def _generate_banksy_scene(llm, summary: str) -> str:
+    if not llm:
+        return ""
+    try:
+        prompt_text = generator.load_prompt("banksy_scene", summary=summary[:800])
+        prompt_text = str(prompt_text).strip()
+        output = llm(prompt_text, max_tokens=60, temperature=0.6)
+        scene = _get_llm_text(output)
+        scene = scene.strip('"').strip("'").strip()
+        scene = re.sub(r'^(visual\s*(?:scene)?:?\s*|scene:?\s*|mural:?\s*)', '', scene, flags=re.I).strip()
+        if scene.startswith("```") and scene.endswith("```"):
+            scene = scene[3:-3].strip()
+        if len(scene) > 300:
+            scene = scene[:300].rsplit(' ', 1)[0]
+        logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
+        return scene
+    except Exception as e:
+        logger.warning(f"[digest] Banksy scene generation failed: {e}")
+        return ""
+
+
+async def _generate_digest_embed(client, trends, task_type, llm=None, visual_scene: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
@@ -52,16 +78,13 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None,
         short_keyword = _shorten_keyword(keyword, 3)
         safe_keyword = short_keyword.replace("'", "").replace('"', '')[:50]
 
-        visual_source = refined_desc if refined_desc else top_item.get("summary", "")
-        safe_visual = visual_source.replace("'", "").replace('"', '')
+        safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
-            f"The artwork depicts this scene: {safe_visual} "
-            f"Monochrome stencil with selective color accents, satirical and thought-provoking composition. "
-            f"The word '{safe_keyword}' appears as a small hand-painted tag in the corner. "
-            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. "
-            f"Drips, overspray, raw urban texture."
+            f"Banksy-style street art stencil on concrete wall. "
+            f"Scene: {safe_visual} "
+            f"Monochrome stencil, satirical composition, "
+            f"tag '{safe_keyword}' in corner, drips, overspray."
         )
 
         negative_prompt = (
@@ -70,7 +93,7 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None,
             "stray letters, nonsense words"
         )
 
-        logger.info(f"[digest] Visual prompt: {safe_visual}")
+        logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt: {image_prompt}")
 
@@ -94,7 +117,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     stats_emoji = config.TREND_STATS_EMOJI
     sep = config.TREND_SCORE_SEPARATOR
     trophy = config.TREND_TROPHY
-    refined_desc = ""
+    visual_scene = ""
     if task_type == "digest_mini":
         lines = []
         for idx, item in enumerate(trends[:6]):
@@ -132,7 +155,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.info("=== [DIGEST PROMPT END ===")
         try:
             output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5)
-            desc = output.get("choices", [{}])[0].get("text", "").strip()
+            desc = _get_llm_text(output)
             desc = utils.compress_numbers(desc)
             if config.RAW_DEBUG:
                 logger.info("=== [DIGEST RAW OUTPUT] ===")
@@ -154,7 +177,9 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         if desc_chars > desc_limit:
             logger.warning(f"[digest] Still too long after truncation, returning None")
             return None, None
-        refined_desc = desc
+        visual_scene = _generate_banksy_scene(llm, desc)
+        if not visual_scene:
+            visual_scene = desc[:200]
         body = title + desc
     final = body + sig
     final_len = utils.count_graphemes(final)
@@ -167,5 +192,5 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [END FINAL POST] ===")
     embed = None
     if client and task_type == "digest_full":
-        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, refined_desc=refined_desc)
+        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, visual_scene=visual_scene)
     return final, embed
