@@ -14,18 +14,37 @@ from typing import List, Dict, Any
 logger = logging.getLogger(__name__)
 
 
+def _strip_reply_prefix(text: str) -> str:
+    prefixes = [
+        r'^\s*\[?ANSWER\]?\s*:?\s*',
+        r'^\s*\[?RESPONSE\]?\s*:?\s*',
+        r'^\s*\[?REPLY\]?\s*:?\s*',
+        r'^\s*\[?MESSAGE\]?\s*:?\s*',
+        r'^\s*Answer\s*:\s*',
+        r'^\s*Response\s*:\s*',
+        r'^\s*Reply\s*:\s*',
+        r'^\s*Message\s*:\s*',
+        r'^\s*A\s*:\s*',
+        r'^\s*>\s*',
+    ]
+    cleaned = text
+    for prefix in prefixes:
+        cleaned = re.sub(prefix, '', cleaned, flags=re.I).strip()
+    return cleaned
+
+
 async def _fetch_link_content(url: str, client) -> str:
     try:
         logger.info(f"[owner] Fetching link content: {url}")
         content = await bsky.fetch_url_content(client, url)
         if content:
             logger.info(f"[owner] Fetched {len(content)} chars from {url}")
-            return content[:1000]
+            return content[:600]
         logger.warning(f"[owner] Empty content from {url}, trying Tavily extract")
         tavily_content = await fetch_tavily(f"site:{url}", "")
         if tavily_content:
             logger.info(f"[owner] Tavily extracted {len(tavily_content)} chars for {url}")
-            return tavily_content[:1000]
+            return tavily_content[:600]
     except Exception as e:
         logger.warning(f"[owner] Link fetch failed {url}: {e}")
     return ""
@@ -145,15 +164,23 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
                 link_texts.append(lc)
         entry = text
         if embed_text:
-            entry += f"\n[EMBEDDED CONTENT]\n{embed_text}"
+            entry += f"\n<embed>{embed_text}</embed>"
         if link_texts:
-            entry += f"\n[LINK CONTENT]\n" + "\n---\n".join(link_texts)
+            entry += f"\n<linked_content note=\"truncated, may be incomplete\">\n{'---\n'.join(link_texts)}\n</linked_content>"
         context_parts.append(entry)
         logger.info(f"[owner] Processed post #{i+1}: text={len(text)} chars, embed={len(embed_text)} chars, links={len(link_texts)}")
     
-    full_context = "\n\n".join(context_parts)
+    root_post = context_parts[0] if context_parts else ""
+    
+    if len(context_parts) > 2:
+        thread_posts = context_parts[1:-3] if len(context_parts) > 4 else context_parts[1:-1]
+        thread_content = "\n\n".join(thread_posts) if thread_posts else "(no intermediate posts)"
+    else:
+        thread_content = "(no intermediate posts)"
+    
     last_three = context_parts[-3:] if len(context_parts) >= 3 else context_parts
-    recent_context = "\n\n".join(last_three)
+    recent_replies = "\n\n".join(last_three)
+    
     clean_query = utils.clean_for_llm(_clean_operators(user_text))
 
     search_data = ""
@@ -164,7 +191,8 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     logger.info(f"[owner] Operators: do_tavily={do_tavily}, do_chainbase={do_chainbase}")
 
     if do_tavily:
-        q, t = generator.extract_search_intent(llm, clean_query, full_context)
+        context_for_intent = f"{root_post}\n{thread_content}\n{recent_replies}"
+        q, t = generator.extract_search_intent(llm, clean_query, context_for_intent)
         if q:
             logger.info(f"[owner] Generated search query: '{q}'")
             search_data = await fetch_tavily(q, t)
@@ -173,7 +201,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
                 logger.info(f"[owner] Tavily returned {len(search_data)} chars")
             else:
                 logger.info("[owner] Tavily returned empty, falling back to Chainbase")
-                kw = generator.extract_chainbase_keyword(llm, clean_query, recent_context)
+                kw = generator.extract_chainbase_keyword(llm, clean_query, recent_replies)
                 if kw:
                     search_data = await fetch_chainbase(kw)
                     if search_data:
@@ -184,7 +212,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
                             search_data = ""
 
     elif do_chainbase:
-        original_keyword = generator.extract_chainbase_keyword(llm, clean_query, recent_context)
+        original_keyword = generator.extract_chainbase_keyword(llm, clean_query, recent_replies)
         kw = original_keyword
         tried_keywords = set()
         for attempt in range(3):
@@ -193,7 +221,7 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
             logger.info(f"[owner] Chainbase attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
             if not kw:
                 tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
-                kw = generator.regenerate_keyword(llm, original_keyword, clean_query, recent_context, tried_keywords=tried_str)
+                kw = generator.regenerate_keyword(llm, original_keyword, clean_query, recent_replies, tried_keywords=tried_str)
                 if not kw:
                     logger.info(f"[owner] Cannot regenerate keyword (attempt {attempt+1})")
                     break
@@ -222,10 +250,26 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
 
     sig = build_content._get_signature(source, bool(search_data))
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
-    model_ctx = f"[FULL THREAD CONTEXT]\n{full_context}\n\n[RECENT COMMENTS]\n{recent_context}\n\n[USER QUERY]\n{clean_query}"
+    
+    model_ctx = f"""<context>
+<root_post>
+{root_post}
+</root_post>
+<thread>
+{thread_content}
+</thread>
+<recent_replies>
+{recent_replies}
+</recent_replies>
+</context>
+<current_query>
+{clean_query}
+</current_query>"""
+
     if search_data:
         clean_search = utils.clean_for_llm(search_data)
-        model_ctx += f"\n\n[SEARCH RESULTS]\n{clean_search}"
+        model_ctx += f"\n<search_results>\n{clean_search}\n</search_results>"
+
     if config.RAW_DEBUG:
         logger.info("=== [OWNER CONTEXT] ===")
         logger.info(model_ctx)
@@ -235,14 +279,17 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
         logger.warning("[owner] LLM returned empty reply")
         return []
     reply = reply.strip()
+    reply = _strip_reply_prefix(reply)
     if reply.startswith("```") and reply.endswith("```"):
         reply = reply[3:-3].strip()
+        reply = _strip_reply_prefix(reply)
     reply, facets_list = facets.enhance_tickers(reply)
     final_text = reply + sig
     if utils.count_graphemes(final_text) > config.MAX_COMMENT_CHARS:
         reply = utils.truncate_text(reply, config.MAX_COMMENT_CHARS, sig)
         if not reply or not isinstance(reply, str):
             return []
+        reply = _strip_reply_prefix(reply)
         reply, facets_list = facets.enhance_tickers(reply)
         final_text = reply + sig
     if config.RAW_DEBUG:
