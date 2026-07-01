@@ -33,8 +33,9 @@ def get_model():
         logger.error(f"[generator] Model load failed: {repr(e)}")
         return None
 
-def extract_search_intent(llm, user_query: str) -> tuple:
-    prompt = load_prompt("tavily_intent", query=user_query)
+def extract_search_intent(llm, user_query: str, full_context: str = "") -> tuple:
+    context_for_prompt = full_context[:2000] if full_context else user_query
+    prompt = load_prompt("tavily_intent", query=user_query, context=context_for_prompt)
     try:
         raw = _get_llm_text(llm(prompt, max_tokens=config.LLM_TOKENS_INTENT, temperature=0.1))
         if "| TIME:" in raw:
