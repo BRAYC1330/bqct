@@ -9,29 +9,35 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_path = "models/sdxl-turbo"
+_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
 
 def _load_model():
     global _model
     if _model is not None:
         return _model
     
-    logger.info(f"[local_image] Loading model from {_model_path}...")
+    model_index = os.path.join(_model_dir, "model_index.json")
+    if not os.path.exists(model_index):
+        logger.error(f"[local_image] model_index.json not found: {model_index}")
+        logger.info(f"[local_image] Contents of models/: {os.listdir('models') if os.path.exists('models') else 'NOT FOUND'}")
+        return None
+    
+    logger.info(f"[local_image] Loading model from {_model_dir}...")
     
     try:
-        hf_token = os.getenv("HF_API_TOKEN", "")
-        
         _model = StableDiffusionXLPipeline.from_pretrained(
-            _model_path,
+            _model_dir,
             torch_dtype=torch.float32,
             use_safetensors=True,
-            token=hf_token if hf_token else None
+            local_files_only=True
         )
         _model.to("cpu")
         logger.info("[local_image] Model loaded successfully")
         return _model
     except Exception as e:
         logger.error(f"[local_image] Failed to load model: {e}")
+        import traceback
+        logger.error(f"[local_image] Traceback: {traceback.format_exc()[:800]}")
         return None
 
 def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, height: int = 1024) -> bytes | None:
@@ -45,7 +51,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
         guidance = 0.0 if steps == 1 else 1.0
         logger.info(f"[local_image] Generating image ({steps} steps): {prompt[:100]}...")
         
-        enhanced_negative = (
+        enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
             "blurry, low quality, watermark, signature, distorted, deformed, "
             "bad anatomy, wrong proportions, extra limbs, mutated hands, "
             "poorly drawn face, mutation, ugly, duplicate, morbid, "
