@@ -33,7 +33,8 @@ def _load_model():
             _model_dir,
             torch_dtype=torch.float32,
             use_safetensors=True,
-            local_files_only=True
+            local_files_only=True,
+            clean_up_tokenization_spaces=False
         )
         _model.to("cpu")
         logger.info("[local_image] Model loaded successfully")
@@ -52,14 +53,14 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 0.0 if steps == 1 else 1.0
-        logger.info(f"[local_image] Generating image ({steps} steps): {prompt[:100]}...")
+        guidance = 7.5
+        logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
             "blurry, low quality, watermark, signature, distorted, deformed, "
             "bad anatomy, wrong proportions, extra limbs, mutated hands, "
             "poorly drawn face, mutation, ugly, duplicate, morbid, "
-            "out of frame, cropped, dark, low contrast"
+            "out of frame, cropped, dark, low contrast, sepia, brown tint, washed out"
         )
         if negative_prompt:
             enhanced_negative = f"{negative_prompt}, {enhanced_negative}"
