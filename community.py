@@ -94,22 +94,22 @@ async def prepare(ctx: RunContext, client, llm, task: Task) -> List[Dict[str, An
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
     
     if intent == "CASUAL":
-        ctx_text = f"[ROOT]\n{clean_root}"
+        ctx_text = f"[ROOT POST]\n{clean_root}"
         reply = generator.get_answer(llm, ctx_text, user_text, max_chars=max_reply_chars, temperature=config.LLM_TEMP_CASUAL, prompt_key="casual_reply")
     elif not search_data:
-        ctx_text = f"[ROOT]\n{clean_root}"
+        ctx_text = f"[ROOT POST]\n{clean_root}"
         reply = generator.get_answer(llm, ctx_text, clean_query, max_chars=max_reply_chars, temperature=config.LLM_TEMP_STANDARD, prompt_key="dyor_fallback", keyword=original_keyword or "this topic")
     else:
         clean_search = utils.clean_for_llm(search_data)
-        minimal_ctx = f"[ROOT]\n{clean_root}\n\n{clean_search}"
+        minimal_ctx = f"[ROOT POST]\n{clean_root}\n\n[SEARCH RESULTS]\n{clean_search}"
         reply = generator.get_answer(llm, minimal_ctx, clean_query, max_chars=max_reply_chars, temperature=config.LLM_TEMP_STANDARD, prompt_key="community_reply")
         
     if config.RAW_DEBUG:
         logger.info("=== [COMMUNITY DEBUG] ===")
         logger.info(f"Intent: {intent} | Keyword: {original_keyword} | Search: {'yes' if search_data else 'no'} | Sig: {sig}")
-        logger.info(f"Prompt Context:\n[ROOT]\n{clean_root}")
+        logger.info(f"Prompt Context:\n[ROOT POST]\n{clean_root}")
         if search_data:
-            logger.info(f"[SEARCH]\n{utils.clean_for_llm(search_data)}")
+            logger.info(f"[SEARCH RESULTS]\n{utils.clean_for_llm(search_data)}")
         logger.info(f"Raw Model Output: {reply}")
         logger.info("=== [END DEBUG] ===")
         
