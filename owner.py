@@ -145,11 +145,10 @@ async def prepare(client, llm, task: Task) -> List[Dict[str, Any]]:
     do_chainbase = bool(re.search(r'!\s*c\b', user_text, re.I))
 
     if do_tavily:
-        q, t = generator.extract_search_intent(llm, clean_query)
+        q, t = generator.extract_search_intent(llm, clean_query, full_context)
         if q:
-            snippet = full_context[:300]
-            enriched = f"{q} in context: {snippet}"
-            search_data = await fetch_tavily(enriched, t)
+            logger.info(f"[owner] Generated search query: '{q}'")
+            search_data = await fetch_tavily(q, t)
             if search_data:
                 source = "tavily"
             else:
