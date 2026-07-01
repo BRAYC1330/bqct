@@ -21,7 +21,8 @@ def _load_model():
         _model = StableDiffusionXLPipeline.from_pretrained(
             _model_path,
             torch_dtype=torch.float32,
-            use_safetensors=True
+            use_safetensors=True,
+            local_files_only=True
         )
         _model.to("cpu")
         logger.info("[local_image] Model loaded successfully")
@@ -41,7 +42,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
         guidance = 0.0 if steps == 1 else 1.0
         logger.info(f"[local_image] Generating image ({steps} steps): {prompt[:100]}...")
         
-        enhanced_negative = (
+        enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
             "blurry, low quality, watermark, signature, distorted, deformed, "
             "bad anatomy, wrong proportions, extra limbs, mutated hands, "
             "poorly drawn face, mutation, ugly, duplicate, morbid, "
