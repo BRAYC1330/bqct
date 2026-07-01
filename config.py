@@ -18,7 +18,6 @@ REQUEST_TIMEOUT = 15
 ENGLISH_ONLY_SEARCH = True
 ENGLISH_ASCII_RATIO = 0.8
 ALLOWED_LINK_DOMAINS = ["bsky.app", "atproto.com", "chainbase.com", "tavily.com"]
-MAX_LINK_CONTENT_SIZE = 3000
 MAX_SEARCH_RESULTS = 3
 
 SIGNATURE_ICONS = "💜💛"
@@ -44,7 +43,7 @@ RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
 LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
 IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "1024x1024")
-POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY", "")
+IMAGE_INFERENCE_STEPS = int(os.getenv("IMAGE_INFERENCE_STEPS", "8"))
 
 SCOUT_HANDLES = [
     "chainbase.com", "buildermaps.io", "agentkey.app", "subq.ai",
