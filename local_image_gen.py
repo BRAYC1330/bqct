@@ -21,7 +21,6 @@ def _load_model():
         _model = StableDiffusionXLPipeline.from_pretrained(
             _model_path,
             torch_dtype=torch.float32,
-            variant="fp32",
             use_safetensors=True
         )
         _model.to("cpu")
