@@ -9,6 +9,7 @@ import io
 import bsky
 from PIL import Image
 import urllib.parse
+import local_image_gen
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +73,9 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None,
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt: {image_prompt}")
 
-        seed = random.randint(0, 2**31 - 1)
-        image_bytes = await _call_image_gen(image_prompt, negative_prompt, seed)
+        w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+        image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
+        
         if not image_bytes:
             logger.warning("[digest] Image generation failed, posting text-only")
             return None
@@ -81,48 +83,6 @@ async def _generate_digest_embed(client, trends: list, task_type: str, llm=None,
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
-
-
-async def _call_image_gen(prompt: str, negative: str, seed: int) -> bytes | None:
-    models = ["flux", "turbo"]
-    w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-    encoded = urllib.parse.quote(prompt, safe='')
-    neg_encoded = urllib.parse.quote(negative, safe='')
-    key_encoded = urllib.parse.quote(config.POLLINATIONS_API_KEY, safe='')
-    for model in models:
-        url = f"https://gen.pollinations.ai/image/{encoded}?width={w}&height={h}&seed={seed}&model={model}&enhance=true&nologo=true&negative_prompt={neg_encoded}&key={key_encoded}"
-        max_attempts = 2
-        for attempt in range(max_attempts):
-            try:
-                async with httpx.AsyncClient() as http:
-                    r = await http.get(url, timeout=120)
-                    if r.status_code == 200:
-                        img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                        logger.info(f"[image_gen] Success ({model}): {img.size} (attempt {attempt+1})")
-                        buffer = io.BytesIO()
-                        img.save(buffer, format="PNG", optimize=True)
-                        if buffer.tell() > 900 * 1024:
-                            buffer = io.BytesIO()
-                            img.save(buffer, format="JPEG", quality=85, optimize=True)
-                        return buffer.getvalue()
-                    elif r.status_code in (402, 429):
-                        logger.warning(f"[image_gen] Rate/balance limit ({r.status_code}, {model}): {r.text[:200]}")
-                        if attempt < max_attempts - 1:
-                            await asyncio.sleep(30)
-                            continue
-                    else:
-                        logger.warning(f"[image_gen] Error {r.status_code} ({model}): {r.text[:200]}")
-                        if attempt < max_attempts - 1:
-                            await asyncio.sleep(10)
-                            continue
-            except Exception as e:
-                logger.warning(f"[image_gen] Request failed ({model}): {type(e).__name__}: {e}")
-                if attempt < max_attempts - 1:
-                    await asyncio.sleep(10)
-                    continue
-        logger.warning(f"[image_gen] Model {model} exhausted, trying next...")
-    logger.warning("[image_gen] All models and attempts failed, returning None")
-    return None
 
 
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
