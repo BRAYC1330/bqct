@@ -29,11 +29,9 @@ def _load_model():
     logger.info(f"[local_image] Loading FLUX model from {gguf_file}...")
     
     try:
-        _model = FluxPipeline.from_pretrained(
-            "hum-ma/flux.1-lite-8B-GGUF",
-            gguf_file="flux.1-lite-8B-Q4_K_M.gguf",
-            torch_dtype=torch.float32,
-            local_files_only=True
+        _model = FluxPipeline.from_single_file(
+            gguf_file,
+            torch_dtype=torch.float32
         )
         _model.to("cpu")
         logger.info("[local_image] FLUX model loaded successfully")
