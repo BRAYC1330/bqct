@@ -51,19 +51,13 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Create a SHORT visual scene description (max 30 words) for an authentic Banksky-style street art mural.
-  
-  Banksky characteristics:
-  - Black and white stencil with selective RED accents only
-  - Simple but expressive figures: children, police, rats, monkeys, soldiers
-  - Satirical political commentary, dark humor
-  - Rough concrete wall texture as background
+  Create a SHORT visual scene description (max 30 words) for a Banksy-style street art mural.
   
   Rules:
-  - Describe SPECIFIC visual elements: people, objects, actions
+  - Describe SPECIFIC visual elements: people, objects, actions, symbols
   - ALWAYS include logos, symbols, flags mentioned in the news
   - Use concrete visual nouns, NO abstract terms
-  - Think: "What would Banksky paint about this topic?"
+  - Think: "What would Banksy paint about this topic?"
   
   Examples:
   * Bank approving Ethereum → "child in hoodie spray-painting Ethereum diamond logo on Federal Reserve wall, security guard looking away"
@@ -73,7 +67,8 @@ banksy_scene: |
   News context:
   {context}
   
-  Visual scene (Banksky would paint):
+  Visual scene:
+
 
 context_memory: |
   Summarize the conversation history.
