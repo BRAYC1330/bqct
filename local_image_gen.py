@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-base")
+_lora_path = os.path.join(os.path.dirname(__file__), "models", "banksy-lora")
 
 def _load_model():
     global _model
@@ -19,11 +20,6 @@ def _load_model():
     model_index = os.path.join(_model_dir, "model_index.json")
     if not os.path.exists(model_index):
         logger.error(f"[local_image] model_index.json not found: {model_index}")
-        models_dir = os.path.join(os.path.dirname(__file__), "models")
-        if os.path.exists(models_dir):
-            logger.info(f"[local_image] Contents of models/: {os.listdir(models_dir)}")
-        else:
-            logger.error(f"[local_image] models/ directory not found")
         return None
     
     logger.info(f"[local_image] Loading model from {_model_dir}...")
@@ -36,6 +32,15 @@ def _load_model():
             local_files_only=True,
             clean_up_tokenization_spaces=False
         )
+        
+        lora_file = os.path.join(_lora_path, "banksy-style.safetensors")
+        if os.path.exists(lora_file):
+            logger.info("[local_image] Loading Banksy LoRA...")
+            _model.load_lora_weights(lora_file)
+            logger.info("[local_image] Banksy LoRA loaded")
+        else:
+            logger.warning(f"[local_image] Banksy LoRA not found at {lora_file}")
+        
         _model.to("cpu")
         logger.info("[local_image] Model loaded successfully")
         return _model
@@ -60,7 +65,9 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             "blurry, low quality, watermark, signature, distorted, deformed, "
             "bad anatomy, wrong proportions, extra limbs, mutated hands, "
             "poorly drawn face, mutation, ugly, duplicate, morbid, "
-            "out of frame, cropped, dark, low contrast, sepia, brown tint, washed out"
+            "out of frame, cropped, dark, low contrast, sepia, brown tint, washed out, "
+            "photorealistic, 3D render, digital art, cartoon, anime, illustration, "
+            "smooth gradients, airbrushed, clean lines, professional photography"
         )
         if negative_prompt:
             enhanced_negative = f"{negative_prompt}, {enhanced_negative}"
