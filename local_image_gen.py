@@ -1,6 +1,6 @@
 import os
 import torch
-from diffusers import StableDiffusionXLPipeline
+from diffusers import FluxPipeline
 from PIL import Image
 import io
 import logging
@@ -9,16 +9,16 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
+_model_dir = os.path.join(os.path.dirname(__file__), "models", "flux-lite-8b")
 
 def _load_model():
     global _model
     if _model is not None:
         return _model
     
-    model_index = os.path.join(_model_dir, "model_index.json")
-    if not os.path.exists(model_index):
-        logger.error(f"[local_image] model_index.json not found: {model_index}")
+    gguf_file = os.path.join(_model_dir, "flux.1-lite-8B-Q4_K_M.gguf")
+    if not os.path.exists(gguf_file):
+        logger.error(f"[local_image] GGUF file not found: {gguf_file}")
         models_dir = os.path.join(os.path.dirname(__file__), "models")
         if os.path.exists(models_dir):
             logger.info(f"[local_image] Contents of models/: {os.listdir(models_dir)}")
@@ -26,17 +26,17 @@ def _load_model():
             logger.error(f"[local_image] models/ directory not found")
         return None
     
-    logger.info(f"[local_image] Loading model from {_model_dir}...")
+    logger.info(f"[local_image] Loading FLUX model from {gguf_file}...")
     
     try:
-        _model = StableDiffusionXLPipeline.from_pretrained(
-            _model_dir,
+        _model = FluxPipeline.from_pretrained(
+            "hum-ma/flux.1-lite-8B-GGUF",
+            gguf_file="flux.1-lite-8B-Q4_K_M.gguf",
             torch_dtype=torch.float32,
-            use_safetensors=True,
             local_files_only=True
         )
         _model.to("cpu")
-        logger.info("[local_image] Model loaded successfully")
+        logger.info("[local_image] FLUX model loaded successfully")
         return _model
     except Exception as e:
         logger.error(f"[local_image] Failed to load model: {e}")
@@ -52,7 +52,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 0.0 if steps == 1 else 1.0
+        guidance = 3.5
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
