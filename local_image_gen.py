@@ -1,6 +1,7 @@
 import os
 import torch
 from diffusers import FluxPipeline
+from huggingface_hub import login
 from PIL import Image
 import io
 import logging
@@ -29,9 +30,18 @@ def _load_model():
     logger.info(f"[local_image] Loading FLUX model from {gguf_file}...")
     
     try:
+        hf_token = os.getenv("HF_API_TOKEN", "").strip() or None
+        
+        if hf_token:
+            logger.info("[local_image] Logging in to HuggingFace Hub...")
+            login(token=hf_token)
+        else:
+            logger.warning("[local_image] HF_API_TOKEN not found")
+        
         _model = FluxPipeline.from_single_file(
             gguf_file,
-            torch_dtype=torch.float32
+            torch_dtype=torch.float32,
+            token=hf_token
         )
         _model.to("cpu")
         logger.info("[local_image] FLUX model loaded successfully")
