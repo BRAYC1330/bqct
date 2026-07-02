@@ -75,7 +75,7 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex huggingface_hub
+          pip install pyyaml PyNaCl trafilatura regex 'huggingface_hub<0.23'
 
       - name: Install PyTorch and diffusers
         if: steps.checker.outputs.has_full == 'true'
