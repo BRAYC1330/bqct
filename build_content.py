@@ -55,10 +55,10 @@ def _generate_banksy_scene(llm, context: str) -> str:
             scene = scene[3:-3].strip()
         if len(scene) > 350:
             scene = scene[:350].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
+        logger.info(f"[digest] Banksky visual scene: {scene[:120]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksy scene generation failed: {e}")
+        logger.warning(f"[digest] Banksky scene generation failed: {e}")
         return ""
 
 
@@ -77,20 +77,22 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"Authentic Banksy street art stencil on weathered concrete wall. "
+            f"Banksky Style street photography of a crowd viewing mural on concrete wall. "
             f"Scene: {safe_visual} "
-            f"Black and white stencil technique, selective red accents only, "
-            f"satirical composition, paint drips, overspray, rough urban texture, "
-            f"high contrast, street art photography style."
+            f"Real people in foreground looking at artwork: some taking photos with phones, "
+            f"others standing and observing, casual urban clothing. "
+            f"Authentic street photography, natural lighting, documentary style. "
+            f"Black and white stencil art with selective red accents on wall behind crowd."
         )
 
         negative_prompt = (
-            "blurry, low quality, watermark, signature, colorful, bright colors, "
-            "photorealistic, 3D render, digital art, cartoon, anime, illustration, "
-            "smooth gradients, airbrushed, clean lines, professional photography, "
-            "sepia, brown tint, washed out, multiple colors, rainbow, pastel, "
-            "blank wall, only text, typography only, letters without illustration, "
-            "random words, gibberish text, unrelated text, stray letters, nonsense words"
+            "blurry, low quality, watermark, signature, "
+            "cartoon people, illustrated people, anime people, drawn people, "
+            "empty street, no people, "
+            "colorful mural, bright colors, multiple colors, rainbow, pastel, "
+            "photorealistic mural, 3D render mural, digital art mural, "
+            "smooth gradients, airbrushed, clean lines, "
+            "professional studio photography, studio lighting, posed models"
         )
 
         logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
@@ -195,4 +197,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     embed = None
     if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type, llm=llm, visual_scene=visual_scene, full_context=full_context)
+        if embed is None:
+            logger.warning("[digest] Image generation failed for digest_full, skipping entire digest")
+            return None, None
     return final, embed
