@@ -34,15 +34,15 @@ def _load_model():
             _model_dir,
             torch_dtype=torch.float32,
             use_safetensors=True,
-            local_files_only=True,
-            clean_up_tokenization_spaces=False
+            local_files_only=True
         )
         
         lora_file = os.path.join(_lora_path, "banksy-style.safetensors")
         if os.path.exists(lora_file):
             logger.info("[local_image] Loading Banksy LoRA...")
             _model.load_lora_weights(lora_file)
-            logger.info("[local_image] Banksy LoRA loaded")
+            _model.fuse_lora(lora_scale=0.8)
+            logger.info("[local_image] Banksy LoRA loaded and fused")
         else:
             logger.warning(f"[local_image] Banksy LoRA not found at {lora_file}")
         
