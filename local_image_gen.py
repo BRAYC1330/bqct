@@ -43,11 +43,10 @@ def _load_model():
                 logger.info("[local_image] Loading Banksy LoRA...")
                 _model.load_lora_weights(lora_file, adapter_name="banksy")
                 _model.fuse_lora(lora_scale=1.0)
-                logger.info("[local_image] Banksy LoRA loaded and fused")
+                logger.info("[local_image] Banksy LoRA loaded and fused (scale 1.0)")
             except Exception as lora_err:
                 logger.warning(f"[local_image] LoRA load failed, trying UNet-only: {lora_err}")
                 try:
-                    from diffusers.loaders import LoraLoaderMixin
                     from safetensors.torch import load_file
                     state_dict = load_file(lora_file)
                     unet_lora = {k.replace("unet.", ""): v for k, v in state_dict.items() if k.startswith("unet.")}
@@ -87,7 +86,8 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             "poorly drawn face, mutation, ugly, duplicate, morbid, "
             "out of frame, cropped, dark, low contrast, sepia, brown tint, washed out, "
             "photorealistic, 3D render, digital art, cartoon, anime, illustration, "
-            "smooth gradients, airbrushed, clean lines, professional photography"
+            "smooth gradients, airbrushed, clean lines, professional photography, "
+            "colorful, bright colors, multiple colors, rainbow, pastel"
         )
         if negative_prompt:
             enhanced_negative = f"{negative_prompt}, {enhanced_negative}"
