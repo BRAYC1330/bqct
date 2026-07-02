@@ -56,12 +56,12 @@ jobs:
           path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
           key: qwen-model-v1
 
-      - name: Cache Flex.1-alpha model
+      - name: Cache Juggernaut-Z model
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/flex1-alpha-8b
-          key: flex1-alpha-8b-q4km-v1
+          path: models/juggernaut-z-6b
+          key: juggernaut-z-q4km-v1
 
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
@@ -124,15 +124,15 @@ jobs:
             fi
           fi
 
-      - name: Verify and Download Flex.1-alpha Model
+      - name: Verify and Download Juggernaut-Z Model
         if: steps.checker.outputs.has_full == 'true'
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           set -e
-          mkdir -p models/flex1-alpha-8b
-          if [ ! -f "models/flex1-alpha-8b/Flex.1-alpha-Q4_K_M.gguf" ]; then
-            echo "[INFO] Downloading Flex.1-alpha model..."
+          mkdir -p models/juggernaut-z-6b
+          if [ ! -f "models/juggernaut-z-6b/flux1-dev-Q4_K_M.gguf" ]; then
+            echo "[INFO] Downloading Juggernaut-Z model..."
             python -c "
           import os
           from huggingface_hub import hf_hub_download
@@ -141,15 +141,15 @@ jobs:
           if token:
               kwargs['token'] = token
           hf_hub_download(
-              repo_id='hum-ma/Flex.1-alpha-GGUF',
-              filename='Flex.1-alpha-Q4_K_M.gguf',
-              local_dir='models/flex1-alpha-8b',
+              repo_id='RunDiffusion/Juggernaut-Z-Image',
+              filename='flux1-dev-Q4_K_M.gguf',
+              local_dir='models/juggernaut-z-6b',
               **kwargs
           )
-          print('[OK] Flex.1-alpha model downloaded')
+          print('[OK] Juggernaut-Z model downloaded')
           "
           else
-            echo "[OK] Flex.1-alpha model cached"
+            echo "[OK] Juggernaut-Z model cached"
           fi
 
       - name: Run Bot
