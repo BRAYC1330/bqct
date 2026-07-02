@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: models/sdxl-turbo
-          key: sdxl-turbo-q40-v1
+          key: sdxl-turbo-q80-v1
 
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
@@ -131,7 +131,7 @@ jobs:
         run: |
           set -e
           mkdir -p models/sdxl-turbo
-          if [ ! -f "models/sdxl-turbo/sdxl-turbo-q4_0.gguf" ]; then
+          if [ ! -f "models/sdxl-turbo/stable-diffusion-xl-1.0-turbo-Q8_0.gguf" ]; then
             echo "[INFO] Downloading SDXL-Turbo model..."
             python -c "
           import os
@@ -142,7 +142,7 @@ jobs:
               kwargs['token'] = token
           hf_hub_download(
               repo_id='gpustack/stable-diffusion-xl-1.0-turbo-GGUF',
-              filename='sdxl-turbo-q4_0.gguf',
+              filename='stable-diffusion-xl-1.0-turbo-Q8_0.gguf',
               local_dir='models/sdxl-turbo',
               **kwargs
           )
