@@ -51,22 +51,30 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Create a SHORT visual scene description (max 30 words) for a Banksy-style street art mural.
+  Create a SHORT visual scene description (max 30 words) for an authentic Banksy-style street art mural.
+  
+  Banksy characteristics:
+  - Black and white stencil with selective RED accents only
+  - Simple but expressive figures: children, police, rats, monkeys, soldiers
+  - Satirical political commentary, dark humor
+  - Rough concrete wall texture as background
   
   Rules:
-  - Describe a SPECIFIC visual scene: location, characters, objects, actions
-  - ALWAYS include logos, symbols, flags, or brand icons mentioned in the news
-  - Examples:
-    * News about bank approving Ethereum → "bank building, worker holding document with Ethereum diamond logo"
-    * News about earthquake in Venezuela → "crumbling buildings, Venezuelan flag torn in half, dust clouds"
-    * News about Apple launching AI → "giant bitten Apple logo, robot hands assembling it"
-  - Use concrete visual nouns: people, buildings, objects, flags, logos
-  - NO abstract terms: "policy", "signals", "shift", "uncertainty", "volatility", "conflicting"
+  - Describe SPECIFIC visual elements: people, objects, actions
+  - ALWAYS include logos, symbols, flags mentioned in the news
+  - Use concrete visual nouns, NO abstract terms
+  - Think: "What would Banksy paint about this topic?"
+  
+  Examples:
+  * Bank approving Ethereum → "child in hoodie spray-painting Ethereum diamond logo on Federal Reserve wall, security guard looking away"
+  * Earthquake in Venezuela → "crumbling concrete, torn Venezuelan flag, child holding broken toy, dust clouds"
+  * Apple AI launch → "giant bitten Apple logo, robot arms assembling it, workers in chains below"
   
   News context:
   {context}
   
-  Visual scene:
+  Visual scene (Banksy would paint):
+  
 
 context_memory: |
   Summarize the conversation history.
