@@ -52,7 +52,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             logger.warning("[local_image] Model not loaded")
             return None
         
-        steps = 4
+        steps = config.IMAGE_INFERENCE_STEPS
         guidance = 0.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
