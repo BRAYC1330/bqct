@@ -75,12 +75,13 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex 'huggingface_hub<0.23'
+          pip install pyyaml PyNaCl trafilatura regex
 
       - name: Install PyTorch and diffusers
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install 'huggingface_hub<0.23'
           pip install diffusers==0.27.2 transformers accelerate safetensors peft==0.10.0
 
       - name: Verify and Download Qwen Model
