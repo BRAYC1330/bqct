@@ -1,6 +1,6 @@
 import os
 import torch
-from diffusers import AutoPipelineForText2Image
+from diffusers import StableDiffusionXLPipeline
 from huggingface_hub import login
 from PIL import Image
 import io
@@ -38,7 +38,7 @@ def _load_model():
         else:
             logger.warning("[local_image] HF_API_TOKEN not found")
         
-        _model = AutoPipelineForText2Image.from_single_file(
+        _model = StableDiffusionXLPipeline.from_single_file(
             gguf_file,
             torch_dtype=torch.float32,
             token=hf_token
