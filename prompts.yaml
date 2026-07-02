@@ -74,7 +74,6 @@ banksy_scene: |
   {context}
   
   Visual scene (Banksy would paint):
-  
 
 context_memory: |
   Summarize the conversation history.
