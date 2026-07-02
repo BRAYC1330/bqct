@@ -17,7 +17,7 @@ def _load_model():
     if _model is not None:
         return _model
     
-    gguf_file = os.path.join(_model_dir, "sdxl-turbo-q4_0.gguf")
+    gguf_file = os.path.join(_model_dir, "stable-diffusion-xl-1.0-turbo-Q8_0.gguf")
     if not os.path.exists(gguf_file):
         logger.error(f"[local_image] GGUF file not found: {gguf_file}")
         models_dir = os.path.join(os.path.dirname(__file__), "models")
@@ -59,11 +59,11 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             logger.warning("[local_image] Model not loaded")
             return None
         
-        logger.info(f"[local_image] Generating image (1 step, guidance 0.0): {prompt[:100]}...")
+        logger.info(f"[local_image] Generating image (4 steps, guidance 0.0): {prompt[:100]}...")
         
         image = pipe(
             prompt=prompt,
-            num_inference_steps=1,
+            num_inference_steps=4,
             guidance_scale=0.0,
             width=width,
             height=height
