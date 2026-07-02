@@ -9,8 +9,7 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-base")
-_lora_path = os.path.join(os.path.dirname(__file__), "models", "banksy-lora")
+_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
 
 def _load_model():
     global _model
@@ -36,30 +35,6 @@ def _load_model():
             use_safetensors=True,
             local_files_only=True
         )
-        
-        lora_file = os.path.join(_lora_path, "banksy-style.safetensors")
-        if os.path.exists(lora_file):
-            try:
-                logger.info("[local_image] Loading Banksy LoRA...")
-                _model.load_lora_weights(lora_file, adapter_name="banksy")
-                _model.fuse_lora(lora_scale=1.0)
-                logger.info("[local_image] Banksy LoRA loaded and fused (scale 1.0)")
-            except Exception as lora_err:
-                logger.warning(f"[local_image] LoRA load failed, trying UNet-only: {lora_err}")
-                try:
-                    from safetensors.torch import load_file
-                    state_dict = load_file(lora_file)
-                    unet_lora = {k.replace("unet.", ""): v for k, v in state_dict.items() if k.startswith("unet.")}
-                    if unet_lora:
-                        _model.load_lora_into_unet(unet_lora, network_alphas=None, unet=_model.unet)
-                        logger.info("[local_image] Banksy LoRA loaded (UNet only)")
-                    else:
-                        logger.warning("[local_image] No UNet keys in LoRA, continuing without LoRA")
-                except Exception as fallback_err:
-                    logger.warning(f"[local_image] LoRA fallback failed, continuing without LoRA: {fallback_err}")
-        else:
-            logger.warning(f"[local_image] Banksy LoRA not found at {lora_file}")
-        
         _model.to("cpu")
         logger.info("[local_image] Model loaded successfully")
         return _model
@@ -77,7 +52,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 7.5
+        guidance = 0.0 if steps == 1 else 1.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
