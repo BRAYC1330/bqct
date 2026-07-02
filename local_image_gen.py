@@ -10,14 +10,14 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_dir = os.path.join(os.path.dirname(__file__), "models", "flux-lite-8b")
+_model_dir = os.path.join(os.path.dirname(__file__), "models", "flex1-alpha-8b")
 
 def _load_model():
     global _model
     if _model is not None:
         return _model
     
-    gguf_file = os.path.join(_model_dir, "flux.1-lite-8B-Q4_K_M.gguf")
+    gguf_file = os.path.join(_model_dir, "Flex.1-alpha-Q4_K_M.gguf")
     if not os.path.exists(gguf_file):
         logger.error(f"[local_image] GGUF file not found: {gguf_file}")
         models_dir = os.path.join(os.path.dirname(__file__), "models")
@@ -27,7 +27,7 @@ def _load_model():
             logger.error(f"[local_image] models/ directory not found")
         return None
     
-    logger.info(f"[local_image] Loading FLUX model from {gguf_file}...")
+    logger.info(f"[local_image] Loading Flex.1-alpha model from {gguf_file}...")
     
     try:
         hf_token = os.getenv("HF_API_TOKEN", "").strip() or None
@@ -44,7 +44,7 @@ def _load_model():
             token=hf_token
         )
         _model.to("cpu")
-        logger.info("[local_image] FLUX model loaded successfully")
+        logger.info("[local_image] Flex.1-alpha model loaded successfully")
         return _model
     except Exception as e:
         logger.error(f"[local_image] Failed to load model: {e}")
