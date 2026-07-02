@@ -1,7 +1,6 @@
 import os
 import torch
 from diffusers import StableDiffusionXLPipeline
-from huggingface_hub import login
 from PIL import Image
 import io
 import logging
@@ -17,9 +16,9 @@ def _load_model():
     if _model is not None:
         return _model
     
-    gguf_file = os.path.join(_model_dir, "stable-diffusion-xl-1.0-turbo-Q8_0.gguf")
-    if not os.path.exists(gguf_file):
-        logger.error(f"[local_image] GGUF file not found: {gguf_file}")
+    model_index = os.path.join(_model_dir, "model_index.json")
+    if not os.path.exists(model_index):
+        logger.error(f"[local_image] model_index.json not found: {model_index}")
         models_dir = os.path.join(os.path.dirname(__file__), "models")
         if os.path.exists(models_dir):
             logger.info(f"[local_image] Contents of models/: {os.listdir(models_dir)}")
@@ -27,24 +26,18 @@ def _load_model():
             logger.error(f"[local_image] models/ directory not found")
         return None
     
-    logger.info(f"[local_image] Loading SDXL-Turbo model from {gguf_file}...")
+    logger.info(f"[local_image] Loading model from {_model_dir}...")
     
     try:
-        hf_token = os.getenv("HF_API_TOKEN", "").strip() or None
-        
-        if hf_token:
-            logger.info("[local_image] Logging in to HuggingFace Hub...")
-            login(token=hf_token)
-        else:
-            logger.warning("[local_image] HF_API_TOKEN not found")
-        
-        _model = StableDiffusionXLPipeline.from_single_file(
-            gguf_file,
+        _model = StableDiffusionXLPipeline.from_pretrained(
+            _model_dir,
             torch_dtype=torch.float32,
-            token=hf_token
+            use_safetensors=True,
+            local_files_only=True,
+            clean_up_tokenization_spaces=False
         )
         _model.to("cpu")
-        logger.info("[local_image] SDXL-Turbo model loaded successfully")
+        logger.info("[local_image] Model loaded successfully")
         return _model
     except Exception as e:
         logger.error(f"[local_image] Failed to load model: {e}")
@@ -59,12 +52,14 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             logger.warning("[local_image] Model not loaded")
             return None
         
-        logger.info(f"[local_image] Generating image (4 steps, guidance 0.0): {prompt[:100]}...")
+        steps = 4
+        guidance = 0.0
+        logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         image = pipe(
             prompt=prompt,
-            num_inference_steps=4,
-            guidance_scale=0.0,
+            num_inference_steps=steps,
+            guidance_scale=guidance,
             width=width,
             height=height
         ).images[0]
