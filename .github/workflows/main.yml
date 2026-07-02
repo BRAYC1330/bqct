@@ -63,13 +63,6 @@ jobs:
           path: models/sdxl-base
           key: sdxl-base-v1
 
-      - name: Cache Banksy LoRA
-        if: steps.checker.outputs.has_full == 'true'
-        uses: actions/cache@v4
-        with:
-          path: models/banksy-lora
-          key: banksy-lora-v1
-
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
@@ -81,7 +74,7 @@ jobs:
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers==0.21.4 transformers==4.33.3 accelerate==0.23.0 safetensors==0.3.3 peft==0.5.0
+          pip install -U diffusers transformers accelerate safetensors peft
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
@@ -152,35 +145,6 @@ jobs:
           "
           else
             echo "[OK] SDXL-Base model cached"
-          fi
-
-      - name: Verify and Download Banksy LoRA
-        if: steps.checker.outputs.has_full == 'true'
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: |
-          set -e
-          mkdir -p models/banksy-lora
-          if [ ! -f "models/banksy-lora/banksy-style.safetensors" ]; then
-            echo "[INFO] Downloading Banksy LoRA..."
-            python -c "
-          import os
-          from huggingface_hub import hf_hub_download
-          token = os.environ.get('HF_API_TOKEN', '').strip()
-          kwargs = {}
-          if token:
-              kwargs['token'] = token
-          hf_hub_download(
-              repo_id='KappaNeuro/banksy-style',
-              filename='Banksy Style.safetensors',
-              local_dir='models/banksy-lora',
-              **kwargs
-          )
-          os.rename('models/banksy-lora/Banksy Style.safetensors', 'models/banksy-lora/banksy-style.safetensors')
-          print('[OK] Banksy LoRA downloaded')
-          "
-          else
-            echo "[OK] Banksy LoRA cached"
           fi
 
       - name: Run Bot
