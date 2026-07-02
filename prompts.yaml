@@ -51,11 +51,21 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Convert this news summary into a SHORT visual scene description (max 25 words) 
-  suitable for a Banksy-style street art mural on a concrete wall.
-  Focus on concrete visual elements: people, objects, actions, symbols.
-  Do NOT use abstract terms like "policy", "signals", "shift", "conflicting", "uncertainty", "volatility".
-  News: {summary}
+  Create a SHORT visual scene description (max 30 words) for a Banksy-style street art mural.
+  
+  Rules:
+  - Describe a SPECIFIC visual scene: location, characters, objects, actions
+  - ALWAYS include logos, symbols, flags, or brand icons mentioned in the news
+  - Examples:
+    * News about bank approving Ethereum → "bank building, worker holding document with Ethereum diamond logo"
+    * News about earthquake in Venezuela → "crumbling buildings, Venezuelan flag torn in half, dust clouds"
+    * News about Apple launching AI → "giant bitten Apple logo, robot hands assembling it"
+  - Use concrete visual nouns: people, buildings, objects, flags, logos
+  - NO abstract terms: "policy", "signals", "shift", "uncertainty", "volatility", "conflicting"
+  
+  News context:
+  {context}
+  
   Visual scene:
 
 context_memory: |
