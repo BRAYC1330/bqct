@@ -77,23 +77,26 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"Authentic Banksy-style black and white stencil art on weathered concrete wall. "
-            f"Small artwork centered on large wall, occupying only 20-30% of wall space. "
+            f"Single cohesive Banksy-style black and white stencil artwork centered on large weathered concrete wall. "
+            f"Small unified scene occupying only 20-30% of wall space in the middle. "
             f"Scene: {safe_visual} "
-            f"Pure monochrome stencil, no color accents. "
-            f"Rough concrete texture, spray paint drips, overspray edges. "
-            f"Political satire, gritty realism, documentary photography, natural daylight."
+            f"All elements form ONE connected composition, interacting with each other. "
+            f"Pure monochrome stencil art, no colors. "
+            f"Rough concrete texture visible around artwork, spray paint drips. "
+            f"Documentary photography, natural daylight, no yellow tint."
         )
 
         negative_prompt = (
             "blurry, low quality, watermark, signature, "
             "people, crowd, viewers, spectators, tourists, "
             "colorful, rainbow, pastel, bright colors, red accent, yellow tint, sepia, "
+            "scattered elements, disconnected objects, multiple separate artworks, "
             "large artwork, full wall coverage, mural covering entire wall, "
             "clean wall, pristine surface, "
             "cartoon, anime, illustration, digital art, "
             "smooth gradients, airbrushed, professional studio, "
-            "ornate, decorative, temple, church, religious"
+            "ornate, decorative, temple, church, religious, "
+            "random placement, chaotic composition"
         )
 
         logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
