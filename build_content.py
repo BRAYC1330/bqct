@@ -45,11 +45,11 @@ def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
     return ' '.join(words[:max_words])
 
 
-def _generate_banksy_scene(llm, summary: str) -> str:
+def _generate_banksy_scene(llm, context: str) -> str:
     if not llm:
         return ""
     try:
-        prompt_text = generator.load_prompt("banksy_scene", summary=summary[:800])
+        prompt_text = generator.load_prompt("banksy_scene", context=context[:1200])
         prompt_text = str(prompt_text).strip()
         output = llm(prompt_text, max_tokens=60, temperature=0.6)
         scene = _get_llm_text(output)
@@ -57,16 +57,16 @@ def _generate_banksy_scene(llm, summary: str) -> str:
         scene = re.sub(r'^(visual\s*(?:scene)?:?\s*|scene:?\s*|mural:?\s*)', '', scene, flags=re.I).strip()
         if scene.startswith("```") and scene.endswith("```"):
             scene = scene[3:-3].strip()
-        if len(scene) > 300:
-            scene = scene[:300].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
+        if len(scene) > 350:
+            scene = scene[:350].rsplit(' ', 1)[0]
+        logger.info(f"[digest] Banksky visual scene: {scene[:120]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksy scene generation failed: {e}")
+        logger.warning(f"[digest] Banksky scene generation failed: {e}")
         return ""
 
 
-async def _generate_digest_embed(client, trends, task_type, llm=None, visual_scene: str = "") -> dict | None:
+async def _generate_digest_embed(client, trends, task_type, llm=None, visual_scene: str = "", full_context: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
@@ -81,10 +81,12 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"Banksy-style street art stencil on concrete wall. "
+            f"Wide shot of weathered concrete wall filling entire frame. "
+            f"Banksky-style stencil mural centered on wall. "
             f"Scene: {safe_visual} "
-            f"Monochrome stencil, satirical composition, "
-            f"tag '{safe_keyword}' in corner, drips, overspray."
+            f"Wall extends to all edges, stencil art occupies center. "
+            f"Monochrome black stencil with selective red accents, "
+            f"satirical street art, paint drips, overspray, urban texture, high contrast."
         )
 
         negative_prompt = (
@@ -118,6 +120,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     sep = config.TREND_SCORE_SEPARATOR
     trophy = config.TREND_TROPHY
     visual_scene = ""
+    full_context = ""
     if task_type == "digest_mini":
         lines = []
         for idx, item in enumerate(trends[:6]):
@@ -177,7 +180,8 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         if desc_chars > desc_limit:
             logger.warning(f"[digest] Still too long after truncation, returning None")
             return None, None
-        visual_scene = _generate_banksy_scene(llm, desc)
+        full_context = f"{kw}\n\n{summary}"
+        visual_scene = _generate_banksy_scene(llm, full_context)
         if not visual_scene:
             visual_scene = desc[:200]
         body = title + desc
@@ -192,5 +196,5 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [END FINAL POST] ===")
     embed = None
     if client and task_type == "digest_full":
-        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, visual_scene=visual_scene)
+        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, visual_scene=visual_scene, full_context=full_context)
     return final, embed
