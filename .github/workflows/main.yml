@@ -56,12 +56,12 @@ jobs:
           path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
           key: qwen-model-v1
 
-      - name: Cache FLUX-Lite model
+      - name: Cache Flex.1-alpha model
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/flux-lite-8b
-          key: flux-lite-8b-q4km-v1
+          path: models/flex1-alpha-8b
+          key: flex1-alpha-8b-q4km-v1
 
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
@@ -124,15 +124,15 @@ jobs:
             fi
           fi
 
-      - name: Verify and Download FLUX-Lite Model
+      - name: Verify and Download Flex.1-alpha Model
         if: steps.checker.outputs.has_full == 'true'
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           set -e
-          mkdir -p models/flux-lite-8b
-          if [ ! -f "models/flux-lite-8b/flux.1-lite-8B-Q4_K_M.gguf" ]; then
-            echo "[INFO] Downloading FLUX-Lite model..."
+          mkdir -p models/flex1-alpha-8b
+          if [ ! -f "models/flex1-alpha-8b/Flex.1-alpha-Q4_K_M.gguf" ]; then
+            echo "[INFO] Downloading Flex.1-alpha model..."
             python -c "
           import os
           from huggingface_hub import hf_hub_download
@@ -141,15 +141,15 @@ jobs:
           if token:
               kwargs['token'] = token
           hf_hub_download(
-              repo_id='hum-ma/flux.1-lite-8B-GGUF',
-              filename='flux.1-lite-8B-Q4_K_M.gguf',
-              local_dir='models/flux-lite-8b',
+              repo_id='hum-ma/Flex.1-alpha-GGUF',
+              filename='Flex.1-alpha-Q4_K_M.gguf',
+              local_dir='models/flex1-alpha-8b',
               **kwargs
           )
-          print('[OK] FLUX-Lite model downloaded')
+          print('[OK] Flex.1-alpha model downloaded')
           "
           else
-            echo "[OK] FLUX-Lite model cached"
+            echo "[OK] Flex.1-alpha model cached"
           fi
 
       - name: Run Bot
