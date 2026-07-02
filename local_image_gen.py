@@ -17,7 +17,7 @@ def _load_model():
     if _model is not None:
         return _model
     
-    gguf_file = os.path.join(_model_dir, "flux1-dev-Q4_K_M.gguf")
+    gguf_file = os.path.join(_model_dir, "Juggernaut_Z_V1_by_RunDiffusion_q4_k_m-002.gguf")
     if not os.path.exists(gguf_file):
         logger.error(f"[local_image] GGUF file not found: {gguf_file}")
         models_dir = os.path.join(os.path.dirname(__file__), "models")
