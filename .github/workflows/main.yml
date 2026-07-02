@@ -56,33 +56,25 @@ jobs:
           path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
           key: qwen-model-v1
 
-      - name: Cache SDXL-Base model
+      - name: Cache SDXL-Turbo model
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/sdxl-base
-          key: sdxl-base-v1
-
-      - name: Cache Banksy LoRA
-        if: steps.checker.outputs.has_full == 'true'
-        uses: actions/cache@v4
-        with:
-          path: models/banksy-lora
-          key: banksy-lora-v1
+          path: models/sdxl-turbo
+          key: sdxl-turbo-v1
 
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex
+          pip install pyyaml PyNaCl trafilatura regex huggingface_hub
 
       - name: Install PyTorch and diffusers
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install 'huggingface_hub<0.23'
-          pip install diffusers==0.27.2 transformers accelerate safetensors peft==0.10.0
+          pip install diffusers transformers accelerate safetensors
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
@@ -132,56 +124,17 @@ jobs:
             fi
           fi
 
-      - name: Verify and Download SDXL-Base Model
+      - name: Verify and Download SDXL-Turbo Model
         if: steps.checker.outputs.has_full == 'true'
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           set -e
-          mkdir -p models/sdxl-base
-          if [ ! -f "models/sdxl-base/model_index.json" ]; then
-            echo "[INFO] Downloading SDXL-Base model..."
-            python -c "
-          import os
-          from huggingface_hub import snapshot_download
-          token = os.environ.get('HF_API_TOKEN', '').strip()
-          kwargs = {}
-          if token:
-              kwargs['token'] = token
-          snapshot_download('stabilityai/stable-diffusion-xl-base-1.0', local_dir='models/sdxl-base', **kwargs)
-          print('[OK] SDXL-Base downloaded')
-          "
+          mkdir -p models/sdxl-turbo
+          if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
+            echo "[INFO] Downloading SDXL-Turbo model..."
+            python -c "from huggingface_hub import snapshot_download; snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo')"
+            echo "[OK] SDXL-Turbo model downloaded"
           else
-            echo "[OK] SDXL-Base model cached"
-          fi
-
-      - name: Verify and Download Banksy LoRA
-        if: steps.checker.outputs.has_full == 'true'
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: |
-          set -e
-          mkdir -p models/banksy-lora
-          if [ ! -f "models/banksy-lora/banksy-style.safetensors" ]; then
-            echo "[INFO] Downloading Banksy LoRA..."
-            python -c "
-          import os
-          from huggingface_hub import hf_hub_download
-          token = os.environ.get('HF_API_TOKEN', '').strip()
-          kwargs = {}
-          if token:
-              kwargs['token'] = token
-          hf_hub_download(
-              repo_id='KappaNeuro/banksy-style',
-              filename='Banksy Style.safetensors',
-              local_dir='models/banksy-lora',
-              **kwargs
-          )
-          os.rename('models/banksy-lora/Banksy Style.safetensors', 'models/banksy-lora/banksy-style.safetensors')
-          print('[OK] Banksy LoRA downloaded')
-          "
-          else
-            echo "[OK] Banksy LoRA cached"
+            echo "[OK] SDXL-Turbo model cached"
           fi
 
       - name: Run Bot
