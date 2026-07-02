@@ -77,22 +77,20 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"Banksky Style street photography of a crowd viewing mural on concrete wall. "
+            f"Authentic Banksy-style stencil street art on weathered concrete wall. "
             f"Scene: {safe_visual} "
-            f"Real people in foreground looking at artwork: some taking photos with phones, "
-            f"others standing and observing, casual urban clothing. "
-            f"Authentic street photography, natural lighting, documentary style. "
-            f"Black and white stencil art with selective red accents on wall behind crowd."
+            f"High-contrast monochrome stencil with selective red accent color. "
+            f"Urban decay, cracked concrete texture, spray paint drips, overspray edges. "
+            f"Political satire, gritty realism, documentary photography, natural lighting."
         )
 
         negative_prompt = (
             "blurry, low quality, watermark, signature, "
-            "cartoon people, illustrated people, anime people, drawn people, "
-            "empty street, no people, "
-            "colorful mural, bright colors, multiple colors, rainbow, pastel, "
-            "photorealistic mural, 3D render mural, digital art mural, "
-            "smooth gradients, airbrushed, clean lines, "
-            "professional studio photography, studio lighting, posed models"
+            "people, crowd, viewers, spectators, tourists, "
+            "colorful, rainbow, pastel, bright colors, "
+            "clean wall, pristine surface, "
+            "cartoon, anime, illustration, digital art, "
+            "smooth gradients, airbrushed, professional studio"
         )
 
         logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
