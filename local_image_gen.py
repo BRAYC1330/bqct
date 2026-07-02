@@ -42,7 +42,7 @@ def _load_model():
             try:
                 logger.info("[local_image] Loading Banksy LoRA...")
                 _model.load_lora_weights(lora_file, adapter_name="banksy")
-                _model.fuse_lora(lora_scale=0.8)
+                _model.fuse_lora(lora_scale=1.0)
                 logger.info("[local_image] Banksy LoRA loaded and fused")
             except Exception as lora_err:
                 logger.warning(f"[local_image] LoRA load failed, trying UNet-only: {lora_err}")
