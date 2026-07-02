@@ -1,6 +1,7 @@
 import os
 import torch
 from diffusers import FluxPipeline
+from transformers import CLIPTextModel, CLIPTokenizer
 from huggingface_hub import login
 from PIL import Image
 import io
@@ -38,8 +39,17 @@ def _load_model():
         else:
             logger.warning("[local_image] HF_API_TOKEN not found")
         
+        logger.info("[local_image] Loading CLIP text encoder...")
+        text_encoder = CLIPTextModel.from_pretrained(
+            "openai/clip-vit-large-patch14",
+            torch_dtype=torch.float32
+        )
+        tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
+        
         _model = FluxPipeline.from_single_file(
             gguf_file,
+            text_encoder=text_encoder,
+            tokenizer=tokenizer,
             torch_dtype=torch.float32,
             token=hf_token
         )
