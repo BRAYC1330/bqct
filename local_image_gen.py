@@ -39,10 +39,25 @@ def _load_model():
         
         lora_file = os.path.join(_lora_path, "banksy-style.safetensors")
         if os.path.exists(lora_file):
-            logger.info("[local_image] Loading Banksy LoRA...")
-            _model.load_lora_weights(lora_file)
-            _model.fuse_lora(lora_scale=0.8)
-            logger.info("[local_image] Banksy LoRA loaded and fused")
+            try:
+                logger.info("[local_image] Loading Banksy LoRA...")
+                _model.load_lora_weights(lora_file, adapter_name="banksy")
+                _model.fuse_lora(lora_scale=0.8)
+                logger.info("[local_image] Banksy LoRA loaded and fused")
+            except Exception as lora_err:
+                logger.warning(f"[local_image] LoRA load failed, trying UNet-only: {lora_err}")
+                try:
+                    from diffusers.loaders import LoraLoaderMixin
+                    from safetensors.torch import load_file
+                    state_dict = load_file(lora_file)
+                    unet_lora = {k.replace("unet.", ""): v for k, v in state_dict.items() if k.startswith("unet.")}
+                    if unet_lora:
+                        _model.load_lora_into_unet(unet_lora, network_alphas=None, unet=_model.unet)
+                        logger.info("[local_image] Banksy LoRA loaded (UNet only)")
+                    else:
+                        logger.warning("[local_image] No UNet keys in LoRA, continuing without LoRA")
+                except Exception as fallback_err:
+                    logger.warning(f"[local_image] LoRA fallback failed, continuing without LoRA: {fallback_err}")
         else:
             logger.warning(f"[local_image] Banksy LoRA not found at {lora_file}")
         
