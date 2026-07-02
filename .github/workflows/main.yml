@@ -131,7 +131,7 @@ jobs:
         run: |
           set -e
           mkdir -p models/juggernaut-z-6b
-          if [ ! -f "models/juggernaut-z-6b/flux1-dev-Q4_K_M.gguf" ]; then
+          if [ ! -f "models/juggernaut-z-6b/Juggernaut_Z_V1_by_RunDiffusion_q4_k_m-002.gguf" ]; then
             echo "[INFO] Downloading Juggernaut-Z model..."
             python -c "
           import os
@@ -142,7 +142,7 @@ jobs:
               kwargs['token'] = token
           hf_hub_download(
               repo_id='RunDiffusion/Juggernaut-Z-Image',
-              filename='flux1-dev-Q4_K_M.gguf',
+              filename='Juggernaut_Z_V1_by_RunDiffusion_q4_k_m-002.gguf',
               local_dir='models/juggernaut-z-6b',
               **kwargs
           )
