@@ -3,11 +3,7 @@ import config
 import utils
 import generator
 import logging
-import httpx
-import asyncio
-import io
 import bsky
-from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +55,10 @@ def _generate_banksy_scene(llm, context: str) -> str:
             scene = scene[3:-3].strip()
         if len(scene) > 350:
             scene = scene[:350].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksky visual scene: {scene[:120]}")
+        logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksky scene generation failed: {e}")
+        logger.warning(f"[digest] Banksy scene generation failed: {e}")
         return ""
 
 
@@ -81,18 +77,20 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"Wide shot of weathered concrete wall filling entire frame. "
-            f"Banksky-style stencil mural centered on wall. "
+            f"Authentic Banksy street art stencil on weathered concrete wall. "
             f"Scene: {safe_visual} "
-            f"Wall extends to all edges, stencil art occupies center. "
-            f"Monochrome black stencil with selective red accents, "
-            f"satirical street art, paint drips, overspray, urban texture, high contrast."
+            f"Black and white stencil technique, selective red accents only, "
+            f"satirical composition, paint drips, overspray, rough urban texture, "
+            f"high contrast, street art photography style."
         )
 
         negative_prompt = (
-            "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
-            "letters without illustration, random words, gibberish text, unrelated text, "
-            "stray letters, nonsense words"
+            "blurry, low quality, watermark, signature, colorful, bright colors, "
+            "photorealistic, 3D render, digital art, cartoon, anime, illustration, "
+            "smooth gradients, airbrushed, clean lines, professional photography, "
+            "sepia, brown tint, washed out, multiple colors, rainbow, pastel, "
+            "blank wall, only text, typography only, letters without illustration, "
+            "random words, gibberish text, unrelated text, stray letters, nonsense words"
         )
 
         logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
