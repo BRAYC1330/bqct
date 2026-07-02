@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-base")
-_lora_path = os.path.join(os.path.dirname(__file__), "models", "banksky-lora")
+_lora_path = os.path.join(os.path.dirname(__file__), "models", "banksy-lora")
 
 def _load_model():
     global _model
@@ -38,13 +38,13 @@ def _load_model():
             clean_up_tokenization_spaces=False
         )
         
-        lora_file = os.path.join(_lora_path, "banksky-style.safetensors")
+        lora_file = os.path.join(_lora_path, "banksy-style.safetensors")
         if os.path.exists(lora_file):
-            logger.info("[local_image] Loading Banksky LoRA...")
+            logger.info("[local_image] Loading Banksy LoRA...")
             _model.load_lora_weights(lora_file)
-            logger.info("[local_image] Banksky LoRA loaded")
+            logger.info("[local_image] Banksy LoRA loaded")
         else:
-            logger.warning(f"[local_image] Banksky LoRA not found at {lora_file}")
+            logger.warning(f"[local_image] Banksy LoRA not found at {lora_file}")
         
         _model.to("cpu")
         logger.info("[local_image] Model loaded successfully")
