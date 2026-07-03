@@ -41,10 +41,6 @@ def generate_image(pipe, style_prompt, news_context):
     logger.info(f"Generated in {elapsed:.1f}s")
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    
-    for f in os.listdir(OUTPUT_DIR):
-        os.remove(os.path.join(OUTPUT_DIR, f))
-    
     image.save(OUTPUT_FILE, format="PNG")
     logger.info(f"Saved: {OUTPUT_FILE}")
 
