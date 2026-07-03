@@ -2,8 +2,6 @@ import os
 import sys
 import torch
 from diffusers import StableDiffusionXLPipeline
-from PIL import Image
-import io
 import time
 import logging
 
@@ -11,7 +9,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 MODEL_DIR = "models/sdxl-base"
-OUTPUT_FILE = "test_output.png"
 
 def load_model():
     logger.info("Loading SDXL model...")
@@ -43,14 +40,8 @@ def generate_image(pipe, style_prompt, news_context):
     
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
-    
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    
-    with open(OUTPUT_FILE, "wb") as f:
-        f.write(buffer.getvalue())
-    
-    logger.info(f"Saved: {OUTPUT_FILE}")
+    logger.info(f"Image size: {image.size}")
+    logger.info("Image generated successfully (not saved)")
 
 def main():
     if len(sys.argv) < 3:
