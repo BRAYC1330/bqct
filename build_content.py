@@ -97,11 +97,12 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         compressed_scene = _compress_scene_for_stencil(llm, safe_visual)
 
         image_prompt = (
-            f"Small black stencil graffiti on white concrete wall. "
-            f"Artwork is only 20 percent of wall size in center, rest is empty white wall. "
+            f"Small black stencil graffiti centered on large white concrete wall. "
+            f"Artwork is tiny with large empty white border around it on all sides. "
             f"Showing {compressed_scene}. "
-            f"Solid black silhouette, pure monochrome. "
+            f"Solid black silhouette, pure monochrome, high contrast. "
             f"Minimalist composition, spray paint drips. "
+            f"High contrast lighting, no shadows, no yellow tint. "
             f"Documentary photo style."
         )
 
