@@ -1,139 +1,43 @@
-name: Bluesky AI Bot
+name: Test Image Generation
 on:
   workflow_dispatch:
     inputs:
-      manual_digest:
-        description: 'Generate digest manually (optional)'
-        required: false
-        type: choice
-        options:
-          - none
-          - mini
-          - full
-        default: 'none'
-concurrency:
-  group: bluesky-bot-${{ github.ref }}
-  cancel-in-progress: false
-permissions:
-  contents: read
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      style_prompt:
+        description: 'Style prompt'
+        required: true
+        type: string
+      news_context:
+        description: 'News context'
+        required: true
+        type: string
+
 jobs:
-  run:
+  test:
     runs-on: ubuntu-latest
-    environment: production
-    outputs:
-      new_digest_uri: ${{ steps.run.outputs.new_digest_uri }}
-      bot_status: ${{ steps.run.outputs.bot_status }}
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip'
-
-      - name: Install checker deps
-        run: pip install httpx pydantic Pillow
-
-      - name: Check
-        id: checker
-        env:
-          BOT_HANDLE: ${{ secrets.BOT_HANDLE }}
-          BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
-          OWNER_DID: ${{ secrets.OWNER_DID }}
-          BOT_DID: ${{ secrets.BOT_DID }}
-          PAT: ${{ secrets.PAT }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          LAST_PROCESSED: ${{ vars.LAST_PROCESSED || secrets.LAST_PROCESSED }}
-          MANUAL_DIGEST_TYPE: ${{ inputs.manual_digest }}
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
-        run: python check.py
-
-      - name: Cache Qwen model file
-        if: steps.checker.outputs.status == 'true'
-        uses: actions/cache@v4
-        with:
-          path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
-          key: qwen-model-v1
-
+      
+      - name: Install dependencies
+        run: |
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install diffusers transformers accelerate safetensors huggingface_hub
+      
       - name: Cache SDXL-Turbo model
-        if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
           path: models/sdxl-turbo
           key: sdxl-turbo-v1
-
-      - name: Install heavy deps
-        if: steps.checker.outputs.status == 'true'
-        run: |
-          pip install --upgrade pip setuptools wheel
-          CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex huggingface_hub
-
-      - name: Install PyTorch and diffusers
-        if: steps.checker.outputs.has_full == 'true'
-        run: |
-          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers transformers accelerate safetensors
-
-      - name: Verify and Download Qwen Model
-        if: steps.checker.outputs.status == 'true'
-        run: |
-          set -e
-          mkdir -p models
-          FILE="models/qwen2.5-coder-14b-instruct-q5_k_m.gguf"
-          EXPECTED_SHA256="${{ secrets.MODEL_SHA256 }}"
-          MIN_SIZE=100000000
-
-          if [ -z "$EXPECTED_SHA256" ]; then
-            echo "[WARN] MODEL_SHA256 secret is empty or not set!"
-          else
-            echo "[OK] MODEL_SHA256 secret is set (length: ${#EXPECTED_SHA256})"
-          fi
-
-          if [ -f "$FILE" ]; then
-            FILE_SIZE=$(stat -c%s "$FILE" 2>/dev/null || echo 0)
-            if [ "$FILE_SIZE" -ge "$MIN_SIZE" ]; then
-              if [ -n "$EXPECTED_SHA256" ] && echo "$EXPECTED_SHA256  $FILE" | sha256sum -c - >/dev/null 2>&1; then
-                echo "[OK] Qwen model cached and verified (${FILE_SIZE} bytes), skipping download."
-              elif [ -z "$EXPECTED_SHA256" ]; then
-                echo "[OK] Qwen model cached (${FILE_SIZE} bytes), no hash to verify, skipping download."
-              else
-                echo "[WARN] Hash mismatch on cached file, removing."
-                rm -f "$FILE"
-              fi
-            else
-              echo "[WARN] Cached file too small (${FILE_SIZE} bytes), removing."
-              rm -f "$FILE"
-            fi
-          fi
-
-          if [ ! -f "$FILE" ]; then
-            echo "[INFO] Downloading Qwen model..."
-            curl -L --retry 5 --retry-delay 15 -o "$FILE" "https://huggingface.co/Qwen/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/qwen2.5-coder-14b-instruct-q5_k_m.gguf?download=true"
-            FILE_SIZE=$(stat -c%s "$FILE" 2>/dev/null || echo 0)
-            echo "[INFO] Downloaded file size: ${FILE_SIZE} bytes"
-            if [ "$FILE_SIZE" -lt "$MIN_SIZE" ]; then
-              echo "[ERROR] Downloaded file too small (${FILE_SIZE} bytes), likely an error page."
-              rm -f "$FILE"
-              exit 1
-            fi
-            if [ -n "$EXPECTED_SHA256" ]; then
-              echo "[INFO] Verifying downloaded Qwen model..."
-              echo "$EXPECTED_SHA256  $FILE" | sha256sum -c -
-            fi
-          fi
-
-      - name: Verify and Download SDXL-Turbo Model
-        if: steps.checker.outputs.has_full == 'true'
+      
+      - name: Download SDXL-Turbo model
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          set -e
-          mkdir -p models/sdxl-turbo
           if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
-            echo "[INFO] Downloading SDXL-Turbo model..."
+            echo "Downloading SDXL-Turbo model..."
             python -c "
           import os
           from huggingface_hub import snapshot_download
@@ -142,41 +46,11 @@ jobs:
           if token:
               kwargs['token'] = token
           snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo', **kwargs)
-          print('[OK] SDXL-Turbo downloaded')
           "
-          else
-            echo "[OK] SDXL-Turbo model cached"
           fi
-
-      - name: Run Bot
-        id: run
-        if: steps.checker.outputs.status == 'true'
+      
+      - name: Generate test image
         env:
-          PYTHONUNBUFFERED: "1"
-          TASKS_JSON: ${{ steps.checker.outputs.tasks }}
-          PREV_STATE_JSON: ${{ steps.checker.outputs.state_json }}
-          SCHED_TYPE: ${{ steps.checker.outputs.scheduled_type }}
-          BOT_HANDLE: ${{ secrets.BOT_HANDLE }}
-          BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
-          BOT_DID: ${{ secrets.BOT_DID }}
-          OWNER_DID: ${{ secrets.OWNER_DID }}
-          PAT: ${{ secrets.PAT }}
-          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          LINK_CACHE_TTL: 300
-          MAX_LINK_CONTENT_SIZE: 600
-          LLAMA_NO_ACCELERATE: 1
-          DEBUG_OWNER: "true"
-          LOG_PROMPTS: "false"
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
-        run: python bot.py
-
-      - name: Health check alert
-        if: failure()
-        run: |
-          if [ -n "${{ secrets.ALERT_WEBHOOK }}" ]; then
-            curl -X POST -H "Content-Type: application/json" \
-            -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-            "${{ secrets.ALERT_WEBHOOK }}" || true
-          fi
+          STYLE_PROMPT: ${{ inputs.style_prompt }}
+          NEWS_CONTEXT: ${{ inputs.news_context }}
+        run: python test_image_gen.py "$STYLE_PROMPT" "$NEWS_CONTEXT"
