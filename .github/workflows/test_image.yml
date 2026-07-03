@@ -2,16 +2,11 @@ name: Test Image Generation
 on:
   workflow_dispatch:
     inputs:
-      style_prompt:
-        description: 'Style prompt'
+      prompt:
+        description: 'Short prompt: subject first, then style. Keep it simple.'
         required: true
         type: string
-        default: 'clean professional stencil graffiti on pure white wall, sharp black silhouette, crisp edges, high contrast monochrome, minimal composition, no drips, no overspray, no texture, studio lighting'
-      news_context:
-        description: 'News context'
-        required: true
-        type: string
-        default: 'Bank of America approves new loan program for small businesses, offering reduced interest rates to stimulate economic growth'
+        default: 'Bank of America building with falling dollar signs, black stencil on white wall, Banksy style, minimalist, centered'
 
 jobs:
   test:
@@ -58,9 +53,8 @@ jobs:
       
       - name: Generate test image
         env:
-          STYLE_PROMPT: ${{ inputs.style_prompt }}
-          NEWS_CONTEXT: ${{ inputs.news_context }}
-        run: python test_image_gen.py "$NEWS_CONTEXT" "$STYLE_PROMPT"
+          PROMPT: ${{ inputs.prompt }}
+        run: python test_image_gen.py "$PROMPT"
       
       - name: Commit and push image
         run: |
