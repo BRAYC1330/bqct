@@ -24,8 +24,8 @@ def load_model():
     logger.info("Model loaded successfully")
     return model
 
-def generate_image(pipe, style_prompt, news_context):
-    full_prompt = f"{style_prompt} {news_context}"
+def generate_image(pipe, news_context, style_prompt):
+    full_prompt = f"{news_context}, {style_prompt}"
     logger.info(f"Full prompt: {full_prompt}")
     
     start = time.time()
@@ -41,19 +41,23 @@ def generate_image(pipe, style_prompt, news_context):
     logger.info(f"Generated in {elapsed:.1f}s")
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    for f in os.listdir(OUTPUT_DIR):
+        os.remove(os.path.join(OUTPUT_DIR, f))
+    
     image.save(OUTPUT_FILE, format="PNG")
     logger.info(f"Saved: {OUTPUT_FILE}")
 
 def main():
     if len(sys.argv) < 3:
-        logger.error("Usage: python test_image_gen.py <style_prompt> <news_context>")
+        logger.error("Usage: python test_image_gen.py <news_context> <style_prompt>")
         sys.exit(1)
     
-    style_prompt = sys.argv[1]
-    news_context = sys.argv[2]
+    news_context = sys.argv[1]
+    style_prompt = sys.argv[2]
     
     pipe = load_model()
-    generate_image(pipe, style_prompt, news_context)
+    generate_image(pipe, news_context, style_prompt)
 
 if __name__ == "__main__":
     main()
