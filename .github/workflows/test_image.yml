@@ -2,11 +2,16 @@ name: Test Image Generation
 on:
   workflow_dispatch:
     inputs:
-      prompt:
-        description: 'Prompt (keep it short, 512x512 native size)'
+      news_context:
+        description: 'News context - what to draw'
         required: true
         type: string
-        default: 'Bank of America approves new loan program for small businesses, offering reduced interest rates to stimulate economic growth, Style: Banksy. clean professional stencil graffiti on pure white wall, black silhouette, the main object is in the center of the wall, with a large indentation around it on all sides.'
+        default: 'Bank of America approves new loan program for small businesses, offering reduced interest rates to stimulate economic growth'
+      style_prompt:
+        description: 'Style description - how to draw it'
+        required: true
+        type: string
+        default: 'Style: Banksy. clean professional stencil graffiti on pure white wall, black silhouette, the main object is in the center of the wall, with a large indentation around it on all sides.'
 
 jobs:
   test:
@@ -53,8 +58,9 @@ jobs:
       
       - name: Generate test image
         env:
-          PROMPT: ${{ inputs.prompt }}
-        run: python test_image_gen.py "$PROMPT"
+          NEWS_CONTEXT: ${{ inputs.news_context }}
+          STYLE_PROMPT: ${{ inputs.style_prompt }}
+        run: python test_image_gen.py "$NEWS_CONTEXT" "$STYLE_PROMPT"
       
       - name: Commit and push image
         run: |
