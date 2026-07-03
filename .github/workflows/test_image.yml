@@ -77,3 +77,10 @@ jobs:
           git add output/test_output.png
           git commit -m "Test image: ${{ github.run_number }}" || echo "No changes"
           git push
+      
+      - name: Clean up model to free space for cache
+        if: always()
+        run: |
+          echo "Removing model to free space for cache..."
+          rm -rf models/sdxl-turbo
+          df -h
