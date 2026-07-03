@@ -26,7 +26,7 @@ def load_model():
 
 def generate_image(pipe, news_context, style_prompt):
     full_prompt = f"{news_context}, {style_prompt}"
-    logger.info(f"Full prompt: {full_prompt}")
+    logger.info(f"Full prompt: {full_prompt = f"Banksy stencil of {news_object}, black silhouette on white wall, minimalist"}")
     
     start = time.time()
     image = pipe(
