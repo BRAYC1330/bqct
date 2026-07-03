@@ -8,10 +8,10 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-MODEL_DIR = "models/sdxl-base"
+MODEL_DIR = "models/sdxl-turbo"
 
 def load_model():
-    logger.info("Loading SDXL model...")
+    logger.info("Loading SDXL-Turbo model...")
     model = StableDiffusionXLPipeline.from_pretrained(
         MODEL_DIR,
         torch_dtype=torch.float32,
@@ -26,14 +26,11 @@ def generate_image(pipe, style_prompt, news_context):
     full_prompt = f"{style_prompt} {news_context}"
     logger.info(f"Full prompt: {full_prompt}")
     
-    negative_prompt = "colorful, rainbow, bright colors, full wall coverage, crowd, complex composition, detailed background"
-    
     start = time.time()
     image = pipe(
         prompt=full_prompt,
-        negative_prompt=negative_prompt,
-        num_inference_steps=10,
-        guidance_scale=7.5,
+        num_inference_steps=4,
+        guidance_scale=0.0,
         width=1024,
         height=1024
     ).images[0]
