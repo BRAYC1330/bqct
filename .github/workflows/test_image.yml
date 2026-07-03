@@ -26,19 +26,11 @@ jobs:
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install diffusers transformers accelerate safetensors huggingface_hub
       
-      - name: Cache SDXL-Turbo model
-        uses: actions/cache@v4
-        with:
-          path: models/sdxl-turbo
-          key: sdxl-turbo-v1
-      
       - name: Download SDXL-Turbo model
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
-            echo "Downloading SDXL-Turbo model..."
-            python -c "
+          python -c "
           import os
           from huggingface_hub import snapshot_download
           token = os.environ.get('HF_API_TOKEN', '').strip()
@@ -47,10 +39,15 @@ jobs:
               kwargs['token'] = token
           snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo', **kwargs)
           "
-          fi
       
       - name: Generate test image
         env:
           STYLE_PROMPT: ${{ inputs.style_prompt }}
           NEWS_CONTEXT: ${{ inputs.news_context }}
         run: python test_image_gen.py "$STYLE_PROMPT" "$NEWS_CONTEXT"
+      
+      - name: Upload test image
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-image
+          path: test_output.png
