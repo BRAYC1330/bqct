@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 MODEL_DIR = "models/sdxl-turbo"
+OUTPUT_FILE = "test_output.png"
 
 def load_model():
     logger.info("Loading SDXL-Turbo model...")
@@ -37,8 +38,9 @@ def generate_image(pipe, style_prompt, news_context):
     
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
-    logger.info(f"Image size: {image.size}")
-    logger.info("Image generated successfully (not saved)")
+    
+    image.save(OUTPUT_FILE, format="PNG")
+    logger.info(f"Saved: {OUTPUT_FILE}")
 
 def main():
     if len(sys.argv) < 3:
