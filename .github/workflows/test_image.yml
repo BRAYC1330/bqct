@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
       
       - uses: actions/setup-python@v5
         with:
@@ -48,9 +50,10 @@ jobs:
           NEWS_CONTEXT: ${{ inputs.news_context }}
         run: python test_image_gen.py "$STYLE_PROMPT" "$NEWS_CONTEXT"
       
-      - name: Upload image
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-image
-          path: output/test_output.png
-          format: zip
+      - name: Commit and push image
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add output/test_output.png
+          git commit -m "Test image: ${{ github.run_number }}" || echo "No changes"
+          git push
