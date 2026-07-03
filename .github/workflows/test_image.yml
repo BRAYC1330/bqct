@@ -3,10 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       prompt:
-        description: 'Short prompt: subject first, then style. Keep it simple.'
+        description: 'Prompt (keep it short, 512x512 native size)'
         required: true
         type: string
-        default: 'Bank of America building with falling dollar signs, black stencil on white wall, Banksy style, minimalist, centered'
+        default: 'Bank of America approves new loan program for small businesses, offering reduced interest rates to stimulate economic growth, Style: Banksy. clean professional stencil graffiti on pure white wall, black silhouette, the main object is in the center of the wall, with a large indentation around it on all sides.'
 
 jobs:
   test:
