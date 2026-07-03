@@ -9,7 +9,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 MODEL_DIR = "models/sdxl-turbo"
-OUTPUT_FILE = "test_output.png"
+OUTPUT_DIR = "output"
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "test_output.png")
 
 def load_model():
     logger.info("Loading SDXL-Turbo model...")
@@ -38,6 +39,11 @@ def generate_image(pipe, style_prompt, news_context):
     
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
+    
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    for f in os.listdir(OUTPUT_DIR):
+        os.remove(os.path.join(OUTPUT_DIR, f))
     
     image.save(OUTPUT_FILE, format="PNG")
     logger.info(f"Saved: {OUTPUT_FILE}")
