@@ -1,6 +1,38 @@
 {
-  "news_context": "The United States and Iran are scheduled to resume direct negotiations in Doha on July 18, focusing on the Strait of Hormuz and regional stability. Amidst these diplomatic efforts, European governments have shifted their stance to accept potential transit fees for shipping through the Strait as inevitable.",
-  "variations": [
+  "news_raw": "The United States and Iran are scheduled to resume direct negotiations in Doha on July 18, focusing on the Strait of Hormuz and regional stability. Amidst these diplomatic efforts, European governments have shifted their stance to accept potential transit fees for shipping through the Strait as inevitable, prioritizing non-discriminatory rules over opposing the charges. Simultaneously, Saudi Arabia has increased crude oil exports through the waterway following a US-Iran truce, while Iranian oil tankers remain anchored off Asian ports due to a lack of buyers despite sanctions waivers. Tensions persist as Iran warns against US intervention in the Strait, and the US maintains a significant naval presence in the region, including two aircraft carriers. Reports indicate that Washington offered to release frozen Iranian assets in exchange for free passage, an offer Tehran reportedly rejected. Additionally, concerns remain regarding Israeli military intentions and the security of Iranian officials during ongoing diplomatic engagements.",
+  "news_variations": [
+    {
+      "id": 1,
+      "name": "raw",
+      "text": "The United States and Iran are scheduled to resume direct negotiations in Doha on July 18, focusing on the Strait of Hormuz and regional stability. Amidst these diplomatic efforts, European governments have shifted their stance to accept potential transit fees for shipping through the Strait as inevitable, prioritizing non-discriminatory rules over opposing the charges. Simultaneously, Saudi Arabia has increased crude oil exports through the waterway following a US-Iran truce, while Iranian oil tankers remain anchored off Asian ports due to a lack of buyers despite sanctions waivers. Tensions persist as Iran warns against US intervention in the Strait, and the US maintains a significant naval presence in the region, including two aircraft carriers. Reports indicate that Washington offered to release frozen Iranian assets in exchange for free passage, an offer Tehran reportedly rejected. Additionally, concerns remain regarding Israeli military intentions and the security of Iranian officials during ongoing diplomatic engagements."
+    },
+    {
+      "id": 2,
+      "name": "short",
+      "text": "US and Iran resume direct negotiations in Doha on July 18, focusing on Strait of Hormuz and regional stability. European governments accept potential transit fees for shipping. Saudi Arabia increased crude oil exports following US-Iran truce. US maintains naval presence with two aircraft carriers."
+    },
+    {
+      "id": 3,
+      "name": "key_objects",
+      "text": "US aircraft carrier and Iranian oil tanker in Strait of Hormuz, diplomats at negotiation table, oil barrels"
+    },
+    {
+      "id": 4,
+      "name": "symbolic",
+      "text": "Two hands shaking over oil barrel with warships in background, diplomatic negotiations"
+    },
+    {
+      "id": 5,
+      "name": "minimal",
+      "text": "US Iran negotiations, Strait of Hormuz, oil tankers"
+    },
+    {
+      "id": 6,
+      "name": "action",
+      "text": "Diplomats negotiating while warships patrol strait, oil tankers anchored"
+    }
+  ],
+  "art_styles": [
     {
       "id": 1,
       "style": "Style: Banksy. clean professional stencil graffiti on pure white wall, black silhouette, the main object is in the center of the wall, with a large indentation around it on all sides."

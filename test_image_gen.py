@@ -39,6 +39,7 @@ def generate_image(pipe, prompt, output_file):
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
     
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     image.save(output_file, format="PNG")
     logger.info(f"Saved: {output_file}")
 
@@ -52,28 +53,42 @@ def main():
     with open(prompts_file, 'r') as f:
         data = json.load(f)
     
-    news_context = data['news_context']
-    variations = data['variations']
+    news_variations = data['news_variations']
+    art_styles = data['art_styles']
     
-    logger.info(f"Generating {len(variations)} images...")
+    total = len(art_styles) * len(news_variations)
+    logger.info(f"Generating {total} images ({len(art_styles)} styles × {len(news_variations)} news variants)...")
     
     pipe = load_model()
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     for f in os.listdir(OUTPUT_DIR):
-        os.remove(os.path.join(OUTPUT_DIR, f))
+        fp = os.path.join(OUTPUT_DIR, f)
+        if os.path.isfile(fp):
+            os.remove(fp)
+        elif os.path.isdir(fp):
+            import shutil
+            shutil.rmtree(fp)
     
-    for variation in variations:
-        var_id = variation['id']
-        style = variation['style']
+    count = 0
+    for art_style in art_styles:
+        style_id = art_style['id']
+        style_text = art_style['style']
+        style_dir = os.path.join(OUTPUT_DIR, f"style_{style_id:02d}")
         
-        full_prompt = f"{news_context}, {style}"
-        output_file = os.path.join(OUTPUT_DIR, f"test_{var_id:02d}.png")
-        
-        generate_image(pipe, full_prompt, output_file)
+        for news_var in news_variations:
+            news_id = news_var['id']
+            news_name = news_var['name']
+            news_text = news_var['text']
+            
+            full_prompt = f"{news_text}, {style_text}"
+            output_file = os.path.join(style_dir, f"news_{news_id:02d}_{news_name}.png")
+            
+            generate_image(pipe, full_prompt, output_file)
+            count += 1
     
-    logger.info(f"✓ Generated {len(variations)} images in {OUTPUT_DIR}/")
+    logger.info(f"✓ Generated {count} images in {OUTPUT_DIR}/")
 
 if __name__ == "__main__":
     main()
