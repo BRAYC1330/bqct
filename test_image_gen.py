@@ -32,8 +32,8 @@ def generate_image(pipe, prompt):
         prompt=prompt,
         num_inference_steps=4,
         guidance_scale=0.0,
-        width=1024,
-        height=1024
+        width=512,
+        height=512
     ).images[0]
     
     elapsed = time.time() - start
