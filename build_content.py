@@ -62,6 +62,23 @@ def _generate_banksy_scene(llm, context: str) -> str:
         return ""
 
 
+def _compress_scene_for_stencil(llm, scene: str) -> str:
+    if not llm:
+        return scene[:100]
+    try:
+        prompt_text = generator.load_prompt("banksy_compress", scene=scene[:200])
+        output = llm(str(prompt_text), max_tokens=20, temperature=0.3)
+        compressed = _get_llm_text(output).strip()
+        compressed = re.sub(r'^(visual\s*(?:elements?)?:?\s*|elements?:?\s*)', '', compressed, flags=re.I).strip()
+        if len(compressed) > 50:
+            compressed = compressed[:50].rsplit(',', 1)[0]
+        logger.info(f"[digest] Compressed scene: {compressed}")
+        return compressed
+    except Exception as e:
+        logger.warning(f"[digest] Scene compression failed: {e}")
+        return scene[:100]
+
+
 async def _generate_digest_embed(client, trends, task_type, llm=None, visual_scene: str = "", full_context: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
@@ -76,33 +93,23 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        image_prompt = (
-            f"Small black stencil graffiti centered on empty beige concrete wall. "
-            f"Artwork is ONLY 20-30% of wall size, rest is EMPTY weathered concrete. "
-            f"Simple scene: {safe_visual} "
-            f"SOLID BLACK silhouette/stencil, pure monochrome. "
-            f"Minimalist composition - 2-3 elements maximum forming ONE group. "
-            f"Spray paint drips below. Documentary photo style."
-        )
+        compressed_scene = _compress_scene_for_stencil(llm, safe_visual)
 
-        negative_prompt = (
-            "blurry, low quality, watermark, signature, "
-            "people in foreground, crowd, viewers, spectators, "
-            "colorful, rainbow, pastel, bright colors, red, green, blue, yellow, "
-            "full wall coverage, artwork filling entire wall, large mural, "
-            "multiple separate elements, scattered objects, chaotic layout, "
-            "detailed background, complex composition, many people, crowd scene, "
-            "flags, money, text, words, letters, "
-            "cartoon, anime, illustration, digital art, painting, "
-            "professional studio, ornate, decorative"
+        image_prompt = (
+            f"Small black stencil graffiti on white concrete wall. "
+            f"Artwork is only 20 percent of wall size in center, rest is empty white wall. "
+            f"Scene: {compressed_scene}. "
+            f"Solid black silhouette, pure monochrome. "
+            f"Minimalist composition, spray paint drips. "
+            f"Documentary photo style."
         )
 
         logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
-        logger.info(f"[digest] Short keyword: {safe_keyword}")
+        logger.info(f"[digest] Compressed: {compressed_scene}")
         logger.info(f"[digest] Image prompt: {image_prompt}")
 
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
+        image_bytes = local_image_gen.generate_image(image_prompt, "", w, h)
         
         if not image_bytes:
             logger.warning("[digest] Image generation failed, posting text-only")
