@@ -46,8 +46,9 @@ jobs:
           NEWS_CONTEXT: ${{ inputs.news_context }}
         run: python test_image_gen.py "$STYLE_PROMPT" "$NEWS_CONTEXT"
       
-      - name: Upload test image
+      - name: Upload image as artifact
         uses: actions/upload-artifact@v4
         with:
           name: test-image
           path: test_output.png
+          retention-days: 1
