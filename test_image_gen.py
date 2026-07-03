@@ -24,13 +24,12 @@ def load_model():
     logger.info("Model loaded successfully")
     return model
 
-def generate_image(pipe, news_context, style_prompt):
-    full_prompt = f"{news_context}, {style_prompt}"
-    logger.info(f"Full prompt: {full_prompt = f"Banksy stencil of {news_object}, black silhouette on white wall, minimalist"}")
+def generate_image(pipe, prompt):
+    logger.info(f"Prompt: {prompt}")
     
     start = time.time()
     image = pipe(
-        prompt=full_prompt,
+        prompt=prompt,
         num_inference_steps=4,
         guidance_scale=0.0,
         width=1024,
@@ -49,15 +48,14 @@ def generate_image(pipe, news_context, style_prompt):
     logger.info(f"Saved: {OUTPUT_FILE}")
 
 def main():
-    if len(sys.argv) < 3:
-        logger.error("Usage: python test_image_gen.py <news_context> <style_prompt>")
+    if len(sys.argv) < 2:
+        logger.error("Usage: python test_image_gen.py <prompt>")
         sys.exit(1)
     
-    news_context = sys.argv[1]
-    style_prompt = sys.argv[2]
+    prompt = sys.argv[1]
     
     pipe = load_model()
-    generate_image(pipe, news_context, style_prompt)
+    generate_image(pipe, prompt)
 
 if __name__ == "__main__":
     main()
