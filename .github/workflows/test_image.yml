@@ -6,10 +6,12 @@ on:
         description: 'Style prompt'
         required: true
         type: string
+        default: 'Clean professional stencil graffiti on pure white wall, sharp black silhouette, crisp edges, high contrast monochrome, minimal composition, no drips, no overspray, no texture, studio lighting'
       news_context:
         description: 'News context'
         required: true
         type: string
+        default: 'Bank of America approves new loan program for small businesses, offering reduced interest rates to stimulate economic growth'
 
 jobs:
   test:
@@ -46,9 +48,9 @@ jobs:
           NEWS_CONTEXT: ${{ inputs.news_context }}
         run: python test_image_gen.py "$STYLE_PROMPT" "$NEWS_CONTEXT"
       
-      - name: Upload image as artifact
+      - name: Upload image
         uses: actions/upload-artifact@v4
         with:
           name: test-image
-          path: test_output.png
-          retention-days: 1
+          path: output/test_output.png
+          format: zip
