@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
     inputs:
       style_prompt:
-        description: 'Style prompt (e.g., "Small black stencil graffiti on white concrete wall")'
+        description: 'Style prompt'
         required: true
         type: string
       news_context:
-        description: 'News context (e.g., "Bank of America approves loans for small businesses")'
+        description: 'News context'
         required: true
         type: string
 
@@ -54,9 +54,3 @@ jobs:
           STYLE_PROMPT: ${{ inputs.style_prompt }}
           NEWS_CONTEXT: ${{ inputs.news_context }}
         run: python test_image_gen.py "$STYLE_PROMPT" "$NEWS_CONTEXT"
-      
-      - name: Upload test image
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-image-${{ github.run_number }}
-          path: test_output.png
