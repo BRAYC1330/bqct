@@ -41,19 +41,42 @@ jobs:
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
+          echo "Checking model..."
           if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
-            echo "Downloading SDXL-Turbo model..."
+            echo "Model not found, downloading..."
             python -c "
           import os
+          import time
           from huggingface_hub import snapshot_download
           token = os.environ.get('HF_API_TOKEN', '').strip()
           kwargs = {}
           if token:
               kwargs['token'] = token
-          snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo', **kwargs)
+          
+          max_retries = 3
+          for attempt in range(max_retries):
+              try:
+                  print(f'Attempt {attempt + 1}/{max_retries}')
+                  snapshot_download(
+                      'stabilityai/sdxl-turbo',
+                      local_dir='models/sdxl-turbo',
+                      **kwargs
+                  )
+                  print('Download successful')
+                  break
+              except Exception as e:
+                  print(f'Download failed: {e}')
+                  if attempt < max_retries - 1:
+                      print('Cleaning up and retrying...')
+                      import shutil
+                      if os.path.exists('models/sdxl-turbo'):
+                          shutil.rmtree('models/sdxl-turbo')
+                      time.sleep(10)
+                  else:
+                      raise
           "
           else
-            echo "SDXL-Turbo model cached"
+            echo "✓ SDXL-Turbo model cached, skipping download"
           fi
       
       - name: Generate test image
