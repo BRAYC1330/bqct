@@ -1,17 +1,6 @@
 name: Test Image Generation
 on:
   workflow_dispatch:
-    inputs:
-      news_context:
-        description: 'News context - what to draw'
-        required: true
-        type: string
-        default: 'Bank of America approves new loan program for small businesses, offering reduced interest rates to stimulate economic growth'
-      style_prompt:
-        description: 'Style description - how to draw it'
-        required: true
-        type: string
-        default: 'Style: Banksy. clean professional stencil graffiti on pure white wall, black silhouette, the main object is in the center of the wall, with a large indentation around it on all sides.'
 
 jobs:
   test:
@@ -79,18 +68,15 @@ jobs:
             echo "✓ SDXL-Turbo model cached, skipping download"
           fi
       
-      - name: Generate test image
-        env:
-          NEWS_CONTEXT: ${{ inputs.news_context }}
-          STYLE_PROMPT: ${{ inputs.style_prompt }}
-        run: python test_image_gen.py "$NEWS_CONTEXT" "$STYLE_PROMPT"
+      - name: Generate test images
+        run: python test_image_gen.py test_prompts.json
       
-      - name: Commit and push image
+      - name: Commit and push images
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add output/test_output.png
-          git commit -m "Test image: ${{ github.run_number }}" || echo "No changes"
+          git add output/*.png
+          git commit -m "Test images: ${{ github.run_number }}" || echo "No changes"
           git push
       
       - name: Clean up model to free space for cache
