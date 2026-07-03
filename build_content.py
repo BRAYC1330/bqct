@@ -67,11 +67,12 @@ def _compress_scene_for_stencil(llm, scene: str) -> str:
         return scene[:100]
     try:
         prompt_text = generator.load_prompt("banksy_compress", scene=scene[:200])
-        output = llm(str(prompt_text), max_tokens=20, temperature=0.3)
+        output = llm(str(prompt_text), max_tokens=30, temperature=0.3)
         compressed = _get_llm_text(output).strip()
-        compressed = re.sub(r'^(visual\s*(?:elements?)?:?\s*|elements?:?\s*)', '', compressed, flags=re.I).strip()
-        if len(compressed) > 50:
-            compressed = compressed[:50].rsplit(',', 1)[0]
+        compressed = re.sub(r'^(visual\s*(?:description?)?:?\s*|description?:?\s*)', '', compressed, flags=re.I).strip()
+        compressed = compressed.strip('"').strip("'").strip()
+        if len(compressed) > 80:
+            compressed = compressed[:80].rsplit(' ', 1)[0]
         logger.info(f"[digest] Compressed scene: {compressed}")
         return compressed
     except Exception as e:
@@ -98,7 +99,7 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         image_prompt = (
             f"Small black stencil graffiti on white concrete wall. "
             f"Artwork is only 20 percent of wall size in center, rest is empty white wall. "
-            f"Scene: {compressed_scene}. "
+            f"Showing {compressed_scene}. "
             f"Solid black silhouette, pure monochrome. "
             f"Minimalist composition, spray paint drips. "
             f"Documentary photo style."
