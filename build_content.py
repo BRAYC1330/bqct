@@ -77,26 +77,24 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"Single cohesive Banksy-style black and white stencil artwork centered on large weathered concrete wall. "
-            f"Small unified scene occupying only 20-30% of wall space in the middle. "
-            f"Scene: {safe_visual} "
-            f"All elements form ONE connected composition, interacting with each other. "
-            f"Pure monochrome stencil art, no colors. "
-            f"Rough concrete texture visible around artwork, spray paint drips. "
-            f"Documentary photography, natural daylight, no yellow tint."
+            f"Small black stencil graffiti centered on empty beige concrete wall. "
+            f"Artwork is ONLY 20-30% of wall size, rest is EMPTY weathered concrete. "
+            f"Simple scene: {safe_visual} "
+            f"SOLID BLACK silhouette/stencil, pure monochrome. "
+            f"Minimalist composition - 2-3 elements maximum forming ONE group. "
+            f"Spray paint drips below. Documentary photo style."
         )
 
         negative_prompt = (
             "blurry, low quality, watermark, signature, "
-            "people, crowd, viewers, spectators, tourists, "
-            "colorful, rainbow, pastel, bright colors, red accent, yellow tint, sepia, "
-            "scattered elements, disconnected objects, multiple separate artworks, "
-            "large artwork, full wall coverage, mural covering entire wall, "
-            "clean wall, pristine surface, "
-            "cartoon, anime, illustration, digital art, "
-            "smooth gradients, airbrushed, professional studio, "
-            "ornate, decorative, temple, church, religious, "
-            "random placement, chaotic composition"
+            "people in foreground, crowd, viewers, spectators, "
+            "colorful, rainbow, pastel, bright colors, red, green, blue, yellow, "
+            "full wall coverage, artwork filling entire wall, large mural, "
+            "multiple separate elements, scattered objects, chaotic layout, "
+            "detailed background, complex composition, many people, crowd scene, "
+            "flags, money, text, words, letters, "
+            "cartoon, anime, illustration, digital art, painting, "
+            "professional studio, ornate, decorative"
         )
 
         logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
