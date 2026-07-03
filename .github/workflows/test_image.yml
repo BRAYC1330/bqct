@@ -75,7 +75,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add output/*.png
+          git add output/
           git commit -m "Test images: ${{ github.run_number }}" || echo "No changes"
           git push
       
