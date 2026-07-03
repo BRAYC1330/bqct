@@ -59,31 +59,23 @@ banksy_scene: |
   - Use concrete visual nouns, NO abstract terms
   - Think: "What would Banksy paint about this topic?"
   
-  Examples:
-  * Bank approving Ethereum → "child in hoodie spray-painting Ethereum diamond logo on Federal Reserve wall, security guard looking away"
-  * Earthquake in Venezuela → "crumbling concrete, torn Venezuelan flag, child holding broken toy, dust clouds"
-  * Apple AI launch → "giant bitten Apple logo, robot arms assembling it, workers in chains below"
-  
   News context:
   {context}
   
   Visual scene:
 
 banksy_compress: |
-  Compress this news scene into 2-3 key visual elements for a small stencil graffiti.
+  Describe this news scene as a simple visual for stencil graffiti.
   
   Rules:
-  - Output ONLY 5-10 words total
-  - List 2-3 concrete objects/actions separated by comma
-  - No abstract concepts, only visual nouns
-  - Think: what 2-3 things represent this news?
-  
-  Example: "child, Bitcoin logo, spray can"
-  Example: "rat, broken chain, dollar sign"
+  - Output 10-20 words describing the scene
+  - Include specific details: which bank, what action, who is involved
+  - Describe what is happening, not just objects
+  - No abstract concepts, only visual description
   
   News scene: {scene}
   
-  Visual elements:
+  Visual description:
 
 context_memory: |
   Summarize the conversation history.
