@@ -11,6 +11,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 MODEL_DIR = "models/sdxl-turbo"
+LORA_DIR = "lora"
+LORA_PATH = os.path.join(LORA_DIR, "banksy-style.safetensors")
 OUTPUT_DIR = "output"
 
 def load_model():
@@ -22,6 +24,14 @@ def load_model():
         local_files_only=True
     )
     model.to("cpu")
+    
+    if os.path.exists(LORA_PATH):
+        logger.info(f"Loading LoRA from {LORA_PATH}...")
+        model.load_lora_weights(LORA_PATH)
+        logger.info("LoRA loaded successfully")
+    else:
+        logger.warning(f"LoRA file not found at {LORA_PATH}, using base model only")
+    
     logger.info("Model loaded successfully")
     return model
 
