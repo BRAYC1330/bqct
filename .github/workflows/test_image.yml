@@ -68,11 +68,19 @@ jobs:
             echo "✓ SDXL-Turbo model cached, skipping download"
           fi
       
+      - name: Cache Banksy LoRA
+        uses: actions/cache@v4
+        with:
+          path: lora
+          key: banksy-lora-v1
+      
       - name: Download Banksy LoRA
         run: |
-          echo "Downloading Banksy LoRA..."
-          mkdir -p lora
-          python -c "
+          echo "Checking LoRA..."
+          if [ ! -f "lora/Banksy Style.safetensors" ]; then
+            echo "LoRA not found, downloading..."
+            mkdir -p lora
+            python -c "
           from huggingface_hub import hf_hub_download
           import os
           
@@ -87,6 +95,9 @@ jobs:
           except Exception as e:
               print(f'Failed to download LoRA: {e}')
           "
+          else
+            echo "✓ Banksy LoRA cached, skipping download"
+          fi
       
       - name: Generate test images
         run: python test_image_gen.py test_prompts.json
