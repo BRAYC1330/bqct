@@ -9,19 +9,43 @@
   "art_styles": [
     {
       "id": 1,
-      "style": "Black and white editorial cartoon, newspaper comic style, pure black ink on white paper, no color, high contrast"
+      "style": "Vintage black and white newspaper front page, large central editorial illustration, halftone print texture, classic broadsheet layout, pure monochrome"
     },
     {
       "id": 2,
-      "style": "Vintage newspaper caricature, black ink drawing on white background, stark contrast, no yellow tint"
+      "style": "Modern minimalist black and white newspaper, dominant central artwork covering 60 percent of page, clean sans-serif headlines, pure monochrome ink on white"
     },
     {
       "id": 3,
-      "style": "Comic book newspaper illustration, pure black and white, ink lines, no color, clean white background"
+      "style": "Black and white tabloid newspaper front page, dramatic large central illustration, bold sensational headlines, high contrast monochrome print"
     },
     {
       "id": 4,
-      "style": "Political cartoon newspaper style, stark black silhouette on pure white, no yellowing, sharp edges"
+      "style": "Black and white editorial cartoon newspaper, central symbolic illustration with headline above, comic ink drawing style, pure black ink on white paper"
+    },
+    {
+      "id": 5,
+      "style": "Underground black and white newspaper, gritty central artwork, rough ink texture, alternative press layout, stark monochrome"
+    },
+    {
+      "id": 6,
+      "style": "Classic black and white print newspaper, central woodcut style illustration, traditional typesetting, pure black and white no color"
+    },
+    {
+      "id": 7,
+      "style": "Black and white photojournalism newspaper front page, large central photograph style illustration, dramatic lighting, pure monochrome"
+    },
+    {
+      "id": 8,
+      "style": "Retro 1920s black and white newspaper, art deco central illustration, vintage typography, pure monochrome ink print"
+    },
+    {
+      "id": 9,
+      "style": "Black and white political newspaper front page, propaganda style central illustration, bold stark contrast, pure monochrome"
+    },
+    {
+      "id": 10,
+      "style": "Black and white literary newspaper front page, elegant central illustration, sophisticated layout, fine ink drawing, pure monochrome"
     }
   ]
 }
