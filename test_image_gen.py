@@ -4,6 +4,7 @@ import json
 import torch
 from diffusers import StableDiffusionXLPipeline
 from PIL import Image, ImageEnhance
+import shutil
 import time
 import logging
 
@@ -26,22 +27,15 @@ def load_model():
     return model
 
 def remove_yellow_tint(image):
-    # Конвертация в RGB если нужно
     if image.mode != 'RGB':
         image = image.convert('RGB')
     
-    # Усиление контраста
     enhancer = ImageEnhance.Contrast(image)
     image = enhancer.enhance(1.5)
     
-    # Конвертация в grayscale
     image = image.convert('L')
-    
-    # Применение threshold для чистого ч/б
     threshold = 128
     image = image.point(lambda x: 0 if x < threshold else 255, '1')
-    
-    # Конвертация обратно в RGB
     image = image.convert('RGB')
     
     return image
@@ -61,10 +55,8 @@ def generate_image(pipe, prompt, output_file):
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
     
-    # Удаление желтизны
     image = remove_yellow_tint(image)
     
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
     image.save(output_file, format="PNG")
     logger.info(f"Saved: {output_file}")
 
@@ -88,11 +80,13 @@ def main():
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    # Очистка старых файлов
+    # Полная очистка директории (файлы и папки)
     for f in os.listdir(OUTPUT_DIR):
         fp = os.path.join(OUTPUT_DIR, f)
-        if os.path.isfile(fp):
+        if os.path.isfile(fp) or os.path.islink(fp):
             os.remove(fp)
+        elif os.path.isdir(fp):
+            shutil.rmtree(fp)
     
     count = 1
     for art_style in art_styles:
