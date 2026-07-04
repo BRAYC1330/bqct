@@ -2,32 +2,22 @@
   "news_variations": [
     {
       "id": 1,
-      "name": "short",
-      "text": "US and Iran resume direct negotiations in Doha on July 18, focusing on Strait of Hormuz and regional stability. European governments accept potential transit fees for shipping. Saudi Arabia increased crude oil exports following US-Iran truce. US maintains naval presence with two aircraft carriers."
-    },
-    {
-      "id": 2,
       "name": "symbolic",
       "text": "Two hands shaking over oil barrel with warships in background, diplomatic negotiations"
-    },
-    {
-      "id": 3,
-      "name": "minimal",
-      "text": "US Iran negotiations, Strait of Hormuz, oil tankers"
     }
   ],
   "art_styles": [
     {
       "id": 1,
-      "style": "black stencil silhouette, crisp edges, pure monochrome, spray paint style"
+      "style": "Front page of vintage black and white newspaper, large central symbolic illustration, newspaper masthead and headlines around the artwork, classic print layout"
     },
     {
       "id": 2,
-      "style": "black and white stencil art, sharp cutout edges, minimalist political graffiti"
+      "style": "Modern minimalist newspaper front page, dominant central black and white artwork, clean typography above and below, editorial layout, lots of white space"
     },
     {
       "id": 3,
-      "style": "solid black silhouette, clean edges, street art stencil, high contrast"
+      "style": "Bold tabloid newspaper front page, dramatic large central artwork, sensational headlines surrounding the image, high contrast black and white print"
     }
   ]
 }
