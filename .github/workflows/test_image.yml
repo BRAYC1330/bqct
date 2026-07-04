@@ -68,41 +68,15 @@ jobs:
             echo "✓ SDXL-Turbo model cached, skipping download"
           fi
       
-      - name: Cache Banksy LoRA
-        uses: actions/cache@v4
-        with:
-          path: lora
-          key: banksy-lora-v1
-      
       - name: Download Banksy LoRA
         run: |
-          echo "Checking LoRA..."
+          mkdir -p lora
           if [ ! -f "lora/Banksy Style.safetensors" ]; then
-            echo "LoRA not found, downloading..."
-            mkdir -p lora
-            python -c "
-          from huggingface_hub import hf_hub_download
-          import os
-          
-          try:
-              hf_hub_download(
-                  repo_id='KappaNeuro/banksy-style',
-                  filename='Banksy Style.safetensors',
-                  local_dir='lora',
-                  local_dir_use_symlinks=False
-              )
-              print('LoRA downloaded successfully')
-          except Exception as e:
-              print(f'Failed to download LoRA: {e}')
-          "
+            echo "Downloading LoRA..."
+            wget -O "lora/Banksy Style.safetensors" "https://huggingface.co/KappaNeuro/banksy-style/resolve/main/Banksy%20Style.safetensors"
           else
-            echo "✓ Banksy LoRA cached, skipping download"
+            echo "✓ LoRA already exists"
           fi
-      
-      - name: List lora directory
-        run: |
-          echo "Contents of lora directory:"
-          ls -la lora/ || echo "lora directory not found"
       
       - name: Generate test images
         run: python test_image_gen.py test_prompts.json
@@ -120,4 +94,5 @@ jobs:
         run: |
           echo "Removing model to free space for cache..."
           rm -rf models/sdxl-turbo
+          rm -rf lora
           df -h
