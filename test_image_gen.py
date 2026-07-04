@@ -31,10 +31,10 @@ def remove_yellow_tint(image):
         image = image.convert('RGB')
     
     enhancer = ImageEnhance.Contrast(image)
-    image = enhancer.enhance(1.2)
+    image = enhancer.enhance(1)
     
     image = image.convert('L')
-    threshold = 100  # Уменьшил с 128 для более мягкого белого
+    threshold = 110
     image = image.point(lambda x: 0 if x < threshold else 255, '1')
     image = image.convert('RGB')
     
