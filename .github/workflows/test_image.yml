@@ -13,62 +13,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip'
       
       - name: Install dependencies
-        run: |
-          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers transformers accelerate safetensors huggingface_hub
-      
-      - name: Cache SDXL-Turbo model
-        uses: actions/cache@v4
-        with:
-          path: models/sdxl-turbo
-          key: sdxl-turbo-v1
-      
-      - name: Download SDXL-Turbo model
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: |
-          echo "Checking model..."
-          if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
-            echo "Model not found, downloading..."
-            python -c "
-          import os
-          import time
-          from huggingface_hub import snapshot_download
-          token = os.environ.get('HF_API_TOKEN', '').strip()
-          kwargs = {}
-          if token:
-              kwargs['token'] = token
-          
-          max_retries = 3
-          for attempt in range(max_retries):
-              try:
-                  print(f'Attempt {attempt + 1}/{max_retries}')
-                  snapshot_download(
-                      'stabilityai/sdxl-turbo',
-                      local_dir='models/sdxl-turbo',
-                      **kwargs
-                  )
-                  print('Download successful')
-                  break
-              except Exception as e:
-                  print(f'Download failed: {e}')
-                  if attempt < max_retries - 1:
-                      print('Cleaning up and retrying...')
-                      import shutil
-                      if os.path.exists('models/sdxl-turbo'):
-                          shutil.rmtree('models/sdxl-turbo')
-                      time.sleep(10)
-                  else:
-                      raise
-          "
-          else
-            echo "✓ SDXL-Turbo model cached, skipping download"
-          fi
+        run: pip install requests
       
       - name: Generate test images
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: python test_image_gen.py test_prompts.json
       
       - name: Commit and push images
@@ -78,10 +29,3 @@ jobs:
           git add output/
           git commit -m "Test images: ${{ github.run_number }}" || echo "No changes"
           git push
-      
-      - name: Clean up model to free space for cache
-        if: always()
-        run: |
-          echo "Removing model to free space for cache..."
-          rm -rf models/sdxl-turbo
-          df -h
