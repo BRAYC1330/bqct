@@ -99,6 +99,11 @@ jobs:
             echo "✓ Banksy LoRA cached, skipping download"
           fi
       
+      - name: List lora directory
+        run: |
+          echo "Contents of lora directory:"
+          ls -la lora/ || echo "lora directory not found"
+      
       - name: Generate test images
         run: python test_image_gen.py test_prompts.json
       
@@ -113,7 +118,6 @@ jobs:
       - name: Clean up model to free space for cache
         if: always()
         run: |
-          echo "Removing model and LoRA to free space for cache..."
+          echo "Removing model to free space for cache..."
           rm -rf models/sdxl-turbo
-          rm -rf lora
           df -h
