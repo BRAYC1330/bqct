@@ -3,6 +3,7 @@ import sys
 import json
 import torch
 from diffusers import StableDiffusionXLPipeline
+from PIL import Image, ImageEnhance
 import time
 import logging
 
@@ -24,6 +25,27 @@ def load_model():
     logger.info("Model loaded successfully")
     return model
 
+def remove_yellow_tint(image):
+    # Конвертация в RGB если нужно
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    
+    # Усиление контраста
+    enhancer = ImageEnhance.Contrast(image)
+    image = enhancer.enhance(1.5)
+    
+    # Конвертация в grayscale
+    image = image.convert('L')
+    
+    # Применение threshold для чистого ч/б
+    threshold = 128
+    image = image.point(lambda x: 0 if x < threshold else 255, '1')
+    
+    # Конвертация обратно в RGB
+    image = image.convert('RGB')
+    
+    return image
+
 def generate_image(pipe, prompt, output_file):
     logger.info(f"Generating: {prompt[:100]}...")
     
@@ -39,7 +61,10 @@ def generate_image(pipe, prompt, output_file):
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
     
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    # Удаление желтизны
+    image = remove_yellow_tint(image)
+    
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     image.save(output_file, format="PNG")
     logger.info(f"Saved: {output_file}")
 
@@ -57,25 +82,22 @@ def main():
     art_styles = data['art_styles']
     
     total = len(art_styles) * len(news_variations)
-    logger.info(f"Generating {total} images ({len(art_styles)} styles × {len(news_variations)} news variants)...")
+    logger.info(f"Generating {total} images...")
     
     pipe = load_model()
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
+    # Очистка старых файлов
     for f in os.listdir(OUTPUT_DIR):
         fp = os.path.join(OUTPUT_DIR, f)
         if os.path.isfile(fp):
             os.remove(fp)
-        elif os.path.isdir(fp):
-            import shutil
-            shutil.rmtree(fp)
     
-    count = 0
+    count = 1
     for art_style in art_styles:
         style_id = art_style['id']
         style_text = art_style['style']
-        style_dir = os.path.join(OUTPUT_DIR, f"style_{style_id:02d}")
         
         for news_var in news_variations:
             news_id = news_var['id']
@@ -83,12 +105,12 @@ def main():
             news_text = news_var['text']
             
             full_prompt = f"{news_text}, {style_text}"
-            output_file = os.path.join(style_dir, f"news_{news_id:02d}_{news_name}.png")
+            output_file = os.path.join(OUTPUT_DIR, f"image_{count:02d}.png")
             
             generate_image(pipe, full_prompt, output_file)
             count += 1
     
-    logger.info(f"✓ Generated {count} images in {OUTPUT_DIR}/")
+    logger.info(f"✓ Generated {count - 1} images in {OUTPUT_DIR}/")
 
 if __name__ == "__main__":
     main()

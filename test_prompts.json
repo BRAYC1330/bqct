@@ -9,83 +9,19 @@
   "art_styles": [
     {
       "id": 1,
-      "style": "Classic vintage black and white newspaper front page, large central symbolic illustration, halftone print texture"
+      "style": "Black and white editorial cartoon, newspaper comic style, pure black ink on white paper, no color, high contrast"
     },
     {
       "id": 2,
-      "style": "Modern minimalist black and white editorial newspaper, dominant central artwork, clean typography"
+      "style": "Vintage newspaper caricature, black ink drawing on white background, stark contrast, no yellow tint"
     },
     {
       "id": 3,
-      "style": "Bold tabloid black and white newspaper, dramatic large central artwork, sensational layout"
+      "style": "Comic book newspaper illustration, pure black and white, ink lines, no color, clean white background"
     },
     {
       "id": 4,
-      "style": "Vintage comic book newspaper front page, halftone dots, central symbolic panel, ink drawing style"
-    },
-    {
-      "id": 5,
-      "style": "Modern color comic book newspaper, vibrant ink colors, central action panel, dynamic layout"
-    },
-    {
-      "id": 6,
-      "style": "Split layout newspaper front page, left half full color artwork, right half black and white text"
-    },
-    {
-      "id": 7,
-      "style": "Sepia tone vintage newspaper front page, aged paper texture, central symbolic illustration"
-    },
-    {
-      "id": 8,
-      "style": "Grunge punk zine newspaper style, rough cutout central artwork, distressed black and white print"
-    },
-    {
-      "id": 9,
-      "style": "High contrast black and white stencil graffiti printed on newspaper front page, sharp edges"
-    },
-    {
-      "id": 10,
-      "style": "Pure symbolic abstract newspaper front page, geometric shapes forming central artwork, minimalist"
-    },
-    {
-      "id": 11,
-      "style": "Pop art newspaper front page, Andy Warhol style, vibrant colors, central repeated symbolic image"
-    },
-    {
-      "id": 12,
-      "style": "Noir detective newspaper front page, heavy shadows, high contrast black and white central artwork"
-    },
-    {
-      "id": 13,
-      "style": "Retro 1950s color newspaper front page, muted vintage colors, central symbolic illustration"
-    },
-    {
-      "id": 14,
-      "style": "Cyberpunk digital newspaper front page, dark background, neon accents, central holographic artwork"
-    },
-    {
-      "id": 15,
-      "style": "Sketchbook newspaper front page, pencil and ink drawing style, central rough symbolic sketch"
-    },
-    {
-      "id": 16,
-      "style": "Collage art newspaper front page, cutout style, mixed media central artwork, textured paper"
-    },
-    {
-      "id": 17,
-      "style": "Minimalist Swiss design newspaper front page, strict grid, typography focus, small central artwork"
-    },
-    {
-      "id": 18,
-      "style": "Propaganda poster style newspaper front page, bold red and black colors, central symbolic figure"
-    },
-    {
-      "id": 19,
-      "style": "Watercolor newspaper front page, artistic bleed, soft colors, central symbolic painting"
-    },
-    {
-      "id": 20,
-      "style": "Blueprint technical newspaper front page, white lines on blue background, central schematic artwork"
+      "style": "Political cartoon newspaper style, stark black silhouette on pure white, no yellowing, sharp edges"
     }
   ]
 }
