@@ -1,48 +1,61 @@
 import os
 import sys
 import json
-import requests
+import torch
+from diffusers import StableDiffusionXLPipeline
+from PIL import Image, ImageEnhance
 import time
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+MODEL_DIR = "models/sdxl-turbo"
 OUTPUT_DIR = "output"
-HF_API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
 
-def generate_image(prompt, output_file):
+def load_model():
+    logger.info("Loading SDXL-Turbo model...")
+    model = StableDiffusionXLPipeline.from_pretrained(
+        MODEL_DIR,
+        torch_dtype=torch.float32,
+        use_safetensors=True,
+        local_files_only=True
+    )
+    model.to("cpu")
+    logger.info("Model loaded successfully")
+    return model
+
+def remove_yellow_tint(image):
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    
+    enhancer = ImageEnhance.Contrast(image)
+    image = enhancer.enhance(1.2)
+    
+    image = image.convert('L')
+    image = image.convert('RGB')
+    
+    return image
+
+def generate_image(pipe, prompt, output_file):
     logger.info(f"Generating: {prompt[:100]}...")
     
-    headers = {
-        "Authorization": f"Bearer {os.environ.get('HF_API_TOKEN')}",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "num_inference_steps": 4,
-            "width": 1024,
-            "height": 1024
-        }
-    }
-    
     start = time.time()
-    response = requests.post(HF_API_URL, headers=headers, json=payload)
-    
-    if response.status_code != 200:
-        logger.error(f"API Error: {response.status_code} - {response.text}")
-        return False
+    image = pipe(
+        prompt=prompt,
+        num_inference_steps=5,
+        guidance_scale=1.0,
+        width=1024,
+        height=1024
+    ).images[0]
     
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
     
-    with open(output_file, 'wb') as f:
-        f.write(response.content)
+    image = remove_yellow_tint(image)
     
+    image.save(output_file, format="PNG")
     logger.info(f"Saved: {output_file}")
-    return True
 
 def main():
     if len(sys.argv) < 2:
@@ -59,6 +72,8 @@ def main():
     
     total = len(art_styles) * len(news_variations)
     logger.info(f"Generating {total} images...")
+    
+    pipe = load_model()
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
@@ -77,8 +92,8 @@ def main():
             full_prompt = f"{news_text}, {style_text}"
             output_file = os.path.join(OUTPUT_DIR, f"image_{count:02d}.png")
             
-            if generate_image(full_prompt, output_file):
-                count += 1
+            generate_image(pipe, full_prompt, output_file)
+            count += 1
     
     logger.info(f"✓ Generated {count - 1} images in {OUTPUT_DIR}/")
 
