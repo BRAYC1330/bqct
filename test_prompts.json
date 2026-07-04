@@ -9,43 +9,43 @@
   "art_styles": [
     {
       "id": 1,
-      "style": "Full newspaper front page layout with masthead 'THE DAILY NEWS' at top, large central illustration depicting the news story, columns of text surrounding the artwork, date in corner, black and white print style"
+      "style": "Banksy style stencil art, black silhouette on white wall, political satire, simple powerful symbol, clean edges"
     },
     {
       "id": 2,
-      "style": "Complete newspaper page composition, bold headline above central editorial cartoon, text columns on sides, vintage newspaper layout, black and white ink print"
+      "style": "Banksy style street art, spray paint stencil, black on white, ironic political commentary, minimalist composition"
     },
     {
       "id": 3,
-      "style": "Newspaper spread with large illustration in center, newspaper masthead and dateline at top, article text wrapping around the image, classic broadsheet format, monochrome"
+      "style": "Banksy style graffiti, black stencil silhouette, social criticism, bold simple shapes, high contrast monochrome"
     },
     {
       "id": 4,
-      "style": "Tabloid newspaper front page, dramatic headline, large central cartoon illustration, smaller text articles around it, sensational layout, black and white"
+      "style": "Banksy style urban art, stencil spray paint, black figure on white, provocative political message, clean graphic"
     },
     {
       "id": 5,
-      "style": "Editorial newspaper page, sophisticated layout with central illustration, headline and subheadline above, body text in columns, refined black and white print"
+      "style": "Banksy style wall art, black cutout stencil, satirical commentary, stark black and white, iconic simple image"
     },
     {
       "id": 6,
-      "style": "Comic book newspaper hybrid, large central comic panel illustration, newspaper text and headlines around it, ink drawing style, black and white"
+      "style": "Banksy style political cartoon, stencil graffiti, black silhouette, anti-war message, minimalist powerful symbol"
     },
     {
       "id": 7,
-      "style": "Vintage 1950s newspaper front page, classic typography, central hand-drawn illustration, multiple text columns, aged paper feel, black and white"
+      "style": "Banksy style black and white stencil, spray paint art, social commentary, simple iconic figure, clean sharp edges"
     },
     {
       "id": 8,
-      "style": "Modern newspaper front page, clean grid layout, dominant central illustration, minimal text, contemporary editorial design, black and white"
+      "style": "Banksy style street mural, stencil art, black on white wall, ironic humor, political statement, graphic simplicity"
     },
     {
       "id": 9,
-      "style": "Underground newspaper page, rough layout with central illustration, handwritten-style headlines, alternative press aesthetic, black and white"
+      "style": "Banksy style guerrilla art, black stencil silhouette, subversive message, monochrome urban art, bold minimal design"
     },
     {
       "id": 10,
-      "style": "Political newspaper front page, propaganda-style layout, large central symbolic illustration, bold headlines, stark black and white contrast"
+      "style": "Banksy style anonymous street art, spray paint stencil, black figure, social protest, iconic simple composition, high contrast"
     }
   ]
 }
