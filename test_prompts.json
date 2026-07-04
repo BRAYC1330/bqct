@@ -9,43 +9,43 @@
   "art_styles": [
     {
       "id": 1,
-      "style": "Vintage black and white newspaper front page, large central editorial illustration, halftone print texture, classic broadsheet layout, pure monochrome"
+      "style": "Black and white newspaper spread, cartoon style illustration of the news, clear detailed drawing, text can be blurry but illustration must be sharp and understandable, pure monochrome"
     },
     {
       "id": 2,
-      "style": "Modern minimalist black and white newspaper, dominant central artwork covering 60 percent of page, clean sans-serif headlines, pure monochrome ink on white"
+      "style": "Black and white newspaper spread, anime style illustration of the news, clear detailed manga drawing, text can be blurry but illustration must be sharp, pure monochrome ink"
     },
     {
       "id": 3,
-      "style": "Black and white tabloid newspaper front page, dramatic large central illustration, bold sensational headlines, high contrast monochrome print"
+      "style": "Black and white newspaper spread, comic book style illustration, clear panel drawing with bold lines, text can be blurry but art must be sharp, pure monochrome"
     },
     {
       "id": 4,
-      "style": "Black and white editorial cartoon newspaper, central symbolic illustration with headline above, comic ink drawing style, pure black ink on white paper"
+      "style": "Black and white newspaper spread, political caricature illustration, exaggerated features, clear detailed drawing, text can be blurry but caricature must be sharp, pure monochrome"
     },
     {
       "id": 5,
-      "style": "Underground black and white newspaper, gritty central artwork, rough ink texture, alternative press layout, stark monochrome"
+      "style": "Black and white newspaper spread, vintage 1940s newspaper sketch style, hand-drawn illustration, clear detailed drawing, text can be blurry but sketch must be sharp, pure monochrome"
     },
     {
       "id": 6,
-      "style": "Classic black and white print newspaper, central woodcut style illustration, traditional typesetting, pure black and white no color"
+      "style": "Black and white newspaper spread, realistic pencil sketch illustration, detailed shading, clear drawing, text can be blurry but sketch must be sharp, pure monochrome"
     },
     {
       "id": 7,
-      "style": "Black and white photojournalism newspaper front page, large central photograph style illustration, dramatic lighting, pure monochrome"
+      "style": "Black and white newspaper spread, graphic novel style illustration, dramatic ink drawing, clear detailed art, text can be blurry but illustration must be sharp, pure monochrome"
     },
     {
       "id": 8,
-      "style": "Retro 1920s black and white newspaper, art deco central illustration, vintage typography, pure monochrome ink print"
+      "style": "Black and white newspaper spread, manga style illustration, Japanese comic art, clear detailed drawing, text can be blurry but manga art must be sharp, pure monochrome"
     },
     {
       "id": 9,
-      "style": "Black and white political newspaper front page, propaganda style central illustration, bold stark contrast, pure monochrome"
+      "style": "Black and white newspaper spread, New Yorker magazine style illustration, sophisticated ink drawing, clear detailed art, text can be blurry but illustration must be sharp, pure monochrome"
     },
     {
       "id": 10,
-      "style": "Black and white literary newspaper front page, elegant central illustration, sophisticated layout, fine ink drawing, pure monochrome"
+      "style": "Black and white newspaper spread, editorial illustration style, conceptual art drawing, clear detailed illustration, text can be blurry but art must be sharp, pure monochrome"
     }
   ]
 }
