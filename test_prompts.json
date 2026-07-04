@@ -9,43 +9,43 @@
   "art_styles": [
     {
       "id": 1,
-      "style": "Style: Banksy. clean professional stencil graffiti, black silhouette, pure monochrome"
+      "style": "Style: Banksy. tiny stencil graffiti in center of huge white wall, artwork is only 20 percent of wall, rest is empty white space"
     },
     {
       "id": 2,
-      "style": "Style: Banksy. black stencil, sharp edges, minimalist composition"
+      "style": "Style: Banksy. small black stencil centered on large white wall, wide empty margins around artwork, mostly empty wall visible"
     },
     {
       "id": 3,
-      "style": "Style: Banksy. street art stencil, pure monochrome, high contrast"
+      "style": "Style: Banksy. miniature stencil art in middle of vast white wall, large empty border on all sides, artwork is small compared to wall"
     },
     {
       "id": 4,
-      "style": "Style: Banksy. black silhouette graffiti, crisp cutout edges"
+      "style": "Style: Banksy. black stencil like a small sticker on huge white wall, surrounded by empty white space, centered composition"
     },
     {
       "id": 5,
-      "style": "Style: Banksy. stencil art, solid black, simple composition"
+      "style": "Style: Banksy. small graffiti in center, large white wall around it, empty space dominates the image, artwork is tiny"
     },
     {
       "id": 6,
-      "style": "Style: Banksy. urban stencil graffiti, black and white"
+      "style": "Style: Banksy. stencil art occupies only small center area, vast empty white wall surrounds it on all sides"
     },
     {
       "id": 7,
-      "style": "Style: Banksy. street art, black stencil silhouette, minimalist political art"
+      "style": "Style: Banksy. like a postage stamp on large white envelope, small centered artwork with huge empty margins"
     },
     {
       "id": 8,
-      "style": "Style: Banksy. graffiti stencil, pure black on white, sharp edges"
+      "style": "Style: Banksy. small black silhouette in center of frame, white wall fills rest of image, minimal artwork size"
     },
     {
       "id": 9,
-      "style": "Style: Banksy. wall art stencil, monochrome black"
+      "style": "Style: Banksy. tiny artwork centered, 80 percent of image is empty white wall, small stencil in middle"
     },
     {
       "id": 10,
-      "style": "Style: Banksy. political street art, black stencil, clean edges"
+      "style": "Style: Banksy. small graffiti surrounded by vast empty white space, artwork is minor element, wall dominates"
     }
   ]
 }
