@@ -2,60 +2,50 @@
   "news_variations": [
     {
       "id": 1,
-      "name": "short",
-      "text": "US and Iran resume direct negotiations in Doha on July 18, focusing on Strait of Hormuz and regional stability. European governments accept potential transit fees for shipping. Saudi Arabia increased crude oil exports following US-Iran truce. US maintains naval presence with two aircraft carriers."
-    },
-    {
-      "id": 2,
       "name": "symbolic",
       "text": "Two hands shaking over oil barrel with warships in background, diplomatic negotiations"
-    },
-    {
-      "id": 3,
-      "name": "minimal",
-      "text": "US Iran negotiations, Strait of Hormuz, oil tankers"
     }
   ],
   "art_styles": [
     {
       "id": 1,
-      "style": "Style: Banksy. clean professional stencil graffiti on pure white wall, black silhouette, small artwork centered on wall with large empty white margins on all sides."
+      "style": "Style: Banksy. clean professional stencil graffiti, black silhouette, pure monochrome"
     },
     {
       "id": 2,
-      "style": "Style: Banksy. black stencil on white wall, sharp edges, minimalist composition, small artwork centered with wide empty border around it."
+      "style": "Style: Banksy. black stencil, sharp edges, minimalist composition"
     },
     {
       "id": 3,
-      "style": "Style: Banksy. street art stencil, pure monochrome, high contrast, small artwork centered on large white wall with empty margins."
+      "style": "Style: Banksy. street art stencil, pure monochrome, high contrast"
     },
     {
       "id": 4,
-      "style": "Style: Banksy. black silhouette graffiti, crisp cutout edges, minimal composition, centered on white concrete wall with large empty space around."
+      "style": "Style: Banksy. black silhouette graffiti, crisp cutout edges"
     },
     {
       "id": 5,
-      "style": "Style: Banksy. stencil art, solid black on white wall, simple composition, spray paint aesthetic, centered with empty white border."
+      "style": "Style: Banksy. stencil art, solid black, simple composition"
     },
     {
       "id": 6,
-      "style": "Style: Banksy. urban stencil graffiti, black and white, centered on wall with large empty margins on all sides."
+      "style": "Style: Banksy. urban stencil graffiti, black and white"
     },
     {
       "id": 7,
-      "style": "Style: Banksy. street art, black stencil silhouette, white wall, minimalist political art, centered with wide empty border."
+      "style": "Style: Banksy. street art, black stencil silhouette, minimalist political art"
     },
     {
       "id": 8,
-      "style": "Style: Banksy. graffiti stencil, pure black on white, sharp edges, documentary photo style, small centered artwork with empty margins."
+      "style": "Style: Banksy. graffiti stencil, pure black on white, sharp edges"
     },
     {
       "id": 9,
-      "style": "Style: Banksy. wall art stencil, monochrome black, white background, small centered composition with large empty space around."
+      "style": "Style: Banksy. wall art stencil, monochrome black"
     },
     {
       "id": 10,
-      "style": "Style: Banksy. political street art, black stencil on white wall, clean edges, minimal design, centered with wide empty white border."
+      "style": "Style: Banksy. political street art, black stencil, clean edges"
     }
   ]
 }
