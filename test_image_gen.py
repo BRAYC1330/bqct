@@ -10,13 +10,13 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-MODEL_DIR = "models/sdxl-turbo"
+MODEL_DIR = "models/sdxl-base"
 LORA_DIR = "lora"
 LORA_PATH = os.path.join(LORA_DIR, "Banksy Style.safetensors")
 OUTPUT_DIR = "output"
 
 def load_model():
-    logger.info("Loading SDXL-Turbo model...")
+    logger.info("Loading SDXL Base model...")
     model = StableDiffusionXLPipeline.from_pretrained(
         MODEL_DIR,
         torch_dtype=torch.float32,
@@ -26,19 +26,15 @@ def load_model():
     model.to("cpu")
     
     if os.path.exists(LORA_PATH):
-        logger.info(f"Loading LoRA from {LORA_PATH}...")
-        model.load_lora_weights(LORA_PATH)
-        logger.info("LoRA loaded successfully")
+        logger.info(f"Attempting to load LoRA from {LORA_PATH}...")
+        try:
+            model.load_lora_weights(LORA_PATH)
+            logger.info("LoRA loaded successfully")
+        except Exception as e:
+            logger.warning(f"LoRA incompatible or broken: {e}")
+            logger.warning("Falling back to base SDXL model")
     else:
         logger.warning(f"LoRA file not found at {LORA_PATH}, using base model only")
-        # Попробуем найти любой .safetensors файл в lora/
-        if os.path.exists(LORA_DIR):
-            files = [f for f in os.listdir(LORA_DIR) if f.endswith('.safetensors')]
-            if files:
-                actual_path = os.path.join(LORA_DIR, files[0])
-                logger.info(f"Found alternative LoRA: {actual_path}")
-                model.load_lora_weights(actual_path)
-                logger.info("LoRA loaded successfully")
     
     logger.info("Model loaded successfully")
     return model
@@ -61,8 +57,8 @@ def generate_image(pipe, prompt, output_file):
     start = time.time()
     image = pipe(
         prompt=prompt,
-        num_inference_steps=5,
-        guidance_scale=1.0,
+        num_inference_steps=25,
+        guidance_scale=7.0,
         width=1024,
         height=1024
     ).images[0]
