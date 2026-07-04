@@ -2,50 +2,32 @@
   "news_variations": [
     {
       "id": 1,
+      "name": "short",
+      "text": "US and Iran resume direct negotiations in Doha on July 18, focusing on Strait of Hormuz and regional stability. European governments accept potential transit fees for shipping. Saudi Arabia increased crude oil exports following US-Iran truce. US maintains naval presence with two aircraft carriers."
+    },
+    {
+      "id": 2,
       "name": "symbolic",
       "text": "Two hands shaking over oil barrel with warships in background, diplomatic negotiations"
+    },
+    {
+      "id": 3,
+      "name": "minimal",
+      "text": "US Iran negotiations, Strait of Hormuz, oil tankers"
     }
   ],
   "art_styles": [
     {
       "id": 1,
-      "style": "Style: Banksy. extreme wide shot, zoomed out, full wall view, small stencil graffiti in center, vast empty wall"
+      "style": "black stencil silhouette, crisp edges, pure monochrome, spray paint style"
     },
     {
       "id": 2,
-      "style": "Style: Banksy. distant camera shot, far away view, tiny graffiti on huge white wall, mostly empty space"
+      "style": "black and white stencil art, sharp cutout edges, minimalist political graffiti"
     },
     {
       "id": 3,
-      "style": "Style: Banksy. wide angle lens, full wall composition, small artwork centered, large negative space"
-    },
-    {
-      "id": 4,
-      "style": "Style: Banksy. bird's eye view of wall, zoomed out far, miniature stencil in center, empty margins"
-    },
-    {
-      "id": 5,
-      "style": "Style: Banksy. extreme long shot, the wall fills the frame, graffiti is very small in the middle"
-    },
-    {
-      "id": 6,
-      "style": "Style: Banksy. panoramic view of white wall, small black stencil centered, vast empty concrete"
-    },
-    {
-      "id": 7,
-      "style": "Style: Banksy. macro photography of a small sticker on a huge wall, zoomed out, empty background"
-    },
-    {
-      "id": 8,
-      "style": "Style: Banksy. full body shot of the wall, distant perspective, tiny artwork, mostly white space"
-    },
-    {
-      "id": 9,
-      "style": "Style: Banksy. ultra wide shot, camera far away, small graffiti in center of massive white wall"
-    },
-    {
-      "id": 10,
-      "style": "Style: Banksy. zoomed out photography, full wall visible, small stencil art, large empty borders"
+      "style": "solid black silhouette, clean edges, street art stencil, high contrast"
     }
   ]
 }

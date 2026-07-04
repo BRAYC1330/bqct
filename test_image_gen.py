@@ -3,6 +3,7 @@ import sys
 import json
 import torch
 from diffusers import StableDiffusionXLPipeline
+from PIL import Image
 import time
 import logging
 
@@ -11,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 MODEL_DIR = "models/sdxl-turbo"
 OUTPUT_DIR = "output"
+
+STENCIL_SIZE = 512
+CANVAS_SIZE = 1024
+MARGIN = 256
 
 def load_model():
     logger.info("Loading SDXL-Turbo model...")
@@ -24,23 +29,30 @@ def load_model():
     logger.info("Model loaded successfully")
     return model
 
-def generate_image(pipe, prompt, output_file):
-    logger.info(f"Generating: {prompt[:100]}...")
+def generate_stencil(pipe, prompt):
+    logger.info(f"Generating stencil: {prompt[:100]}...")
     
     start = time.time()
     image = pipe(
         prompt=prompt,
         num_inference_steps=4,
         guidance_scale=0.0,
-        width=512,
-        height=512
+        width=STENCIL_SIZE,
+        height=STENCIL_SIZE
     ).images[0]
     
     elapsed = time.time() - start
     logger.info(f"Generated in {elapsed:.1f}s")
     
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    image.save(output_file, format="PNG")
+    return image
+
+def create_wall_with_stencil(stencil, output_file):
+    canvas = Image.new('RGB', (CANVAS_SIZE, CANVAS_SIZE), 'white')
+    
+    offset = (CANVAS_SIZE - STENCIL_SIZE) // 2
+    canvas.paste(stencil, (offset, offset))
+    
+    canvas.save(output_file, format="PNG")
     logger.info(f"Saved: {output_file}")
 
 def main():
@@ -85,7 +97,10 @@ def main():
             full_prompt = f"{news_text}, {style_text}"
             output_file = os.path.join(style_dir, f"news_{news_id:02d}_{news_name}.png")
             
-            generate_image(pipe, full_prompt, output_file)
+            stencil = generate_stencil(pipe, full_prompt)
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            create_wall_with_stencil(stencil, output_file)
+            
             count += 1
     
     logger.info(f"✓ Generated {count} images in {OUTPUT_DIR}/")
