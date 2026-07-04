@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers==0.25.1 transformers accelerate safetensors huggingface_hub
+          pip install diffusers==0.25.1 transformers==4.37.2 accelerate==0.27.2 safetensors huggingface_hub==0.21.4
       
       - name: Cache SDXL Base model
         uses: actions/cache@v4
