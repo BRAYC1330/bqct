@@ -20,18 +20,18 @@ jobs:
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install diffusers transformers accelerate safetensors huggingface_hub peft
       
-      - name: Cache SDXL-Turbo model
+      - name: Cache SDXL Base model
         uses: actions/cache@v4
         with:
-          path: models/sdxl-turbo
-          key: sdxl-turbo-v1
+          path: models/sdxl-base
+          key: sdxl-base-v1
       
-      - name: Download SDXL-Turbo model
+      - name: Download SDXL Base model
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           echo "Checking model..."
-          if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
+          if [ ! -f "models/sdxl-base/model_index.json" ]; then
             echo "Model not found, downloading..."
             python -c "
           import os
@@ -47,8 +47,8 @@ jobs:
               try:
                   print(f'Attempt {attempt + 1}/{max_retries}')
                   snapshot_download(
-                      'stabilityai/sdxl-turbo',
-                      local_dir='models/sdxl-turbo',
+                      'stabilityai/stable-diffusion-xl-base-1.0',
+                      local_dir='models/sdxl-base',
                       **kwargs
                   )
                   print('Download successful')
@@ -58,14 +58,14 @@ jobs:
                   if attempt < max_retries - 1:
                       print('Cleaning up and retrying...')
                       import shutil
-                      if os.path.exists('models/sdxl-turbo'):
-                          shutil.rmtree('models/sdxl-turbo')
+                      if os.path.exists('models/sdxl-base'):
+                          shutil.rmtree('models/sdxl-base')
                       time.sleep(10)
                   else:
                       raise
           "
           else
-            echo "✓ SDXL-Turbo model cached, skipping download"
+            echo "✓ SDXL Base model cached, skipping download"
           fi
       
       - name: Download Banksy LoRA
@@ -93,6 +93,6 @@ jobs:
         if: always()
         run: |
           echo "Removing model to free space for cache..."
-          rm -rf models/sdxl-turbo
+          rm -rf models/sdxl-base
           rm -rf lora
           df -h
