@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 MODEL_DIR = "models/sdxl-turbo"
 LORA_DIR = "lora"
-LORA_PATH = os.path.join(LORA_DIR, "banksy-style.safetensors")
+LORA_PATH = os.path.join(LORA_DIR, "Banksy Style.safetensors")
 OUTPUT_DIR = "output"
 
 def load_model():
@@ -31,6 +31,14 @@ def load_model():
         logger.info("LoRA loaded successfully")
     else:
         logger.warning(f"LoRA file not found at {LORA_PATH}, using base model only")
+        # Попробуем найти любой .safetensors файл в lora/
+        if os.path.exists(LORA_DIR):
+            files = [f for f in os.listdir(LORA_DIR) if f.endswith('.safetensors')]
+            if files:
+                actual_path = os.path.join(LORA_DIR, files[0])
+                logger.info(f"Found alternative LoRA: {actual_path}")
+                model.load_lora_weights(actual_path)
+                logger.info("LoRA loaded successfully")
     
     logger.info("Model loaded successfully")
     return model
