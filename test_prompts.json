@@ -9,43 +9,43 @@
   "art_styles": [
     {
       "id": 1,
-      "style": "Style: Banksy. tiny stencil graffiti in center of huge white wall, artwork is only 20 percent of wall, rest is empty white space"
+      "style": "Style: Banksy. extreme wide shot, zoomed out, full wall view, small stencil graffiti in center, vast empty wall"
     },
     {
       "id": 2,
-      "style": "Style: Banksy. small black stencil centered on large white wall, wide empty margins around artwork, mostly empty wall visible"
+      "style": "Style: Banksy. distant camera shot, far away view, tiny graffiti on huge white wall, mostly empty space"
     },
     {
       "id": 3,
-      "style": "Style: Banksy. miniature stencil art in middle of vast white wall, large empty border on all sides, artwork is small compared to wall"
+      "style": "Style: Banksy. wide angle lens, full wall composition, small artwork centered, large negative space"
     },
     {
       "id": 4,
-      "style": "Style: Banksy. black stencil like a small sticker on huge white wall, surrounded by empty white space, centered composition"
+      "style": "Style: Banksy. bird's eye view of wall, zoomed out far, miniature stencil in center, empty margins"
     },
     {
       "id": 5,
-      "style": "Style: Banksy. small graffiti in center, large white wall around it, empty space dominates the image, artwork is tiny"
+      "style": "Style: Banksy. extreme long shot, the wall fills the frame, graffiti is very small in the middle"
     },
     {
       "id": 6,
-      "style": "Style: Banksy. stencil art occupies only small center area, vast empty white wall surrounds it on all sides"
+      "style": "Style: Banksy. panoramic view of white wall, small black stencil centered, vast empty concrete"
     },
     {
       "id": 7,
-      "style": "Style: Banksy. like a postage stamp on large white envelope, small centered artwork with huge empty margins"
+      "style": "Style: Banksy. macro photography of a small sticker on a huge wall, zoomed out, empty background"
     },
     {
       "id": 8,
-      "style": "Style: Banksy. small black silhouette in center of frame, white wall fills rest of image, minimal artwork size"
+      "style": "Style: Banksy. full body shot of the wall, distant perspective, tiny artwork, mostly white space"
     },
     {
       "id": 9,
-      "style": "Style: Banksy. tiny artwork centered, 80 percent of image is empty white wall, small stencil in middle"
+      "style": "Style: Banksy. ultra wide shot, camera far away, small graffiti in center of massive white wall"
     },
     {
       "id": 10,
-      "style": "Style: Banksy. small graffiti surrounded by vast empty white space, artwork is minor element, wall dominates"
+      "style": "Style: Banksy. zoomed out photography, full wall visible, small stencil art, large empty borders"
     }
   ]
 }
