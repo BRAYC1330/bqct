@@ -9,43 +9,43 @@
   "art_styles": [
     {
       "id": 1,
-      "style": "Black and white newspaper spread, cartoon style illustration of the news, clear detailed drawing, text can be blurry but illustration must be sharp and understandable, pure monochrome"
+      "style": "Full newspaper front page layout with masthead 'THE DAILY NEWS' at top, large central illustration depicting the news story, columns of text surrounding the artwork, date in corner, black and white print style"
     },
     {
       "id": 2,
-      "style": "Black and white newspaper spread, anime style illustration of the news, clear detailed manga drawing, text can be blurry but illustration must be sharp, pure monochrome ink"
+      "style": "Complete newspaper page composition, bold headline above central editorial cartoon, text columns on sides, vintage newspaper layout, black and white ink print"
     },
     {
       "id": 3,
-      "style": "Black and white newspaper spread, comic book style illustration, clear panel drawing with bold lines, text can be blurry but art must be sharp, pure monochrome"
+      "style": "Newspaper spread with large illustration in center, newspaper masthead and dateline at top, article text wrapping around the image, classic broadsheet format, monochrome"
     },
     {
       "id": 4,
-      "style": "Black and white newspaper spread, political caricature illustration, exaggerated features, clear detailed drawing, text can be blurry but caricature must be sharp, pure monochrome"
+      "style": "Tabloid newspaper front page, dramatic headline, large central cartoon illustration, smaller text articles around it, sensational layout, black and white"
     },
     {
       "id": 5,
-      "style": "Black and white newspaper spread, vintage 1940s newspaper sketch style, hand-drawn illustration, clear detailed drawing, text can be blurry but sketch must be sharp, pure monochrome"
+      "style": "Editorial newspaper page, sophisticated layout with central illustration, headline and subheadline above, body text in columns, refined black and white print"
     },
     {
       "id": 6,
-      "style": "Black and white newspaper spread, realistic pencil sketch illustration, detailed shading, clear drawing, text can be blurry but sketch must be sharp, pure monochrome"
+      "style": "Comic book newspaper hybrid, large central comic panel illustration, newspaper text and headlines around it, ink drawing style, black and white"
     },
     {
       "id": 7,
-      "style": "Black and white newspaper spread, graphic novel style illustration, dramatic ink drawing, clear detailed art, text can be blurry but illustration must be sharp, pure monochrome"
+      "style": "Vintage 1950s newspaper front page, classic typography, central hand-drawn illustration, multiple text columns, aged paper feel, black and white"
     },
     {
       "id": 8,
-      "style": "Black and white newspaper spread, manga style illustration, Japanese comic art, clear detailed drawing, text can be blurry but manga art must be sharp, pure monochrome"
+      "style": "Modern newspaper front page, clean grid layout, dominant central illustration, minimal text, contemporary editorial design, black and white"
     },
     {
       "id": 9,
-      "style": "Black and white newspaper spread, New Yorker magazine style illustration, sophisticated ink drawing, clear detailed art, text can be blurry but illustration must be sharp, pure monochrome"
+      "style": "Underground newspaper page, rough layout with central illustration, handwritten-style headlines, alternative press aesthetic, black and white"
     },
     {
       "id": 10,
-      "style": "Black and white newspaper spread, editorial illustration style, conceptual art drawing, clear detailed illustration, text can be blurry but art must be sharp, pure monochrome"
+      "style": "Political newspaper front page, propaganda-style layout, large central symbolic illustration, bold headlines, stark black and white contrast"
     }
   ]
 }
