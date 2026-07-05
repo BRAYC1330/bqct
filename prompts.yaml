@@ -51,20 +51,17 @@ digest_refine: |
   Insight:
 
 manga_scene: |
-  Create a SHORT description (max 15 words) for a manga-style scene about this news.
+  Create a VERY SHORT description (max 10 words) for a manga scene about this news.
   
   Rules:
-  - ONE main subject (person, symbol, action)
-  - Dramatic pose or composition
-  - NO hands, NO fingers (they come out deformed)
-  - Max 15 words
+  - ONE main subject + ONE action
+  - NO hands, NO fingers
+  - Max 10 words
   
   Examples:
-  * Basketball news → "basketball player jumping with ball, dramatic angle"
-  * Trump Putin → "two leaders facing each other, intense stare"
-  * Bank crisis → "banker holding money bags, worried expression"
-  * War news → "soldier with flag, battle scene background"
-  * Tech news → "scientist with robot, futuristic lab"
+  * Trump news → "leader on phone, intense expression"
+  * Basketball → "player jumping with ball"
+  * Bank crisis → "banker with money bags"
   
   News context:
   {context}
