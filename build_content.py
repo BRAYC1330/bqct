@@ -45,39 +45,21 @@ def _generate_banksy_scene(llm, context: str) -> str:
     if not llm:
         return ""
     try:
-        prompt_text = generator.load_prompt("banksy_scene", context=context[:1200])
+        prompt_text = generator.load_prompt("banksy_scene", context=context[:800])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=60, temperature=0.6)
+        output = llm(prompt_text, max_tokens=40, temperature=0.6)
         scene = _get_llm_text(output)
         scene = scene.strip('"').strip("'").strip()
         scene = re.sub(r'^(visual\s*(?:scene)?:?\s*|scene:?\s*|mural:?\s*)', '', scene, flags=re.I).strip()
         if scene.startswith("```") and scene.endswith("```"):
             scene = scene[3:-3].strip()
-        if len(scene) > 350:
-            scene = scene[:350].rsplit(' ', 1)[0]
+        if len(scene) > 250:
+            scene = scene[:250].rsplit(' ', 1)[0]
         logger.info(f"[digest] Banksky visual scene: {scene[:120]}")
         return scene
     except Exception as e:
         logger.warning(f"[digest] Banksky scene generation failed: {e}")
         return ""
-
-
-def _compress_scene_for_stencil(llm, scene: str) -> str:
-    if not llm:
-        return scene[:100]
-    try:
-        prompt_text = generator.load_prompt("banksy_compress", scene=scene[:200])
-        output = llm(str(prompt_text), max_tokens=30, temperature=0.3)
-        compressed = _get_llm_text(output).strip()
-        compressed = re.sub(r'^(visual\s*(?:description?)?:?\s*|description?:?\s*)', '', compressed, flags=re.I).strip()
-        compressed = compressed.strip('"').strip("'").strip()
-        if len(compressed) > 80:
-            compressed = compressed[:80].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Compressed scene: {compressed}")
-        return compressed
-    except Exception as e:
-        logger.warning(f"[digest] Scene compression failed: {e}")
-        return scene[:100]
 
 
 async def _generate_digest_embed(client, trends, task_type, llm=None, visual_scene: str = "", full_context: str = "") -> dict | None:
@@ -94,24 +76,21 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        compressed_scene = _compress_scene_for_stencil(llm, safe_visual)
+        # Промпт БЕЗ указания стиля — LoRA делает Banksy сама
+        # Максимум ~70 токенов чтобы уложиться в 77 лимит CLIP
+        image_prompt = safe_visual[:250]
 
-        image_prompt = (
-            f"Small black stencil graffiti centered on large white concrete wall. "
-            f"Artwork is tiny with large empty white border around it on all sides. "
-            f"Showing {compressed_scene}. "
-            f"Solid black silhouette, pure monochrome, high contrast. "
-            f"Minimalist composition, spray paint drips. "
-            f"High contrast lighting, no shadows, no yellow tint. "
-            f"Documentary photo style."
+        negative_prompt = (
+            "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
+            "letters without illustration, random words, gibberish text"
         )
 
         logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
-        logger.info(f"[digest] Compressed: {compressed_scene}")
-        logger.info(f"[digest] Image prompt: {image_prompt}")
+        logger.info(f"[digest] Short keyword: {safe_keyword}")
+        logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
 
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        image_bytes = local_image_gen.generate_image(image_prompt, "", w, h)
+        image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
         
         if not image_bytes:
             logger.warning("[digest] Image generation failed, posting text-only")
