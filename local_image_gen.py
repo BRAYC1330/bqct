@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
-_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksky-lora")
+_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksy-lora")
 
 def _load_model():
     global _model
@@ -38,12 +38,12 @@ def _load_model():
         )
         _model.to("cpu")
         
-        lora_file = os.path.join(_lora_dir, "Banksky Style.safetensors")
+        lora_file = os.path.join(_lora_dir, "Banksy Style.safetensors")
         if os.path.exists(lora_file):
-            logger.info(f"[local_image] Loading Banksky LoRA from {lora_file}...")
+            logger.info(f"[local_image] Loading Banksy LoRA from {lora_file}...")
             try:
                 _model.load_lora_weights(lora_file)
-                logger.info("[local_image] Banksky LoRA loaded successfully")
+                logger.info("[local_image] Banksy LoRA loaded successfully")
             except Exception as lora_err:
                 logger.warning(f"[local_image] LoRA load failed, using base model: {lora_err}")
         else:
@@ -65,7 +65,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 0.0 if steps <= 5 else 1.0
+        guidance = 0.0 if steps <= 4 else 1.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
