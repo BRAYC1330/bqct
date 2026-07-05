@@ -81,7 +81,7 @@ jobs:
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers transformers accelerate safetensors huggingface_hub
+          pip install diffusers transformers accelerate safetensors huggingface_hub peft
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
