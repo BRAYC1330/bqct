@@ -56,10 +56,10 @@ def _generate_banksy_scene(llm, context: str) -> str:
         scene = scene.strip('`"\'').strip()
         if len(scene) > 120:
             scene = scene[:120].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
+        logger.info(f"[digest] Banksky visual scene: {scene[:120]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksy scene generation failed: {e}")
+        logger.warning(f"[digest] Banksky scene generation failed: {e}")
         return ""
 
 
@@ -78,9 +78,9 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
-            f"The artwork depicts this scene: {safe_visual}. "
-            f"Monochrome stencil with selective red accents, satirical composition, drips, overspray, raw urban texture, Banksy style."
+            f"Banksky Style - black and white stencil mural on weathered concrete wall depicting: "
+            f"{safe_visual}. "
+            f"Satirical composition, drips, overspray, raw urban texture."
         )
 
         negative_prompt = (
