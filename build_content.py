@@ -86,7 +86,7 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
 
         w, h = 512, 512
-        image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
+        image_bytes = local_image_gen.generate_image(image_prompt, w, h)
         
         if not image_bytes:
             logger.warning("[digest] Image generation failed, posting text-only")
