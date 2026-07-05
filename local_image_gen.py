@@ -1,7 +1,7 @@
 import os
 import torch
 from diffusers import StableDiffusionXLPipeline
-from PIL import Image
+from PIL import Image, ImageEnhance
 import io
 import logging
 import config
@@ -10,7 +10,18 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
-_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksy-lora")
+_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksky-lora")
+
+
+def remove_yellow_tint(image):
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    enhancer = ImageEnhance.Contrast(image)
+    image = enhancer.enhance(1.2)
+    image = image.convert('L')
+    image = image.convert('RGB')
+    return image
+
 
 def _load_model():
     global _model
@@ -38,12 +49,12 @@ def _load_model():
         )
         _model.to("cpu")
         
-        lora_file = os.path.join(_lora_dir, "Banksy Style.safetensors")
+        lora_file = os.path.join(_lora_dir, "Banksky Style.safetensors")
         if os.path.exists(lora_file):
-            logger.info(f"[local_image] Loading Banksy LoRA from {lora_file}...")
+            logger.info(f"[local_image] Loading Banksky LoRA from {lora_file}...")
             try:
                 _model.load_lora_weights(lora_file)
-                logger.info("[local_image] Banksy LoRA loaded successfully")
+                logger.info("[local_image] Banksky LoRA loaded successfully")
             except Exception as lora_err:
                 logger.warning(f"[local_image] LoRA load failed, using base model: {lora_err}")
         else:
@@ -56,6 +67,7 @@ def _load_model():
         import traceback
         logger.error(f"[local_image] Traceback: {traceback.format_exc()[:800]}")
         return None
+
 
 def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, height: int = 1024) -> bytes | None:
     try:
@@ -85,6 +97,8 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             width=width,
             height=height
         ).images[0]
+        
+        image = remove_yellow_tint(image)
         
         buffer = io.BytesIO()
         image.save(buffer, format="PNG", optimize=True)
