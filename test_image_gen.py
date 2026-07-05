@@ -10,13 +10,13 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-MODEL_DIR = "models/sdxl-base"
+MODEL_DIR = "models/sdxl-turbo"
 LORA_DIR = "lora"
 LORA_PATH = os.path.join(LORA_DIR, "Banksy Style.safetensors")
 OUTPUT_DIR = "output"
 
 def load_model():
-    logger.info("Loading SDXL Base model...")
+    logger.info("Loading SDXL-Turbo model...")
     model = StableDiffusionXLPipeline.from_pretrained(
         MODEL_DIR,
         torch_dtype=torch.float32,
@@ -32,7 +32,7 @@ def load_model():
             logger.info("LoRA loaded successfully")
         except Exception as e:
             logger.warning(f"LoRA incompatible or broken: {e}")
-            logger.warning("Falling back to base SDXL model")
+            logger.warning("Falling back to base SDXL-Turbo model")
     else:
         logger.warning(f"LoRA file not found at {LORA_PATH}, using base model only")
     
@@ -57,8 +57,8 @@ def generate_image(pipe, prompt, output_file):
     start = time.time()
     image = pipe(
         prompt=prompt,
-        num_inference_steps=25,
-        guidance_scale=7.0,
+        num_inference_steps=5,
+        guidance_scale=1.0,
         width=1024,
         height=1024
     ).images[0]
