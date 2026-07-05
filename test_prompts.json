@@ -3,13 +3,13 @@
     {
       "id": 1,
       "name": "symbolic",
-      "text": " A street art stencil mural in the style of Banksy on a weathered concrete wall"
+      "text": " U.S. Senate building, NOBLE logo, laptop, text 'Clarity Act"
     }
   ],
   "art_styles": [
     {
       "id": 1,
-      "style": ""
+      "style": "banksy style"
     }
   ]
 }
