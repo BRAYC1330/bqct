@@ -70,12 +70,28 @@ jobs:
           path: models/banksy-lora
           key: banksy-lora-v1
 
-      - name: Install heavy deps
+      - name: Install Python wheels
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
-          CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex huggingface_hub==0.21.4
+
+      - name: Cache llama-cpp-python binary
+        if: steps.checker.outputs.status == 'true'
+        uses: actions/cache@v4
+        with:
+          path: /opt/hostedtoolcache/Python/3.10.20/x64/lib/python3.10/site-packages/llama_cpp*
+          key: llama-cpp-v1-0.3.20-cpu
+
+      - name: Install llama-cpp-python
+        if: steps.checker.outputs.status == 'true'
+        run: |
+          if ! python -c "import llama_cpp" 2>/dev/null; then
+            echo "[INFO] Installing llama-cpp-python from pre-built wheel..."
+            pip install llama-cpp-python==0.3.20 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+          else
+            echo "[OK] llama-cpp-python cached"
+          fi
 
       - name: Install PyTorch and diffusers
         if: steps.checker.outputs.has_full == 'true'
