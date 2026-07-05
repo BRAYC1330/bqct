@@ -82,6 +82,10 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
             f"on a weathered concrete wall, simple background"
         )
 
+        negative_prompt = (
+            "worst quality"
+        )
+
         logger.info(f"[digest] Subject: {safe_visual[:100]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
