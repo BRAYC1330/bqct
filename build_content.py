@@ -55,10 +55,10 @@ def _generate_banksy_scene(llm, context: str) -> str:
             scene = scene[3:-3].strip()
         if len(scene) > 250:
             scene = scene[:250].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksky visual scene: {scene[:120]}")
+        logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksky scene generation failed: {e}")
+        logger.warning(f"[digest] Banksy scene generation failed: {e}")
         return ""
 
 
@@ -76,9 +76,10 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        # Промпт БЕЗ указания стиля — LoRA делает Banksy сама
-        # Максимум ~70 токенов чтобы уложиться в 77 лимит CLIP
-        image_prompt = safe_visual[:250]
+        # Trigger word "Banksy style" активирует LoRA
+        # Остальное — визуальная сцена из LLM (макс ~50 токенов)
+        # Итого ~60-65 токенов, влезает в лимит 77 токенов CLIP
+        image_prompt = f"Banksy style, {safe_visual[:240]}"
 
         negative_prompt = (
             "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
