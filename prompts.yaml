@@ -51,21 +51,26 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Create a SHORT visual description (max 20 words, max 50 tokens) for an image.
+  Create a VISUAL DESCRIPTION (max 50 words) for a Banksky-style street art mural about this news.
+  
+  Banksky characteristics:
+  - ONE central figure or object with clear satirical message
+  - Dark humor, protest, irony
+  - Simple but powerful imagery
+  - Think: "What would Banksky paint to criticize this?"
   
   Rules:
-  - Use ONLY simple, concrete visual words that image AI understands well
-  - Describe WHAT you see: people, objects, places, actions, logos, flags
-  - NO abstract words: policy, signals, shift, impact, tension, dynamics, concerns
-  - NO style words: style, art, mural, stencil (style is applied automatically)
-  - Include brand logos, symbols, flags mentioned in the news
-  - Max 20 words total
+  - Describe ONE main scene, not multiple objects
+  - Include logos, symbols, flags mentioned in news
+  - Use concrete visual nouns: people, objects, actions
+  - NO abstract words: policy, signals, impact, tension
+  - Max 50 words total
   
   Examples:
-  * News about bank approving Ethereum → "bank building, worker holding document, Ethereum diamond logo on paper"
-  * News about earthquake in Venezuela → "broken buildings, dust, torn Venezuela flag, child with toy"
-  * News about Apple AI → "giant Apple logo, robot hands, computer screens"
-  * News about Russia missiles Ukraine → "missile, broken wall, Ukraine flag, smoke"
+  * Bank approving Ethereum → "child in hoodie spray-painting Ethereum diamond logo on Federal Reserve wall, security guard looking away"
+  * Earthquake in Venezuela → "crumbling concrete wall, torn Venezuelan flag hanging, child holding broken toy in dust"
+  * Apple AI launch → "giant bitten Apple logo being assembled by robot arms, workers in chains below"
+  * LeBron signs contract → "basketball player signing giant contract with pen made of dollar bills, team logo behind"
   
   News context:
   {context}
