@@ -51,20 +51,29 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Create a SHORT description (max 15 words) for a Banksky-style satirical artwork.
+  Create a SHORT description (max 15 words) for a Banksky-style stencil, using TYPICAL Banksky subjects.
+  
+  Typical Banksky subjects (MUST use one of these):
+  - punk skeleton (the BEST, most iconic Banksky subject)
+  - rat (Banksky's signature)
+  - monkey (Banksky's signature)
+  - police officer
+  - soldier
+  - child
+  - businessman in suit
   
   Rules:
-  - Describe ONE main subject (person, politician, symbol)
-  - Include satirical or ironic element
+  - ADAPT the news into a metaphor using a typical Banksky subject
   - NO hands, NO fingers (they come out deformed)
-  - Max 15 words
+  - ONE subject only, max 15 words
   
   Examples:
-  * Trump news → "caricature of Donald Trump as king holding burning match"
-  * Putin news → "satirical portrait of Putin wearing oversized military hat"
-  * Bank crisis → "skeleton banker counting money while world burns"
-  * Tech news → "robot CEO replacing human workers with machines"
-  * War news → "peace dove wearing bulletproof vest"
+  * Basketball news → "punk skeleton holding basketball with crown"
+  * Trump Putin → "two punk skeletons playing chess"
+  * Bank crisis → "skeleton banker with money bags"
+  * War news → "soldier rat holding rifle with peace sign"
+  * Tech news → "punk skeleton monkey holding smartphone"
+  * LeBron signs → "punk skeleton signing document with basketball"
   
   News context:
   {context}
