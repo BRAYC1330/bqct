@@ -51,21 +51,20 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Create a VERY SHORT description (max 12 words) of ONE subject for a Banksky stencil.
+  Create a SHORT description (max 15 words) for a Banksky-style satirical artwork.
   
   Rules:
-  - ONE person, animal, or object only
-  - Simple action or pose
-  - NO crowds, NO complex scenes
-  - Include key symbol if mentioned in news
-  - Max 12 words
+  - Describe ONE main subject (person, politician, symbol)
+  - Include satirical or ironic element
+  - NO hands, NO fingers (they come out deformed)
+  - Max 15 words
   
   Examples:
-  * Trump Iran news → "Donald Trump holding unlit match"
-  * LeBron signs → "basketball player signing giant contract"
-  * Earthquake → "child holding broken toy"
-  * Bank of Japan → "skeleton banker holding money bags"
-  * Apple AI → "robot assembling Apple logo"
+  * Trump news → "caricature of Donald Trump as king holding burning match"
+  * Putin news → "satirical portrait of Putin wearing oversized military hat"
+  * Bank crisis → "skeleton banker counting money while world burns"
+  * Tech news → "robot CEO replacing human workers with machines"
+  * War news → "peace dove wearing bulletproof vest"
   
   News context:
   {context}
