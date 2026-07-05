@@ -1,6 +1,6 @@
 import os
 import torch
-from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler
+from diffusers import StableDiffusionXLPipeline
 from PIL import Image
 import io
 import logging
@@ -9,8 +9,7 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
-_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksy-lora")
+_model_dir = os.path.join(os.path.dirname(__file__), "models", "animagine-xl")
 
 
 def _load_model():
@@ -23,7 +22,7 @@ def _load_model():
         logger.error(f"[local_image] model_index.json not found: {model_index}")
         return None
     
-    logger.info(f"[local_image] Loading SDXL-Turbo from {_model_dir}...")
+    logger.info(f"[local_image] Loading Animagine XL from {_model_dir}...")
     
     try:
         _model = StableDiffusionXLPipeline.from_pretrained(
@@ -34,18 +33,7 @@ def _load_model():
         )
         _model.to("cpu")
         
-        lora_file = os.path.join(_lora_dir, "Banksy Style.safetensors")
-        if os.path.exists(lora_file):
-            logger.info(f"[local_image] Loading Banksy LoRA from {lora_file}...")
-            try:
-                _model.load_lora_weights(lora_file)
-                logger.info("[local_image] Banksy LoRA loaded successfully")
-            except Exception as lora_err:
-                logger.warning(f"[local_image] LoRA load failed, using base model: {lora_err}")
-        else:
-            logger.warning(f"[local_image] LoRA not found at {lora_file}, using base model")
-        
-        logger.info("[local_image] Model loaded successfully")
+        logger.info("[local_image] Animagine XL loaded successfully")
         return _model
     except Exception as e:
         logger.error(f"[local_image] Failed to load model: {e}")
@@ -62,7 +50,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 1.0
+        guidance = 7.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else ""
@@ -75,8 +63,7 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             num_inference_steps=steps,
             guidance_scale=guidance,
             width=width,
-            height=height,
-            clip_skip=2
+            height=height
         ).images[0]
         
         buffer = io.BytesIO()
