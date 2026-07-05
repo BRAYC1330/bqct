@@ -77,8 +77,6 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        # ФОРМАТ КАК В CIVITAI: Banksky Style page, banksky stencil print of [subject], simple background
-        # Максимум ~25-30 токенов
         image_prompt = (
             f"Banksky Style page, banksky stencil print of {safe_visual}, simple background"
         )
