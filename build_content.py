@@ -47,19 +47,19 @@ def _generate_banksy_scene(llm, context: str) -> str:
     try:
         prompt_text = generator.load_prompt("banksy_scene", context=context[:800])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=40, temperature=0.6)
+        output = llm(prompt_text, max_tokens=60, temperature=0.6)
         scene = _get_llm_text(output)
         scene = scene.strip('"').strip("'").strip()
-        scene = re.sub(r'^(visual\s*(?:scene)?:?\s*|scene:?\s*|mural:?\s*)', '', scene, flags=re.I).strip()
+        scene = re.sub(r'^(visual\s*(?:scene|description)?:?\s*|scene:?\s*|mural:?\s*)', '', scene, flags=re.I).strip()
         if scene.startswith("```") and scene.endswith("```"):
             scene = scene[3:-3].strip()
         scene = scene.strip('`"\'').strip()
-        if len(scene) > 120:
-            scene = scene[:120].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
+        if len(scene) > 300:
+            scene = scene[:300].rsplit(' ', 1)[0]
+        logger.info(f"[digest] Banksky visual scene: {scene[:150]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksy scene generation failed: {e}")
+        logger.warning(f"[digest] Banksky scene generation failed: {e}")
         return ""
 
 
@@ -78,12 +78,13 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         news_text = (
-            f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
+            f"A street art stencil mural in the style of Banksky on a weathered concrete wall. "
             f"The artwork depicts this scene: {safe_visual}. "
             f"Monochrome stencil with selective color accents, satirical and thought-provoking composition. "
+            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. "
             f"Drips, overspray, raw urban texture."
         )
-        style_text = "Banksy Style"
+        style_text = "Banksky Style"
         image_prompt = f"{news_text}, {style_text}"
 
         negative_prompt = (
