@@ -56,7 +56,7 @@ def _generate_banksy_scene(llm, context: str) -> str:
         scene = scene.strip('`"\'').strip()
         if len(scene) > 120:
             scene = scene[:120].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksky subject: {scene[:80]}")
+        logger.info(f"[digest] Banksky subject: {scene[:100]}")
         return scene
     except Exception as e:
         logger.warning(f"[digest] Banksky scene generation failed: {e}")
@@ -77,34 +77,27 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        # ФОРМАТ ИЗ РАБОЧИХ ПРИМЕРОВ:
-        # Banksky Style page в конце (как в примерах 2 и 3)
-        # + художественные термины (stencil print, sprayed poster)
-        # + другие художники для стиля (Bernard Buffet, Aleksi Briclot)
-        # + "on concrete wall" чтобы был на стене
+        # ФОРМАТ КАК В CIVITAI С СТЕНОЙ:
+        # Banksky Style page, banksky stencil print of [punk/skeleton subject], on weathered concrete wall, simple background
         image_prompt = (
-            f"banksky stencil print of {safe_visual}, "
-            f"satirical political cartoon, influenced by Bernard Buffet, "
-            f"high contrast black and white with selective red accents, "
-            f"minimal shading, FLAT COLORS, on concrete wall, Banksky Style page"
+            f"Banksky Style page, banksky stencil print of {safe_visual}, "
+            f"on a weathered concrete wall, simple background"
         )
 
-        # УСИЛЕННЫЙ NEGATIVE PROMPT: запрет рук + артефакты
         negative_prompt = (
             "worst quality, low quality, blurry, deformed, disfigured, "
             "extra limbs, extra fingers, bad anatomy, bad hands, hands, fingers, "
             "missing fingers, mutated hands, ugly hands, deformed hands, "
             "cropped, watermark, text, signature, jpeg artifacts, "
             "ugly face, asymmetric eyes, extra arms, extra legs, merged limbs, "
-            "crowd, many people, messy, cluttered, colorful, photorealistic, "
-            "3D render, digital art, smooth gradients"
+            "crowd, many people, messy, cluttered"
         )
 
-        logger.info(f"[digest] Subject: {safe_visual[:80]}")
+        logger.info(f"[digest] Subject: {safe_visual[:100]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
 
-        w, h = 512, 512
+        w, h = 1024, 1024
         image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
         
         if not image_bytes:
