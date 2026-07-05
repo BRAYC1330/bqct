@@ -41,25 +41,25 @@ def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
     return ' '.join(words[:max_words])
 
 
-def _generate_banksy_scene(llm, context: str) -> str:
+def _generate_manga_scene(llm, context: str) -> str:
     if not llm:
         return ""
     try:
-        prompt_text = generator.load_prompt("banksy_scene", context=context[:800])
+        prompt_text = generator.load_prompt("manga_scene", context=context[:800])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=25, temperature=0.6)
+        output = llm(prompt_text, max_tokens=30, temperature=0.6)
         scene = _get_llm_text(output)
         scene = scene.strip('"').strip("'").strip()
         scene = re.sub(r'^(visual\s*(?:scene|description)?:?\s*|scene:?\s*|mural:?\s*|subject\s*description:?\s*)', '', scene, flags=re.I).strip()
         if scene.startswith("```") and scene.endswith("```"):
             scene = scene[3:-3].strip()
         scene = scene.strip('`"\'').strip()
-        if len(scene) > 120:
-            scene = scene[:120].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksky subject: {scene[:100]}")
+        if len(scene) > 150:
+            scene = scene[:150].rsplit(' ', 1)[0]
+        logger.info(f"[digest] Manga scene: {scene[:100]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksky scene generation failed: {e}")
+        logger.warning(f"[digest] Manga scene generation failed: {e}")
         return ""
 
 
@@ -78,15 +78,21 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"Banksky Style page, banksky stencil print of {safe_visual}, "
-            f"on a weathered concrete wall, simple background"
+            f"manga style, black and white ink drawing, {safe_visual}, "
+            f"anime art, detailed linework, dramatic composition, manga panel"
         )
 
         negative_prompt = (
-            "worst quality"
+            "worst quality, low quality, blurry, deformed, disfigured, "
+            "extra limbs, extra fingers, bad anatomy, bad hands, hands, fingers, "
+            "missing fingers, mutated hands, ugly hands, deformed hands, "
+            "cropped, watermark, text, signature, jpeg artifacts, "
+            "ugly face, asymmetric eyes, extra arms, extra legs, merged limbs, "
+            "crowd, many people, messy, cluttered, colorful, photorealistic, "
+            "3D render, smooth gradients"
         )
 
-        logger.info(f"[digest] Subject: {safe_visual[:100]}")
+        logger.info(f"[digest] Manga scene: {safe_visual[:100]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
 
@@ -172,7 +178,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.warning(f"[digest] Still too long after truncation, returning None")
             return None, None
         full_context = f"{kw}\n\n{summary}"
-        visual_scene = _generate_banksy_scene(llm, full_context)
+        visual_scene = _generate_manga_scene(llm, full_context)
         if not visual_scene:
             visual_scene = desc[:200]
         body = title + desc
