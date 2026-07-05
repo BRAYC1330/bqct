@@ -42,7 +42,7 @@ def _load_model():
         return None
 
 
-def generate_image(prompt: str, negative_prompt: str = "", width: int = 512, height: int = 512) -> bytes | None:
+def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | None:
     try:
         pipe = _load_model()
         if pipe is None:
@@ -53,23 +53,28 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 512, hei
         guidance = 7.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
-        enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else ""
-        if negative_prompt:
-            enhanced_negative = f"{negative_prompt}, {enhanced_negative}" if enhanced_negative else negative_prompt
+def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | None:
+    try:
+        pipe = _load_model()
+        if pipe is None:
+            logger.warning("[local_image] Model not loaded")
+            return None
+        
+        steps = config.IMAGE_INFERENCE_STEPS
+        guidance = 1.        logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         image = pipe(
             prompt=prompt,
-            negative_prompt=enhanced_negative,
             num_inference_steps=steps,
             guidance_scale=guidance,
             width=width,
             height=height
         ).images[0]
-        
+
         buffer = io.BytesIO()
         image.save(buffer, format="PNG", optimize=True)
         
-        if buffer.tell() > 900 * 1024:
+        if buffer.tell() > 900 * 512:
             buffer = io.BytesIO()
             image.save(buffer, format="JPEG", quality=85, optimize=True)
         
