@@ -47,19 +47,19 @@ def _generate_banksy_scene(llm, context: str) -> str:
     try:
         prompt_text = generator.load_prompt("banksy_scene", context=context[:800])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=20, temperature=0.6)
+        output = llm(prompt_text, max_tokens=25, temperature=0.6)
         scene = _get_llm_text(output)
         scene = scene.strip('"').strip("'").strip()
         scene = re.sub(r'^(visual\s*(?:scene|description)?:?\s*|scene:?\s*|mural:?\s*|subject\s*description:?\s*)', '', scene, flags=re.I).strip()
         if scene.startswith("```") and scene.endswith("```"):
             scene = scene[3:-3].strip()
         scene = scene.strip('`"\'').strip()
-        if len(scene) > 100:
-            scene = scene[:100].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksy subject: {scene[:80]}")
+        if len(scene) > 120:
+            scene = scene[:120].rsplit(' ', 1)[0]
+        logger.info(f"[digest] Banksky subject: {scene[:80]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksy scene generation failed: {e}")
+        logger.warning(f"[digest] Banksky scene generation failed: {e}")
         return ""
 
 
@@ -77,16 +77,27 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
+        # ФОРМАТ ИЗ РАБОЧИХ ПРИМЕРОВ:
+        # Banksky Style page в конце (как в примерах 2 и 3)
+        # + художественные термины (stencil print, sprayed poster)
+        # + другие художники для стиля (Bernard Buffet, Aleksi Briclot)
+        # + "on concrete wall" чтобы был на стене
         image_prompt = (
-            f"Banksky Style page, banksky stencil print of {safe_visual}, simple background"
+            f"banksky stencil print of {safe_visual}, "
+            f"satirical political cartoon, influenced by Bernard Buffet, "
+            f"high contrast black and white with selective red accents, "
+            f"minimal shading, FLAT COLORS, on concrete wall, Banksky Style page"
         )
 
+        # УСИЛЕННЫЙ NEGATIVE PROMPT: запрет рук + артефакты
         negative_prompt = (
             "worst quality, low quality, blurry, deformed, disfigured, "
-            "extra limbs, extra fingers, bad anatomy, bad hands, cropped, "
-            "watermark, text, signature, jpeg artifacts, "
+            "extra limbs, extra fingers, bad anatomy, bad hands, hands, fingers, "
+            "missing fingers, mutated hands, ugly hands, deformed hands, "
+            "cropped, watermark, text, signature, jpeg artifacts, "
             "ugly face, asymmetric eyes, extra arms, extra legs, merged limbs, "
-            "crowd, many people, messy, cluttered, complex background, colorful"
+            "crowd, many people, messy, cluttered, colorful, photorealistic, "
+            "3D render, digital art, smooth gradients"
         )
 
         logger.info(f"[digest] Subject: {safe_visual[:80]}")
