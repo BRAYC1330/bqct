@@ -56,19 +56,12 @@ jobs:
           path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
           key: qwen-model-v1
 
-      - name: Cache SDXL-Turbo model
+      - name: Cache Animagine XL model
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/sdxl-turbo
-          key: sdxl-turbo-v4
-
-      - name: Cache Banksy LoRA
-        if: steps.checker.outputs.has_full == 'true'
-        uses: actions/cache@v4
-        with:
-          path: models/banksy-lora
-          key: banksy-lora-v4
+          path: models/animagine-xl
+          key: animagine-xl-v1
 
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
@@ -81,7 +74,7 @@ jobs:
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers==0.25.1 transformers==4.37.2 accelerate==0.27.2 safetensors huggingface_hub==0.21.4
+          pip install diffusers transformers accelerate safetensors huggingface_hub
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
@@ -131,23 +124,23 @@ jobs:
             fi
           fi
 
-      - name: Download SDXL-Turbo model
+      - name: Download Animagine XL model
         if: steps.checker.outputs.has_full == 'true'
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          echo "Checking SDXL-Turbo model..."
+          echo "Checking Animagine XL model..."
           MODEL_OK=false
-          if [ -f "models/sdxl-turbo/model_index.json" ]; then
-            if [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.bin" ] || [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.safetensors" ]; then
+          if [ -f "models/animagine-xl/model_index.json" ]; then
+            if [ -f "models/animagine-xl/unet/diffusion_pytorch_model.safetensors" ]; then
               MODEL_OK=true
             fi
           fi
           if [ "$MODEL_OK" = "false" ]; then
             echo "Model incomplete or missing, downloading..."
-            if [ -d "models/sdxl-turbo" ]; then
+            if [ -d "models/animagine-xl" ]; then
               echo "Cleaning up incomplete model..."
-              rm -rf models/sdxl-turbo
+              rm -rf models/animagine-xl
             fi
             python -c "
           import os
@@ -163,8 +156,8 @@ jobs:
               try:
                   print(f'Attempt {attempt + 1}/{max_retries}')
                   snapshot_download(
-                      'stabilityai/sdxl-turbo',
-                      local_dir='models/sdxl-turbo',
+                      'cagliostrolab/animagine-xl-3.1',
+                      local_dir='models/animagine-xl',
                       **kwargs
                   )
                   print('Download successful')
@@ -173,26 +166,14 @@ jobs:
                   print(f'Download failed: {e}')
                   if attempt < max_retries - 1:
                       print('Cleaning up and retrying...')
-                      if os.path.exists('models/sdxl-turbo'):
-                          shutil.rmtree('models/sdxl-turbo')
+                      if os.path.exists('models/animagine-xl'):
+                          shutil.rmtree('models/animagine-xl')
                       time.sleep(10)
                   else:
                       raise
           "
           else
-            echo "[OK] SDXL-Turbo model cached and complete"
-          fi
-
-      - name: Download Banksy LoRA
-        if: steps.checker.outputs.has_full == 'true'
-        run: |
-          mkdir -p models/banksy-lora
-          if [ ! -f "models/banksy-lora/Banksy Style.safetensors" ]; then
-            echo "Downloading Banksy LoRA..."
-            wget -O "models/banksy-lora/Banksy Style.safetensors" "https://huggingface.co/KappaNeuro/banksy-style/resolve/main/Banksy%20Style.safetensors"
-            echo "[OK] Banksy LoRA downloaded"
-          else
-            echo "[OK] Banksy LoRA cached"
+            echo "[OK] Animagine XL model cached and complete"
           fi
 
       - name: Run Bot
