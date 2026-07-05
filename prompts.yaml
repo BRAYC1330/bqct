@@ -51,24 +51,26 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Create a SHORT visual description (max 15 words) for a Banksky-style mural.
+  Create a VERY SHORT description (max 12 words) of ONE subject for a Banksky stencil.
   
   Rules:
-  - ONE central figure or object
-  - NO hands, NO fingers, NO crowds
-  - Simple composition: subject + action + symbol
-  - Include logos/flags if mentioned
-  - Max 15 words
+  - ONE person, animal, or object only
+  - Simple action or pose
+  - NO crowds, NO complex scenes
+  - Include key symbol if mentioned in news
+  - Max 12 words
   
   Examples:
-  * Trump Iran news → "Trump silhouette holding unlit match, US and Iran flags crossed behind"
-  * LeBron signs → "Basketball player signing giant contract, dollar sign on ball"
-  * Earthquake → "Cracked wall, child holding broken toy, torn flag"
+  * Trump Iran news → "Donald Trump holding unlit match"
+  * LeBron signs → "basketball player signing giant contract"
+  * Earthquake → "child holding broken toy"
+  * Bank of Japan → "skeleton banker holding money bags"
+  * Apple AI → "robot assembling Apple logo"
   
   News context:
   {context}
   
-  Visual description:
+  Subject description:
 
 context_memory: |
   Summarize the conversation history.
