@@ -78,8 +78,8 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"manga style, black and white ink drawing, {safe_visual}, "
-            f"anime art, detailed linework, dramatic composition, manga panel"
+            f"manga style, ink drawing, {safe_visual[:80]}, "
+            f"anime art, dramatic, manga panel"
         )
 
         negative_prompt = (
@@ -96,7 +96,7 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
 
-        w, h = 1024, 1024
+        w, h = 512, 512
         image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
         
         if not image_bytes:
