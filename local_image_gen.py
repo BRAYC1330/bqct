@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
-_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksky-lora")
+_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksy-lora")
 
 
 def remove_yellow_tint(image):
@@ -31,11 +31,6 @@ def _load_model():
     model_index = os.path.join(_model_dir, "model_index.json")
     if not os.path.exists(model_index):
         logger.error(f"[local_image] model_index.json not found: {model_index}")
-        models_dir = os.path.join(os.path.dirname(__file__), "models")
-        if os.path.exists(models_dir):
-            logger.info(f"[local_image] Contents of models/: {os.listdir(models_dir)}")
-        else:
-            logger.error(f"[local_image] models/ directory not found")
         return None
     
     logger.info(f"[local_image] Loading SDXL-Turbo from {_model_dir}...")
@@ -49,12 +44,13 @@ def _load_model():
         )
         _model.to("cpu")
         
-        lora_file = os.path.join(_lora_dir, "Banksky Style.safetensors")
+        # ИСПРАВЛЕНО: banksy-lora (без k) и Banksy Style (без k)
+        lora_file = os.path.join(_lora_dir, "Banksy Style.safetensors")
         if os.path.exists(lora_file):
-            logger.info(f"[local_image] Loading Banksky LoRA from {lora_file}...")
+            logger.info(f"[local_image] Loading Banksy LoRA from {lora_file}...")
             try:
                 _model.load_lora_weights(lora_file)
-                logger.info("[local_image] Banksky LoRA loaded successfully")
+                logger.info("[local_image] Banksy LoRA loaded successfully")
             except Exception as lora_err:
                 logger.warning(f"[local_image] LoRA load failed, using base model: {lora_err}")
         else:
@@ -69,7 +65,7 @@ def _load_model():
         return None
 
 
-def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, height: int = 1024) -> bytes | None:
+def generate_image(prompt: str, negative_prompt: str = "", width: int = 512, height: int = 512) -> bytes | None:
     try:
         pipe = _load_model()
         if pipe is None:
@@ -84,7 +80,9 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             "blurry, low quality, watermark, signature, distorted, deformed, "
             "bad anatomy, wrong proportions, extra limbs, mutated hands, "
             "poorly drawn face, mutation, ugly, duplicate, morbid, "
-            "out of frame, cropped, dark, low contrast"
+            "out of frame, cropped, dark, low contrast, "
+            "hands, fingers, extra fingers, missing fingers, text, words, letters, "
+            "crowd, many people, messy, cluttered, complex background"
         )
         if negative_prompt:
             enhanced_negative = f"{negative_prompt}, {enhanced_negative}"
