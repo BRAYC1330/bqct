@@ -42,7 +42,7 @@ def _load_model():
         return None
 
 
-def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, height: int = 1024) -> bytes | None:
+def generate_image(prompt: str, negative_prompt: str = "", width: int = 512, height: int = 512) -> bytes | None:
     try:
         pipe = _load_model()
         if pipe is None:
