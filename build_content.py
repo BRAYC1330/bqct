@@ -47,19 +47,19 @@ def _generate_banksy_scene(llm, context: str) -> str:
     try:
         prompt_text = generator.load_prompt("banksy_scene", context=context[:800])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=60, temperature=0.6)
+        output = llm(prompt_text, max_tokens=30, temperature=0.6)
         scene = _get_llm_text(output)
         scene = scene.strip('"').strip("'").strip()
         scene = re.sub(r'^(visual\s*(?:scene|description)?:?\s*|scene:?\s*|mural:?\s*)', '', scene, flags=re.I).strip()
         if scene.startswith("```") and scene.endswith("```"):
             scene = scene[3:-3].strip()
         scene = scene.strip('`"\'').strip()
-        if len(scene) > 300:
-            scene = scene[:300].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Banksky visual scene: {scene[:150]}")
+        if len(scene) > 100:
+            scene = scene[:100].rsplit(' ', 1)[0]
+        logger.info(f"[digest] Banksy visual scene: {scene[:100]}")
         return scene
     except Exception as e:
-        logger.warning(f"[digest] Banksky scene generation failed: {e}")
+        logger.warning(f"[digest] Banksy scene generation failed: {e}")
         return ""
 
 
@@ -77,26 +77,27 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        news_text = (
-            f"A street art stencil mural in the style of Banksky on a weathered concrete wall. "
-            f"The artwork depicts this scene: {safe_visual}. "
-            f"Monochrome stencil with selective color accents, satirical and thought-provoking composition. "
-            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. "
-            f"Drips, overspray, raw urban texture."
+        # ПРОСТОЙ ПРОМПТ: Стиль в начале, сцена короткая, стиль в конце
+        # Максимум ~50-60 токенов чтобы влезть в 77
+        image_prompt = (
+            f"Banksy Style, stencil mural on concrete wall. "
+            f"{safe_visual}. "
+            f"Monochrome, red accents, drips, satirical."
         )
-        style_text = "Banksky Style"
-        image_prompt = f"{news_text}, {style_text}"
 
         negative_prompt = (
             "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
-            "letters without illustration, random words, gibberish text"
+            "letters without illustration, random words, gibberish text, "
+            "hands, fingers, extra fingers, mutated hands, bad anatomy, "
+            "crowd, many people, messy, cluttered, complex background"
         )
 
-        logger.info(f"[digest] Visual scene: {safe_visual[:150]}")
+        logger.info(f"[digest] Visual scene: {safe_visual[:100]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
 
-        w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
+        # 512x512 для SDXL-Turbo + LoRA стабильнее
+        w, h = 512, 512
         image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
         
         if not image_bytes:
