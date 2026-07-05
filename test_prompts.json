@@ -3,13 +3,13 @@
     {
       "id": 1,
       "name": "symbolic",
-      "text": " A street art stencil mural in the style of Banksy on a weathered concrete wall. The artwork depicts this scene: Galaxy Research cuts CLARITY Act 2026 passage odds to 50%, citing a busy legislative calendar. Polymarket odds hover near 49%. Monochrome stencil with selective color accents, satirical and thought-provoking composition. The word 'Galaxy Research Cuts' appears as a small hand-painted tag in the corner. If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. Drips, overspray, raw urban texture."
+      "text": " A street art stencil mural in the style of Banksy on a weathered concrete wall"
     }
   ],
   "art_styles": [
     {
       "id": 1,
-      "style": "Banksky Style"
+      "style": ""
     }
   ]
 }
