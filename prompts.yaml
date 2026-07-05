@@ -51,29 +51,24 @@ digest_refine: |
   Insight:
 
 banksy_scene: |
-  Create a SHORT visual scene description (max 30 words) for a Banksy-style street art mural.
+  Create a SHORT visual description (max 20 words, max 50 tokens) for an image.
   
   Rules:
-  - Describe SPECIFIC visual elements: people, objects, actions, symbols
-  - ALWAYS include logos, symbols, flags mentioned in the news
-  - Use concrete visual nouns, NO abstract terms
-  - Think: "What would Banksy paint about this topic?"
+  - Use ONLY simple, concrete visual words that image AI understands well
+  - Describe WHAT you see: people, objects, places, actions, logos, flags
+  - NO abstract words: policy, signals, shift, impact, tension, dynamics, concerns
+  - NO style words: style, art, mural, stencil (style is applied automatically)
+  - Include brand logos, symbols, flags mentioned in the news
+  - Max 20 words total
+  
+  Examples:
+  * News about bank approving Ethereum → "bank building, worker holding document, Ethereum diamond logo on paper"
+  * News about earthquake in Venezuela → "broken buildings, dust, torn Venezuela flag, child with toy"
+  * News about Apple AI → "giant Apple logo, robot hands, computer screens"
+  * News about Russia missiles Ukraine → "missile, broken wall, Ukraine flag, smoke"
   
   News context:
   {context}
-  
-  Visual scene:
-
-banksy_compress: |
-  Describe this news scene as a simple visual for stencil graffiti.
-  
-  Rules:
-  - Output 10-20 words describing the scene
-  - Include specific details: which bank, what action, who is involved
-  - Describe what is happening, not just objects
-  - No abstract concepts, only visual description
-  
-  News scene: {scene}
   
   Visual description:
 
