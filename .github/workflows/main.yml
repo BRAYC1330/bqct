@@ -47,7 +47,6 @@ jobs:
           LAST_PROCESSED: ${{ vars.LAST_PROCESSED || secrets.LAST_PROCESSED }}
           MANUAL_DIGEST_TYPE: ${{ inputs.manual_digest }}
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python check.py
 
       - name: Cache Qwen model file
@@ -64,18 +63,25 @@ jobs:
           path: models/sdxl-turbo
           key: sdxl-turbo-v1
 
+      - name: Cache Banksky LoRA
+        if: steps.checker.outputs.has_full == 'true'
+        uses: actions/cache@v4
+        with:
+          path: models/banksky-lora
+          key: banksky-lora-v1
+
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex huggingface_hub
+          pip install pyyaml PyNaCl trafilatura regex huggingface_hub==0.21.4
 
       - name: Install PyTorch and diffusers
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers transformers accelerate safetensors
+          pip install diffusers==0.25.1 transformers==4.37.2 accelerate==0.27.2 safetensors
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
@@ -127,25 +133,43 @@ jobs:
 
       - name: Verify and Download SDXL-Turbo Model
         if: steps.checker.outputs.has_full == 'true'
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           set -e
           mkdir -p models/sdxl-turbo
           if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
             echo "[INFO] Downloading SDXL-Turbo model..."
+            python -c "from huggingface_hub import snapshot_download; snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo')"
+            echo "[OK] SDXL-Turbo model downloaded"
+          else
+            echo "[OK] SDXL-Turbo model cached"
+          fi
+
+      - name: Verify and Download Banksky LoRA
+        if: steps.checker.outputs.has_full == 'true'
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+        run: |
+          set -e
+          mkdir -p models/banksky-lora
+          if [ ! -f "models/banksky-lora/Banksky Style.safetensors" ]; then
+            echo "[INFO] Downloading Banksky LoRA..."
             python -c "
           import os
-          from huggingface_hub import snapshot_download
+          from huggingface_hub import hf_hub_download
           token = os.environ.get('HF_API_TOKEN', '').strip()
           kwargs = {}
           if token:
               kwargs['token'] = token
-          snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo', **kwargs)
-          print('[OK] SDXL-Turbo downloaded')
+          hf_hub_download(
+              repo_id='KappaNeuro/banksky-style',
+              filename='Banksky Style.safetensors',
+              local_dir='models/banksky-lora',
+              **kwargs
+          )
+          print('[OK] Banksky LoRA downloaded')
           "
           else
-            echo "[OK] SDXL-Turbo model cached"
+            echo "[OK] Banksky LoRA cached"
           fi
 
       - name: Run Bot
@@ -169,7 +193,6 @@ jobs:
           DEBUG_OWNER: "true"
           LOG_PROMPTS: "false"
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
         run: python bot.py
 
       - name: Health check alert
