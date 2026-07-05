@@ -82,15 +82,6 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
             f"on a weathered concrete wall, simple background"
         )
 
-        negative_prompt = (
-            "worst quality, low quality, blurry, deformed, disfigured, "
-            "extra limbs, extra fingers, bad anatomy, bad hands, hands, fingers, "
-            "missing fingers, mutated hands, ugly hands, deformed hands, "
-            "cropped, watermark, text, signature, jpeg artifacts, "
-            "ugly face, asymmetric eyes, extra arms, extra legs, merged limbs, "
-            "crowd, many people, messy, cluttered"
-        )
-
         logger.info(f"[digest] Subject: {safe_visual[:100]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
