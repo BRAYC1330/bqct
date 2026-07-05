@@ -61,14 +61,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: models/sdxl-turbo
-          key: sdxl-turbo-v3
+          key: sdxl-turbo-v4
 
       - name: Cache Banksy LoRA
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
           path: models/banksy-lora
-          key: banksy-lora-v3
+          key: banksy-lora-v4
 
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
@@ -137,8 +137,18 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           echo "Checking SDXL-Turbo model..."
-          if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
-            echo "Model not found, downloading..."
+          MODEL_OK=false
+          if [ -f "models/sdxl-turbo/model_index.json" ]; then
+            if [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.bin" ] || [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.safetensors" ]; then
+              MODEL_OK=true
+            fi
+          fi
+          if [ "$MODEL_OK" = "false" ]; then
+            echo "Model incomplete or missing, downloading..."
+            if [ -d "models/sdxl-turbo" ]; then
+              echo "Cleaning up incomplete model..."
+              rm -rf models/sdxl-turbo
+            fi
             python -c "
           import os
           import time
@@ -170,7 +180,7 @@ jobs:
                       raise
           "
           else
-            echo "[OK] SDXL-Turbo model cached"
+            echo "[OK] SDXL-Turbo model cached and complete"
           fi
 
       - name: Download Banksy LoRA
