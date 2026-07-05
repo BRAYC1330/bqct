@@ -61,20 +61,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: models/sdxl-turbo
-          key: sdxl-turbo-v1
+          key: sdxl-turbo-v2
 
       - name: Cache Banksy LoRA
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
           path: models/banksy-lora
-          key: banksy-lora-v1
+          key: banksy-lora-v2
 
       - name: Install Python wheels
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install pyyaml PyNaCl trafilatura regex huggingface_hub==0.21.4
+          pip install pyyaml PyNaCl trafilatura regex
 
       - name: Cache llama-cpp-python binary
         if: steps.checker.outputs.status == 'true'
@@ -97,7 +97,7 @@ jobs:
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers==0.25.1 transformers==4.37.2 accelerate==0.27.2 safetensors
+          pip install diffusers transformers accelerate safetensors huggingface_hub
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
@@ -147,28 +147,57 @@ jobs:
             fi
           fi
 
-      - name: Verify and Download SDXL-Turbo Model
-        if: steps.checker.outputs.has_full == 'true'
-        run: |
-          set -e
-          mkdir -p models/sdxl-turbo
-          if [ ! -f "models/sdxl-turbo/model_index.json" ]; then
-            echo "[INFO] Downloading SDXL-Turbo model..."
-            python -c "from huggingface_hub import snapshot_download; snapshot_download('stabilityai/sdxl-turbo', local_dir='models/sdxl-turbo')"
-            echo "[OK] SDXL-Turbo model downloaded"
-          else
-            echo "[OK] SDXL-Turbo model cached"
-          fi
-
-      - name: Verify and Download Banksy LoRA
+      - name: Download SDXL-Turbo model
         if: steps.checker.outputs.has_full == 'true'
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          set -e
-          mkdir -p models/banksy-lora
+          echo "Checking SDXL-Turbo model..."
+          if [ ! -f "models/sdxl-turbo/text_encoder_2/model.safetensors" ]; then
+            echo "Model incomplete, downloading..."
+            python -c "
+          import os
+          import time
+          import shutil
+          from huggingface_hub import snapshot_download
+          token = os.environ.get('HF_API_TOKEN', '').strip()
+          kwargs = {}
+          if token:
+              kwargs['token'] = token
+          max_retries = 3
+          for attempt in range(max_retries):
+              try:
+                  print(f'Attempt {attempt + 1}/{max_retries}')
+                  snapshot_download(
+                      'stabilityai/sdxl-turbo',
+                      local_dir='models/sdxl-turbo',
+                      **kwargs
+                  )
+                  print('Download successful')
+                  break
+              except Exception as e:
+                  print(f'Download failed: {e}')
+                  if attempt < max_retries - 1:
+                      print('Cleaning up and retrying...')
+                      if os.path.exists('models/sdxl-turbo'):
+                          shutil.rmtree('models/sdxl-turbo')
+                      time.sleep(10)
+                  else:
+                      raise
+          "
+          else
+            echo "[OK] SDXL-Turbo model cached"
+          fi
+
+      - name: Download Banksy LoRA
+        if: steps.checker.outputs.has_full == 'true'
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+        run: |
+          echo "Checking Banksy LoRA..."
           if [ ! -f "models/banksy-lora/Banksy Style.safetensors" ]; then
-            echo "[INFO] Downloading Banksy LoRA..."
+            echo "LoRA not found, downloading..."
+            mkdir -p models/banksy-lora
             python -c "
           import os
           from huggingface_hub import hf_hub_download
@@ -180,6 +209,7 @@ jobs:
               repo_id='KappaNeuro/banksy-style',
               filename='Banksy Style.safetensors',
               local_dir='models/banksy-lora',
+              local_dir_use_symlinks=False,
               **kwargs
           )
           print('[OK] Banksy LoRA downloaded')
