@@ -77,8 +77,6 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        # ФОРМАТ КАК В CIVITAI С СТЕНОЙ:
-        # Banksky Style page, banksky stencil print of [punk/skeleton subject], on weathered concrete wall, simple background
         image_prompt = (
             f"Banksky Style page, banksky stencil print of {safe_visual}, "
             f"on a weathered concrete wall, simple background"
