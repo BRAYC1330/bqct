@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
+_lora_dir = os.path.join(os.path.dirname(__file__), "models", "banksky-lora")
 
 def _load_model():
     global _model
@@ -26,17 +27,28 @@ def _load_model():
             logger.error(f"[local_image] models/ directory not found")
         return None
     
-    logger.info(f"[local_image] Loading model from {_model_dir}...")
+    logger.info(f"[local_image] Loading SDXL-Turbo from {_model_dir}...")
     
     try:
         _model = StableDiffusionXLPipeline.from_pretrained(
             _model_dir,
             torch_dtype=torch.float32,
             use_safetensors=True,
-            local_files_only=True,
-            clean_up_tokenization_spaces=False
+            local_files_only=True
         )
         _model.to("cpu")
+        
+        lora_file = os.path.join(_lora_dir, "Banksky Style.safetensors")
+        if os.path.exists(lora_file):
+            logger.info(f"[local_image] Loading Banksky LoRA from {lora_file}...")
+            try:
+                _model.load_lora_weights(lora_file)
+                logger.info("[local_image] Banksky LoRA loaded successfully")
+            except Exception as lora_err:
+                logger.warning(f"[local_image] LoRA load failed, using base model: {lora_err}")
+        else:
+            logger.warning(f"[local_image] LoRA not found at {lora_file}, using base model")
+        
         logger.info("[local_image] Model loaded successfully")
         return _model
     except Exception as e:
@@ -53,11 +65,21 @@ def generate_image(prompt: str, negative_prompt: str = "", width: int = 1024, he
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 0.0
+        guidance = 0.0 if steps <= 5 else 1.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
+        
+        enhanced_negative = config.IMAGE_NEGATIVE_PROMPT if hasattr(config, 'IMAGE_NEGATIVE_PROMPT') else (
+            "blurry, low quality, watermark, signature, distorted, deformed, "
+            "bad anatomy, wrong proportions, extra limbs, mutated hands, "
+            "poorly drawn face, mutation, ugly, duplicate, morbid, "
+            "out of frame, cropped, dark, low contrast"
+        )
+        if negative_prompt:
+            enhanced_negative = f"{negative_prompt}, {enhanced_negative}"
         
         image = pipe(
             prompt=prompt,
+            negative_prompt=enhanced_negative,
             num_inference_steps=steps,
             guidance_scale=guidance,
             width=width,
