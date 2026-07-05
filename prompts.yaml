@@ -50,35 +50,26 @@ digest_refine: |
   Context: {summary}
   Insight:
 
-banksy_scene: |
-  Create a SHORT description (max 15 words) for a Banksky-style stencil, using TYPICAL Banksky subjects.
-  
-  Typical Banksky subjects (MUST use one of these):
-  - punk skeleton (the BEST, most iconic Banksky subject)
-  - rat (Banksky's signature)
-  - monkey (Banksky's signature)
-  - police officer
-  - soldier
-  - child
-  - businessman in suit
+manga_scene: |
+  Create a SHORT description (max 15 words) for a manga-style scene about this news.
   
   Rules:
-  - ADAPT the news into a metaphor using a typical Banksky subject
+  - ONE main subject (person, symbol, action)
+  - Dramatic pose or composition
   - NO hands, NO fingers (they come out deformed)
-  - ONE subject only, max 15 words
+  - Max 15 words
   
   Examples:
-  * Basketball news → "punk skeleton holding basketball with crown"
-  * Trump Putin → "two punk skeletons playing chess"
-  * Bank crisis → "skeleton banker with money bags"
-  * War news → "soldier rat holding rifle with peace sign"
-  * Tech news → "punk skeleton monkey holding smartphone"
-  * LeBron signs → "punk skeleton signing document with basketball"
+  * Basketball news → "basketball player jumping with ball, dramatic angle"
+  * Trump Putin → "two leaders facing each other, intense stare"
+  * Bank crisis → "banker holding money bags, worried expression"
+  * War news → "soldier with flag, battle scene background"
+  * Tech news → "scientist with robot, futuristic lab"
   
   News context:
   {context}
   
-  Subject description:
+  Scene description:
 
 context_memory: |
   Summarize the conversation history.
