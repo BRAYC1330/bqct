@@ -53,6 +53,7 @@ def _generate_banksy_scene(llm, context: str) -> str:
         scene = re.sub(r'^(visual\s*(?:scene)?:?\s*|scene:?\s*|mural:?\s*)', '', scene, flags=re.I).strip()
         if scene.startswith("```") and scene.endswith("```"):
             scene = scene[3:-3].strip()
+        scene = scene.strip('`"\'').strip()
         if len(scene) > 250:
             scene = scene[:250].rsplit(' ', 1)[0]
         logger.info(f"[digest] Banksy visual scene: {scene[:120]}")
@@ -76,9 +77,6 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        # Trigger word "Banksy style" активирует LoRA
-        # Остальное — визуальная сцена из LLM (макс ~50 токенов)
-        # Итого ~60-65 токенов, влезает в лимит 77 токенов CLIP
         image_prompt = f"Banksy style, {safe_visual[:240]}"
 
         negative_prompt = (
