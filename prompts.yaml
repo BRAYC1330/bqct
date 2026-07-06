@@ -50,29 +50,26 @@ digest_refine: |
   Context: {summary}
   Insight:
 
-manga_scene: |
-  Create a VERY SHORT description (max 10 words) for a manga scene about this news.
+caricature_scene: |
+  Create a SHORT description (max 15 words) for a political caricature about this news.
   
   Rules:
-  - ONE main subject + ONE action
-  - NO hands, NO fingers
-  - Max 10 words
+  - ONE main person or symbol
+  - Exaggerated features or pose
+  - NO hands, NO fingers (they come out deformed)
+  - Max 15 words
   
   Examples:
-  * Trump news → "leader on phone, intense expression"
-  * Basketball → "player jumping with ball"
-  * Bank crisis → "banker with money bags"
+  * Trump news → "Donald Trump with giant ego, tiny hands, holding phone"
+  * Putin news → "Vladimir Putin as bear, wearing military hat"
+  * Bank crisis → "banker with money bags, worried face"
+  * War news → "soldier with rifle, peace sign background"
+  * Tech news → "CEO as robot, holding smartphone"
   
   News context:
   {context}
   
-  Scene description:
-
-context_memory: |
-  Summarize the conversation history.
-  Keep only key facts and open questions.
-  History: {history}
-  Summary:
+  Caricature description:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
