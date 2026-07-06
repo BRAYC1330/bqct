@@ -78,7 +78,8 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
         image_prompt = (
-            f"manga style - {safe_visual[:80]}"
+            f"manga style, ink drawing, {safe_visual[:80]}, "
+            f"anime art, dramatic, manga panel"
         )
 
         logger.info(f"[digest] Manga scene: {safe_visual[:100]}")
