@@ -115,11 +115,24 @@ jobs:
           fi
       - name: Download FLUX model
         if: steps.checker.outputs.has_full == 'true'
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           mkdir -p models
           if [ ! -f "models/flux1-schnell-Q4_K_M.gguf" ]; then
             echo "Downloading FLUX.1-schnell Q4_K_M..."
-            curl -L --retry 5 --retry-delay 15 -o models/flux1-schnell-Q4_K_M.gguf "https://huggingface.co/city96/FLUX.1-schnell-gguf/resolve/main/flux1-schnell-Q4_K_M.gguf"
+            python -c "
+          import os
+          from huggingface_hub import hf_hub_download
+          token = os.environ.get('HF_API_TOKEN', '').strip()
+          kwargs = {'token': token} if token else {}
+          hf_hub_download(
+              repo_id='city96/FLUX.1-schnell-gguf',
+              filename='flux1-schnell-Q4_K_M.gguf',
+              local_dir='models',
+              **kwargs
+          )
+          "
             FILE_SIZE=$(stat -c%s "models/flux1-schnell-Q4_K_M.gguf" 2>/dev/null || echo 0)
             echo "Downloaded file size: ${FILE_SIZE} bytes"
             if [ "$FILE_SIZE" -lt 9000000000 ]; then
