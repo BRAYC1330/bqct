@@ -49,3 +49,11 @@ SCOUT_HANDLES = [
     "chainbase.com", "buildermaps.io", "agentkey.app", "subq.ai",
     "qwen.ai", "zona.finance", "opensea.io",
 ]
+
+CTX_ROOT_POST = "[ROOT POST]"
+CTX_THREAD = "[THREAD]"
+CTX_RECENT_REPLIES = "[RECENT REPLIES]"
+CTX_CURRENT_QUERY = "[CURRENT QUERY]"
+CTX_SEARCH_RESULTS = "[SEARCH RESULTS]"
+CTX_EMBED = "[embed: {}]"
+CTX_LINKED_CONTENT = "[linked content, truncated — may be incomplete: {}]"

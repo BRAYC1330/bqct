@@ -1,9 +1,8 @@
 import logging
-import asyncio
 import config
 import bsky
 import generator
-from search_chainbase import fetch_chainbase
+from search_chainbase import fetch_chainbase_validated
 import utils
 import facets
 import build_content
@@ -17,6 +16,7 @@ async def prepare(ctx: RunContext, client, llm, task: Task) -> List[Dict[str, An
     uri = task.uri
     user_text = task.text
     parent_uri = task.parent_uri or ""
+    
     if not parent_uri: return []
     
     chain = await bsky.fetch_thread_chain(client, uri)
@@ -29,90 +29,43 @@ async def prepare(ctx: RunContext, client, llm, task: Task) -> List[Dict[str, An
     
     root_text = chain.get("root_text", "")
     clean_root = utils.clean_for_llm(root_text)
+    
     sentiment = generator.classify_sentiment(llm, user_text, clean_root)
     clean_query = utils.clean_for_llm(user_text)
     intent = generator.classify_intent(llm, user_text, clean_root)
     
     search_data = ""
-    source = ""
     original_keyword = ""
     
     if intent != "CASUAL":
         original_keyword = generator.extract_chainbase_keyword(llm, clean_query, clean_root)
-        kw = original_keyword
-        tried_keywords = set()
-        for attempt in range(3):
-            if kw:
-                tried_keywords.add(kw.lower())
-            logger.info(f"[search] Attempt {attempt+1}: keyword='{kw or 'REGENERATING'}'")
-            
-            search_task = None
-            regen_task = None
-            
-            if not kw:
-                tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
-                regen_task = asyncio.create_task(asyncio.to_thread(generator.regenerate_keyword, llm, original_keyword, clean_query, clean_root, tried_keywords=tried_str))
-            
-            if kw:
-                search_task = asyncio.create_task(fetch_chainbase(kw))
-            
-            if regen_task:
-                kw = await regen_task
-                if not kw:
-                    logger.info(f"[search] Cannot regenerate keyword (attempt {attempt+1})")
-                    break
-                if kw.lower() in tried_keywords:
-                    logger.info(f"[search] Regenerated keyword '{kw}' was already tried, skipping")
-                    kw = ""
-                    continue
-                logger.info(f"[search] Regenerated keyword: '{kw}'")
-                tried_keywords.add(kw.lower())
-                search_task = asyncio.create_task(fetch_chainbase(kw))
-                
-            if search_task:
-                search_data = await search_task
-            
-            if search_data:
-                logger.info(f"[search] Fetched {len(search_data.split(chr(10)))} results for '{kw}'")
-                sample = "\n".join(search_data.split("\n")[:6])
-                if generator.validate_search_results(llm, clean_query, sample):
-                    logger.info(f"[search] Validation passed for '{kw}' ✓")
-                    break
-                logger.info(f"[search] Validation failed for '{kw}' (irrelevant), retrying...")
-                search_data = ""
-            else:
-                logger.info(f"[search] No results for '{kw}'")
-            kw = ""
-        if not search_data:
-            logger.info(f"[search] All 3 attempts failed, proceeding without search data")
-            
-    if intent == "CASUAL":
-        sig = build_content.SIG_DEFAULT
-    else:
-        sig = build_content.SIG_CHAINBASE if search_data else build_content.SIG_DEFAULT
+        search_data = await fetch_chainbase_validated(llm, clean_query, clean_root, original_keyword)
+        if search_data:
+            logger.info(f"[search] Fetched data for '{original_keyword}'")
+
+    sig = build_content.SIG_DEFAULT
+    if intent != "CASUAL" and search_data:
+        sig = build_content.SIG_CHAINBASE
         
     max_reply_chars = config.MAX_COMMENT_CHARS - len(sig) - 10
     
     if intent == "CASUAL":
-        ctx_text = f"[ROOT POST]\n{clean_root}"
+        ctx_text = f"{config.CTX_ROOT_POST}\n{clean_root}"
         reply = generator.get_answer(llm, ctx_text, user_text, max_chars=max_reply_chars, temperature=config.LLM_TEMP_CASUAL, prompt_key="casual_reply")
     elif not search_data:
-        ctx_text = f"[ROOT POST]\n{clean_root}"
+        ctx_text = f"{config.CTX_ROOT_POST}\n{clean_root}"
         reply = generator.get_answer(llm, ctx_text, clean_query, max_chars=max_reply_chars, temperature=config.LLM_TEMP_STANDARD, prompt_key="dyor_fallback", keyword=original_keyword or "this topic")
     else:
         clean_search = utils.clean_for_llm(search_data)
-        minimal_ctx = f"[ROOT POST]\n{clean_root}\n\n[SEARCH RESULTS]\n{clean_search}"
+        minimal_ctx = f"{config.CTX_ROOT_POST}\n{clean_root}\n{config.CTX_SEARCH_RESULTS}\n{clean_search}"
         reply = generator.get_answer(llm, minimal_ctx, clean_query, max_chars=max_reply_chars, temperature=config.LLM_TEMP_STANDARD, prompt_key="community_reply")
-        
+
     if config.RAW_DEBUG:
         logger.info("=== [COMMUNITY DEBUG] ===")
         logger.info(f"Intent: {intent} | Keyword: {original_keyword} | Search: {'yes' if search_data else 'no'} | Sig: {sig}")
-        logger.info(f"Prompt Context:\n[ROOT POST]\n{clean_root}")
-        if search_data:
-            logger.info(f"[SEARCH RESULTS]\n{utils.clean_for_llm(search_data)}")
         logger.info(f"Raw Model Output: {reply}")
         logger.info("=== [END DEBUG] ===")
-        
+
     if not reply or not isinstance(reply, str):
         logger.warning("[community] LLM returned empty reply")
         return []
@@ -127,10 +80,18 @@ async def prepare(ctx: RunContext, client, llm, task: Task) -> List[Dict[str, An
             return []
         reply, facets_list = facets.enhance_tickers(reply)
         final_text = reply + sig
-        
+
     actions.append({
         "type": "post_reply",
-        "args": {"bot_did": config.BOT_DID, "text": final_text, "root_uri": root_uri, "root_cid": root_cid, "parent_uri": uri, "parent_cid": parent_cid, "facets": facets_list}
+        "args": {
+            "bot_did": config.BOT_DID, 
+            "text": final_text, 
+            "root_uri": root_uri, 
+            "root_cid": root_cid, 
+            "parent_uri": uri, 
+            "parent_cid": parent_cid, 
+            "facets": facets_list
+        }
     })
     
     if ctx.like(uri):

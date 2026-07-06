@@ -40,7 +40,7 @@ async def fetch_chainbase(keyword: str) -> str:
                         return "\n".join(f"{kw}: {sm}" for kw, sm in valid)
         except Exception as e:
             logger.warning(f"[search] Narrative search error: {e}")
-
+            
         try:
             r = await c.get("https://api.chainbase.com/tops/v1/tool/search-mentions", params={"keyword": keyword})
             if r.status_code == 200:
@@ -55,32 +55,48 @@ async def fetch_chainbase(keyword: str) -> str:
                         continue
                     mentions.append(f"@{i.get('user', {}).get('screen_name', 'unknown')}: {txt[:277] + '...' if len(txt) > 280 else txt}")
                 if mentions:
-                    return "Recent mentions:\n" + "\n\n".join(mentions)
+                    return "Recent mentions:\n" + "\n".join(mentions)
         except Exception as e:
             logger.warning(f"[search] Mentions fallback error: {e}")
-
         return ""
 
-@retry_async()
-async def fetch_mentions(keyword: str) -> str:
-    if not keyword:
-        return ""
-    kw_list = [keyword, f"${keyword}"] if not keyword.startswith("$") else [keyword]
-    mentions, seen_ids = [], set()
-    async with httpx.AsyncClient(timeout=config.SEARCH_TIMEOUT) as c:
-        for kw in kw_list:
-            try:
-                r = await c.get("https://api.chainbase.com/tops/v1/tool/search-mentions", params={"keyword": kw})
-                if r.status_code != 200:
-                    continue
-                for i in r.json().get("items", [])[:5]:
-                    if i.get("id") in seen_ids:
-                        continue
-                    seen_ids.add(i["id"])
-                    txt = i.get("text", "").replace("\n", " ").strip()
-                    if len(txt) < 20:
-                        continue
-                    mentions.append(f"@{i.get('user', {}).get('screen_name', 'unknown')}: {txt[:277] + '...' if len(txt) > 280 else txt}")
-            except Exception:
-                pass
-    return "Recent mentions:\n" + "\n\n".join(mentions[:5]) if mentions else ""
+async def fetch_chainbase_validated(llm, query: str, context: str, initial_keyword: str = "") -> str:
+    """
+    Unified search logic with retry, keyword regeneration and validation.
+    Replaces duplicated loops in community.py and owner.py.
+    """
+    import generator
+    
+    kw = initial_keyword
+    tried_keywords = set()
+    search_data = ""
+
+    for attempt in range(3):
+        if kw:
+            tried_keywords.add(kw.lower())
+            logger.info(f"[search] Attempt {attempt+1}: keyword='{kw}'")
+            search_data = await fetch_chainbase(kw)
+
+            if search_data:
+                sample = "\n".join(search_data.split("\n")[:6])
+                if generator.validate_search_results(llm, query, sample):
+                    logger.info(f"[search] Validation passed for '{kw}' ✅")
+                    break
+                logger.info(f"[search] Validation failed for '{kw}' (irrelevant), retrying...")
+                search_data = ""
+            else:
+                logger.info(f"[search] No results for '{kw}'")
+                kw = ""
+
+        tried_str = ", ".join(tried_keywords) if tried_keywords else "none"
+        kw = generator.regenerate_keyword(llm, initial_keyword, query, context, tried_keywords=tried_str)
+        
+        if not kw:
+            logger.info(f"[search] Cannot regenerate keyword (attempt {attempt+1})")
+            break
+        if kw.lower() in tried_keywords:
+            logger.info(f"[search] Regenerated keyword '{kw}' was already tried, skipping")
+            kw = ""
+            continue
+
+    return search_data
