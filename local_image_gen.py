@@ -9,7 +9,7 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_path = os.path.join(os.path.dirname(__file__), "models", "flux1-schnell-Q4_K_M.gguf")
+_model_path = os.path.join(os.path.dirname(__file__), "models", "flux1-schnell-Q4_K_S.gguf")
 
 def _load_model():
     global _model
