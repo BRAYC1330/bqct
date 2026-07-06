@@ -50,21 +50,22 @@ digest_refine: |
   Context: {summary}
   Insight:
 
-comic_scene: |
-  Create a SHORT description (max 20 words) for a comic-style scene about this news.
+duotone_scene: |
+  Create a SHORT description (max 20 words) for a flat duotone illustration about this news.
   
   Rules:
-  - Describe a SCENE with action, not just a portrait
-  - Include multiple objects/people interacting
-  - NO hands, NO fingers (they come out deformed)
+  - Describe simple geometric shapes and forms
+  - Focus on abstract concepts, not realistic people
+  - Use simple nouns: circles, squares, arrows, buildings, symbols
+  - NO hands, NO faces, NO realistic portraits
   - Max 20 words
   
   Examples:
-  * Trump Putin news → "Trump and Putin negotiating at table, oil barrel between them"
-  * Bank crisis → "banker counting money while building burns in background"
-  * War news → "soldiers playing chess with tanks as pieces"
-  * Tech news → "robot CEO presenting to crowd of humans"
-  * Trade news → "two countries shaking hands over trade agreement"
+  * Trump Putin news → "two circles connected by line, oil barrel shape between them"
+  * Bank crisis → "building shape crumbling, money symbols falling down"
+  * War news → "two triangular shapes facing each other, broken line between"
+  * Tech news → "robot geometric form, circuit patterns, screen shapes"
+  * Trade news → "two rectangular shapes connected by arrow, handshake symbol"
   
   News context:
   {context}
