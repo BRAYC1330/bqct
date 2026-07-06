@@ -9,7 +9,7 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
+_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-base")
 _lora_dir = os.path.join(os.path.dirname(__file__), "models", "caricature-lora")
 
 
@@ -33,7 +33,7 @@ def _load_model():
         logger.error(f"[local_image] model_index.json not found: {model_index}")
         return None
     
-    logger.info(f"[local_image] Loading SDXL-Turbo from {_model_dir}...")
+    logger.info(f"[local_image] Loading SDXL-Base from {_model_dir}...")
     
     try:
         _model = StableDiffusionXLPipeline.from_pretrained(
@@ -72,7 +72,7 @@ def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | 
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 1.0
+        guidance = 7.5
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         image = pipe(
