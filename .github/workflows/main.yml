@@ -56,12 +56,12 @@ jobs:
           path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
           key: qwen-model-v1
 
-      - name: Cache SDXL-Turbo model
+      - name: Cache SDXL-Base model
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/sdxl-turbo
-          key: sdxl-turbo-v5
+          path: models/sdxl-base
+          key: sdxl-base-v1
 
       - name: Cache Caricature LoRA
         if: steps.checker.outputs.has_full == 'true'
@@ -81,7 +81,7 @@ jobs:
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers==0.25.1 transformers==4.37.2 accelerate==0.27.2 safetensors huggingface_hub==0.21.4
+          pip install diffusers transformers accelerate safetensors huggingface_hub
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
@@ -131,23 +131,23 @@ jobs:
             fi
           fi
 
-      - name: Download SDXL-Turbo model
+      - name: Download SDXL-Base model
         if: steps.checker.outputs.has_full == 'true'
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          echo "Checking SDXL-Turbo model..."
+          echo "Checking SDXL-Base model..."
           MODEL_OK=false
-          if [ -f "models/sdxl-turbo/model_index.json" ]; then
-            if [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.safetensors" ] || [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.bin" ]; then
+          if [ -f "models/sdxl-base/model_index.json" ]; then
+            if [ -f "models/sdxl-base/unet/diffusion_pytorch_model.safetensors" ] || [ -f "models/sdxl-base/unet/diffusion_pytorch_model.fp16.safetensors" ] || [ -f "models/sdxl-base/unet/diffusion_pytorch_model.bin" ]; then
               MODEL_OK=true
             fi
           fi
           if [ "$MODEL_OK" = "false" ]; then
             echo "Model incomplete or missing, downloading..."
-            if [ -d "models/sdxl-turbo" ]; then
+            if [ -d "models/sdxl-base" ]; then
               echo "Cleaning up incomplete model..."
-              rm -rf models/sdxl-turbo
+              rm -rf models/sdxl-base
             fi
             python -c "
           import os
@@ -163,8 +163,8 @@ jobs:
               try:
                   print(f'Attempt {attempt + 1}/{max_retries}')
                   snapshot_download(
-                      'stabilityai/sdxl-turbo',
-                      local_dir='models/sdxl-turbo',
+                      'stabilityai/stable-diffusion-xl-base-1.0',
+                      local_dir='models/sdxl-base',
                       **kwargs
                   )
                   print('Download successful')
@@ -173,14 +173,14 @@ jobs:
                   print(f'Download failed: {e}')
                   if attempt < max_retries - 1:
                       print('Cleaning up and retrying...')
-                      if os.path.exists('models/sdxl-turbo'):
-                          shutil.rmtree('models/sdxl-turbo')
+                      if os.path.exists('models/sdxl-base'):
+                          shutil.rmtree('models/sdxl-base')
                       time.sleep(10)
                   else:
                       raise
           "
           else
-            echo "[OK] SDXL-Turbo model cached and complete"
+            echo "[OK] SDXL-Base model cached and complete"
           fi
 
       - name: Download Caricature LoRA
