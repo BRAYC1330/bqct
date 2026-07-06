@@ -127,7 +127,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.info("=== [DIGEST PROMPT END ===")
         try:
             output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5)
-            desc = output.get("choices", [{}])[0].get("text", "").strip()
+            desc = _get_llm_text(output)
             desc = utils.compress_numbers(desc)
             if config.RAW_DEBUG:
                 logger.info("=== [DIGEST RAW OUTPUT] ===")
