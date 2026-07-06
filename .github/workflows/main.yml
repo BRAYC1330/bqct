@@ -31,10 +31,8 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
-
       - name: Install checker deps
         run: pip install httpx pydantic Pillow
-
       - name: Check
         id: checker
         env:
@@ -48,34 +46,29 @@ jobs:
           MANUAL_DIGEST_TYPE: ${{ inputs.manual_digest }}
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: python check.py
-
       - name: Cache Qwen model file
         if: steps.checker.outputs.status == 'true'
         uses: actions/cache@v4
         with:
           path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
           key: qwen-model-v1
-
-      - name: Cache SDXL-Base model
+      - name: Cache FLUX model
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/sdxl-base
-          key: sdxl-base-v1
-
+          path: models/flux1-schnell-Q4_K_M.gguf
+          key: flux-schnell-q4km-v1
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
           pip install pyyaml PyNaCl trafilatura regex
-
       - name: Install PyTorch and diffusers
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers transformers accelerate safetensors huggingface_hub
-
+          pip install "diffusers>=0.30.0" "transformers>=4.43.0" accelerate safetensors huggingface_hub gguf sentencepiece
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
         run: |
@@ -84,13 +77,11 @@ jobs:
           FILE="models/qwen2.5-coder-14b-instruct-q5_k_m.gguf"
           EXPECTED_SHA256="${{ secrets.MODEL_SHA256 }}"
           MIN_SIZE=100000000
-
           if [ -z "$EXPECTED_SHA256" ]; then
             echo "[WARN] MODEL_SHA256 secret is empty or not set!"
           else
             echo "[OK] MODEL_SHA256 secret is set (length: ${#EXPECTED_SHA256})"
           fi
-
           if [ -f "$FILE" ]; then
             FILE_SIZE=$(stat -c%s "$FILE" 2>/dev/null || echo 0)
             if [ "$FILE_SIZE" -ge "$MIN_SIZE" ]; then
@@ -107,7 +98,6 @@ jobs:
               rm -f "$FILE"
             fi
           fi
-
           if [ ! -f "$FILE" ]; then
             echo "[INFO] Downloading Qwen model..."
             curl -L --retry 5 --retry-delay 15 -o "$FILE" "https://huggingface.co/Qwen/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/qwen2.5-coder-14b-instruct-q5_k_m.gguf?download=true"
@@ -123,59 +113,23 @@ jobs:
               echo "$EXPECTED_SHA256  $FILE" | sha256sum -c -
             fi
           fi
-
-      - name: Download SDXL-Base model
+      - name: Download FLUX model
         if: steps.checker.outputs.has_full == 'true'
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          echo "Checking SDXL-Base model..."
-          MODEL_OK=false
-          if [ -f "models/sdxl-base/model_index.json" ]; then
-            if [ -f "models/sdxl-base/unet/diffusion_pytorch_model.safetensors" ] || [ -f "models/sdxl-base/unet/diffusion_pytorch_model.fp16.safetensors" ] || [ -f "models/sdxl-base/unet/diffusion_pytorch_model.bin" ]; then
-              MODEL_OK=true
+          mkdir -p models
+          if [ ! -f "models/flux1-schnell-Q4_K_M.gguf" ]; then
+            echo "Downloading FLUX.1-schnell Q4_K_M..."
+            curl -L --retry 5 --retry-delay 15 -o models/flux1-schnell-Q4_K_M.gguf "https://huggingface.co/city96/FLUX.1-schnell-gguf/resolve/main/flux1-schnell-Q4_K_M.gguf"
+            FILE_SIZE=$(stat -c%s "models/flux1-schnell-Q4_K_M.gguf" 2>/dev/null || echo 0)
+            echo "Downloaded file size: ${FILE_SIZE} bytes"
+            if [ "$FILE_SIZE" -lt 9000000000 ]; then
+              echo "Downloaded file too small, likely an error."
+              rm -f "models/flux1-schnell-Q4_K_M.gguf"
+              exit 1
             fi
-          fi
-          if [ "$MODEL_OK" = "false" ]; then
-            echo "Model incomplete or missing, downloading..."
-            if [ -d "models/sdxl-base" ]; then
-              echo "Cleaning up incomplete model..."
-              rm -rf models/sdxl-base
-            fi
-            python -c "
-          import os
-          import time
-          import shutil
-          from huggingface_hub import snapshot_download
-          token = os.environ.get('HF_API_TOKEN', '').strip()
-          kwargs = {}
-          if token:
-              kwargs['token'] = token
-          max_retries = 3
-          for attempt in range(max_retries):
-              try:
-                  print(f'Attempt {attempt + 1}/{max_retries}')
-                  snapshot_download(
-                      'stabilityai/stable-diffusion-xl-base-1.0',
-                      local_dir='models/sdxl-base',
-                      **kwargs
-                  )
-                  print('Download successful')
-                  break
-              except Exception as e:
-                  print(f'Download failed: {e}')
-                  if attempt < max_retries - 1:
-                      print('Cleaning up and retrying...')
-                      if os.path.exists('models/sdxl-base'):
-                          shutil.rmtree('models/sdxl-base')
-                      time.sleep(10)
-                  else:
-                      raise
-          "
           else
-            echo "[OK] SDXL-Base model cached and complete"
+            echo "[OK] FLUX model cached"
           fi
-
       - name: Run Bot
         id: run
         if: steps.checker.outputs.status == 'true'
@@ -198,12 +152,11 @@ jobs:
           LOG_PROMPTS: "false"
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: python bot.py
-
       - name: Health check alert
         if: failure()
         run: |
           if [ -n "${{ secrets.ALERT_WEBHOOK }}" ]; then
-            curl -X POST -H "Content-Type: application/json" \
-            -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-            "${{ secrets.ALERT_WEBHOOK }}" || true
+            curl -X POST -H "Content: application/json" \
+              -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+              "${{ secrets.ALERT_WEBHOOK }}" || true
           fi
