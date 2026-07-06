@@ -1,4 +1,3 @@
-import re
 import config
 import utils
 import generator
@@ -36,37 +35,21 @@ def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
         return keyword
     return ' '.join(words[:max_words])
 
-def _generate_chart_scene(llm, context: str) -> tuple[str, str]:
-    if not llm:
-        return "UP", "green green green"
-    try:
-        prompt_text = generator.load_prompt("chart_scene", context=context[:800])
-        prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=40, temperature=0.6)
-        response = _get_llm_text(output)
-        direction_match = re.search(r'DIRECTION:\s*(UP|DOWN)', response, re.I)
-        pattern_match = re.search(r'PATTERN:\s*([^\|]+)', response, re.I)
-        direction = direction_match.group(1).upper() if direction_match else "UP"
-        pattern = pattern_match.group(1).strip() if pattern_match else "green green green"
-        if len(pattern) > 100:
-            pattern = pattern[:100].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Chart direction: {direction}, pattern: {pattern[:50]}")
-        return direction, pattern
-    except Exception as e:
-        logger.warning(f"[digest] Chart scene generation failed: {e}")
-        return "UP", "green green green"
-
-async def _generate_digest_embed(client, trends, task_type, llm=None, visual_scene: str = "", full_context: str = "", refined_desc: str = "") -> dict | None:
+async def _generate_digest_embed(client, trends: list, task_type: str, llm=None, refined_desc: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
         import local_image_gen
+        
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
+
         short_keyword = _shorten_keyword(keyword, 3)
-        safe_keyword = short_keyword.replace("'", "").replace('"', '').replace('-', ' ')[:50]
+        safe_keyword = short_keyword.replace("'", "").replace('"', '')[:50]
+
         visual_source = refined_desc if refined_desc else top_item.get("summary", "")
         safe_visual = visual_source.replace("'", "").replace('"', '')
+
         image_prompt = (
             f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
             f"The artwork depicts this scene: {safe_visual} "
@@ -75,16 +58,20 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
             f"If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. "
             f"Drips, overspray, raw urban texture."
         )
+
         negative_prompt = (
             "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
             "letters without illustration, random words, gibberish text, unrelated text, "
             "stray letters, nonsense words"
         )
+
         logger.info(f"[digest] Visual prompt: {safe_visual}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt: {image_prompt}")
+
         w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
         image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
+        
         if not image_bytes:
             logger.warning("[digest] Image generation failed, posting text-only")
             return None
@@ -92,6 +79,7 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
+
 
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends:
@@ -101,8 +89,6 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     stats_emoji = config.TREND_STATS_EMOJI
     sep = config.TREND_SCORE_SEPARATOR
     trophy = config.TREND_TROPHY
-    visual_scene = ""
-    full_context = ""
     refined_desc = ""
     if task_type == "digest_mini":
         lines = []
@@ -141,7 +127,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.info("=== [DIGEST PROMPT END ===")
         try:
             output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5)
-            desc = _get_llm_text(output)
+            desc = output.get("choices", [{}])[0].get("text", "").strip()
             desc = utils.compress_numbers(desc)
             if config.RAW_DEBUG:
                 logger.info("=== [DIGEST RAW OUTPUT] ===")
@@ -164,8 +150,6 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.warning(f"[digest] Still too long after truncation, returning None")
             return None, None
         refined_desc = desc
-        full_context = f"{kw}\n{summary}"
-        visual_scene = _generate_chart_scene(llm, full_context)
         body = title + desc
     final = body + sig
     final_len = utils.count_graphemes(final)
@@ -178,8 +162,5 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [END FINAL POST] ===")
     embed = None
     if client and task_type == "digest_full":
-        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, visual_scene=visual_scene, full_context=full_context, refined_desc=refined_desc)
-        if embed is None:
-            logger.warning("[digest] Image generation failed for digest_full, skipping entire digest")
-            return None, None
+        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, refined_desc=refined_desc)
     return final, embed
