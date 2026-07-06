@@ -41,26 +41,29 @@ def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
     return ' '.join(words[:max_words])
 
 
-def _generate_duotone_scene(llm, context: str) -> str:
+def _generate_chart_scene(llm, context: str) -> tuple[str, str]:
     if not llm:
-        return ""
+        return "UP", "green green green"
     try:
-        prompt_text = generator.load_prompt("duotone_scene", context=context[:800])
+        prompt_text = generator.load_prompt("chart_scene", context=context[:800])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=30, temperature=0.6)
-        scene = _get_llm_text(output)
-        scene = scene.strip('"').strip("'").strip()
-        scene = re.sub(r'^(visual\s*(?:scene|description)?:?\s*|scene:?\s*|mural:?\s*|subject\s*description:?\s*)', '', scene, flags=re.I).strip()
-        if scene.startswith("```") and scene.endswith("```"):
-            scene = scene[3:-3].strip()
-        scene = scene.strip('`"\'').strip()
-        if len(scene) > 150:
-            scene = scene[:150].rsplit(' ', 1)[0]
-        logger.info(f"[digest] Duotone scene: {scene[:100]}")
-        return scene
+        output = llm(prompt_text, max_tokens=40, temperature=0.6)
+        response = _get_llm_text(output)
+        
+        direction_match = re.search(r'DIRECTION:\s*(UP|DOWN)', response, re.I)
+        pattern_match = re.search(r'PATTERN:\s*([^\|]+)', response, re.I)
+        
+        direction = direction_match.group(1).upper() if direction_match else "UP"
+        pattern = pattern_match.group(1).strip() if pattern_match else "green green green"
+        
+        if len(pattern) > 100:
+            pattern = pattern[:100].rsplit(' ', 1)[0]
+        
+        logger.info(f"[digest] Chart direction: {direction}, pattern: {pattern[:50]}")
+        return direction, pattern
     except Exception as e:
-        logger.warning(f"[digest] Duotone scene generation failed: {e}")
-        return ""
+        logger.warning(f"[digest] Chart scene generation failed: {e}")
+        return "UP", "green green green"
 
 
 async def _generate_digest_embed(client, trends, task_type, llm=None, visual_scene: str = "", full_context: str = "") -> dict | None:
@@ -75,11 +78,25 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
         short_keyword = _shorten_keyword(keyword, 3)
         safe_keyword = short_keyword.replace("'", "").replace('"', '').replace('-', ' ')[:50]
 
-        safe_visual = visual_scene.replace("'", "").replace('"', '')
+        direction, pattern = visual_scene if isinstance(visual_scene, tuple) else ("UP", "green green green")
+        
+        candle_colors = pattern.lower()
+        
+        if direction == "UP":
+            image_prompt = (
+                f"candlestick chart trending up, {candle_colors} candles, "
+                f"black background, neon glow, bullish market, financial trading screen, "
+                f"green dominant, modern UI design"
+            )
+        else:
+            image_prompt = (
+                f"candlestick chart trending down, {candle_colors} candles, "
+                f"black background, neon glow, bearish market, financial trading screen, "
+                f"red dominant, modern UI design"
+            )
 
-        image_prompt = f"flat duotone illustration, minimalist, bold geometric shapes, two-tone, {safe_visual}, modern editorial design, clean composition"
-
-        logger.info(f"[digest] Duotone scene: {safe_visual[:100]}")
+        logger.info(f"[digest] Chart direction: {direction}")
+        logger.info(f"[digest] Candle pattern: {candle_colors[:50]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
         logger.info(f"[digest] Image prompt ({len(image_prompt.split())} words): {image_prompt}")
 
@@ -165,9 +182,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.warning(f"[digest] Still too long after truncation, returning None")
             return None, None
         full_context = f"{kw}\n\n{summary}"
-        visual_scene = _generate_duotone_scene(llm, full_context)
-        if not visual_scene:
-            visual_scene = desc[:200]
+        visual_scene = _generate_chart_scene(llm, full_context)
         body = title + desc
     final = body + sig
     final_len = utils.count_graphemes(final)
