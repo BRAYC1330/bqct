@@ -56,12 +56,19 @@ jobs:
           path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
           key: qwen-model-v1
 
-      - name: Cache Animagine XL model
+      - name: Cache SDXL-Turbo model
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/animagine-xl
-          key: animagine-xl-v1
+          path: models/sdxl-turbo
+          key: sdxl-turbo-v5
+
+      - name: Cache Caricature LoRA
+        if: steps.checker.outputs.has_full == 'true'
+        uses: actions/cache@v4
+        with:
+          path: models/caricature-lora
+          key: caricature-lora-v1
 
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
@@ -74,7 +81,7 @@ jobs:
         if: steps.checker.outputs.has_full == 'true'
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install diffusers transformers accelerate safetensors huggingface_hub
+          pip install diffusers==0.25.1 transformers==4.37.2 accelerate==0.27.2 safetensors huggingface_hub==0.21.4
 
       - name: Verify and Download Qwen Model
         if: steps.checker.outputs.status == 'true'
@@ -124,23 +131,23 @@ jobs:
             fi
           fi
 
-      - name: Download Animagine XL model
+      - name: Download SDXL-Turbo model
         if: steps.checker.outputs.has_full == 'true'
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          echo "Checking Animagine XL model..."
+          echo "Checking SDXL-Turbo model..."
           MODEL_OK=false
-          if [ -f "models/animagine-xl/model_index.json" ]; then
-            if [ -f "models/animagine-xl/unet/diffusion_pytorch_model.safetensors" ]; then
+          if [ -f "models/sdxl-turbo/model_index.json" ]; then
+            if [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.safetensors" ] || [ -f "models/sdxl-turbo/unet/diffusion_pytorch_model.bin" ]; then
               MODEL_OK=true
             fi
           fi
           if [ "$MODEL_OK" = "false" ]; then
             echo "Model incomplete or missing, downloading..."
-            if [ -d "models/animagine-xl" ]; then
+            if [ -d "models/sdxl-turbo" ]; then
               echo "Cleaning up incomplete model..."
-              rm -rf models/animagine-xl
+              rm -rf models/sdxl-turbo
             fi
             python -c "
           import os
@@ -156,8 +163,8 @@ jobs:
               try:
                   print(f'Attempt {attempt + 1}/{max_retries}')
                   snapshot_download(
-                      'cagliostrolab/animagine-xl-3.1',
-                      local_dir='models/animagine-xl',
+                      'stabilityai/sdxl-turbo',
+                      local_dir='models/sdxl-turbo',
                       **kwargs
                   )
                   print('Download successful')
@@ -166,14 +173,42 @@ jobs:
                   print(f'Download failed: {e}')
                   if attempt < max_retries - 1:
                       print('Cleaning up and retrying...')
-                      if os.path.exists('models/animagine-xl'):
-                          shutil.rmtree('models/animagine-xl')
+                      if os.path.exists('models/sdxl-turbo'):
+                          shutil.rmtree('models/sdxl-turbo')
                       time.sleep(10)
                   else:
                       raise
           "
           else
-            echo "[OK] Animagine XL model cached and complete"
+            echo "[OK] SDXL-Turbo model cached and complete"
+          fi
+
+      - name: Download Caricature LoRA
+        if: steps.checker.outputs.has_full == 'true'
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+        run: |
+          mkdir -p models/caricature-lora
+          if [ ! -f "models/caricature-lora/caricature.safetensors" ]; then
+            echo "Downloading Caricature LoRA..."
+            python -c "
+          import os
+          from huggingface_hub import hf_hub_download
+          token = os.environ.get('HF_API_TOKEN', '').strip()
+          kwargs = {}
+          if token:
+              kwargs['token'] = token
+          hf_hub_download(
+              repo_id='Blib-la/caricature_lora_sdxl',
+              filename='caricature.safetensors',
+              local_dir='models/caricature-lora',
+              local_dir_use_symlinks=False,
+              **kwargs
+          )
+          print('[OK] Caricature LoRA downloaded')
+          "
+          else
+            echo "[OK] Caricature LoRA cached"
           fi
 
       - name: Run Bot
