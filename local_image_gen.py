@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-base")
-_lora_dir = os.path.join(os.path.dirname(__file__), "models", "caricature-lora")
+_lora_dir = os.path.join(os.path.dirname(__file__), "models", "comic-lora")
 
 
 def remove_yellow_tint(image):
@@ -44,12 +44,12 @@ def _load_model():
         )
         _model.to("cpu")
         
-        lora_file = os.path.join(_lora_dir, "caricature_sdxl_v2.safetensors")
+        lora_file = os.path.join(_lora_dir, "Comic-SDXL.safetensors")
         if os.path.exists(lora_file):
-            logger.info(f"[local_image] Loading Caricature LoRA from {lora_file}...")
+            logger.info(f"[local_image] Loading Comic LoRA from {lora_file}...")
             try:
                 _model.load_lora_weights(lora_file)
-                logger.info("[local_image] Caricature LoRA loaded successfully")
+                logger.info("[local_image] Comic LoRA loaded successfully")
             except Exception as lora_err:
                 logger.warning(f"[local_image] LoRA load failed, using base model: {lora_err}")
         else:
