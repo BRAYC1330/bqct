@@ -56,8 +56,8 @@ jobs:
         if: steps.checker.outputs.has_full == 'true'
         uses: actions/cache@v4
         with:
-          path: models/flux1-schnell-Q4_K_M.gguf
-          key: flux-schnell-q4km-v1
+          path: models/flux1-schnell-Q4_K_S.gguf
+          key: flux-schnell-q4ks-v1
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
@@ -119,8 +119,8 @@ jobs:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           mkdir -p models
-          if [ ! -f "models/flux1-schnell-Q4_K_M.gguf" ]; then
-            echo "Downloading FLUX.1-schnell Q4_K_M..."
+          if [ ! -f "models/flux1-schnell-Q4_K_S.gguf" ]; then
+            echo "Downloading FLUX.1-schnell Q4_K_S..."
             python -c "
           import os
           from huggingface_hub import hf_hub_download
@@ -128,16 +128,16 @@ jobs:
           kwargs = {'token': token} if token else {}
           hf_hub_download(
               repo_id='city96/FLUX.1-schnell-gguf',
-              filename='flux1-schnell-Q4_K_M.gguf',
+              filename='flux1-schnell-Q4_K_S.gguf',
               local_dir='models',
               **kwargs
           )
           "
-            FILE_SIZE=$(stat -c%s "models/flux1-schnell-Q4_K_M.gguf" 2>/dev/null || echo 0)
+            FILE_SIZE=$(stat -c%s "models/flux1-schnell-Q4_K_S.gguf" 2>/dev/null || echo 0)
             echo "Downloaded file size: ${FILE_SIZE} bytes"
-            if [ "$FILE_SIZE" -lt 9000000000 ]; then
+            if [ "$FILE_SIZE" -lt 6000000000 ]; then
               echo "Downloaded file too small, likely an error."
-              rm -f "models/flux1-schnell-Q4_K_M.gguf"
+              rm -f "models/flux1-schnell-Q4_K_S.gguf"
               exit 1
             fi
           else
@@ -169,7 +169,7 @@ jobs:
         if: failure()
         run: |
           if [ -n "${{ secrets.ALERT_WEBHOOK }}" ]; then
-            curl -X POST -H "Content: application/json" \
+            curl -X POST -H "Content-Type: application/json" \
               -d "{\"text\":\"Bluesky Bot failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
               "${{ secrets.ALERT_WEBHOOK }}" || true
           fi
