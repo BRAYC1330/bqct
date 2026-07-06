@@ -1,7 +1,7 @@
 import os
 import torch
 from diffusers import StableDiffusionXLPipeline
-from PIL import Image
+from PIL import Image, ImageEnhance
 import io
 import logging
 import config
@@ -9,7 +9,18 @@ import config
 logger = logging.getLogger(__name__)
 
 _model = None
-_model_dir = os.path.join(os.path.dirname(__file__), "models", "animagine-xl")
+_model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-turbo")
+_lora_dir = os.path.join(os.path.dirname(__file__), "models", "caricature-lora")
+
+
+def remove_yellow_tint(image):
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    enhancer = ImageEnhance.Contrast(image)
+    image = enhancer.enhance(1.2)
+    image = image.convert('L')
+    image = image.convert('RGB')
+    return image
 
 
 def _load_model():
@@ -22,7 +33,7 @@ def _load_model():
         logger.error(f"[local_image] model_index.json not found: {model_index}")
         return None
     
-    logger.info(f"[local_image] Loading Animagine XL from {_model_dir}...")
+    logger.info(f"[local_image] Loading SDXL-Turbo from {_model_dir}...")
     
     try:
         _model = StableDiffusionXLPipeline.from_pretrained(
@@ -32,7 +43,19 @@ def _load_model():
             local_files_only=True
         )
         _model.to("cpu")
-        logger.info("[local_image] Animagine XL loaded successfully")
+        
+        lora_file = os.path.join(_lora_dir, "caricature.safetensors")
+        if os.path.exists(lora_file):
+            logger.info(f"[local_image] Loading Caricature LoRA from {lora_file}...")
+            try:
+                _model.load_lora_weights(lora_file)
+                logger.info("[local_image] Caricature LoRA loaded successfully")
+            except Exception as lora_err:
+                logger.warning(f"[local_image] LoRA load failed, using base model: {lora_err}")
+        else:
+            logger.warning(f"[local_image] LoRA not found at {lora_file}, using base model")
+        
+        logger.info("[local_image] Model loaded successfully")
         return _model
     except Exception as e:
         logger.error(f"[local_image] Failed to load model: {e}")
@@ -49,7 +72,7 @@ def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | 
             return None
         
         steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 7.0
+        guidance = 1.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
         image = pipe(
@@ -59,6 +82,8 @@ def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | 
             width=width,
             height=height
         ).images[0]
+        
+        image = remove_yellow_tint(image)
         
         buffer = io.BytesIO()
         image.save(buffer, format="PNG", optimize=True)
