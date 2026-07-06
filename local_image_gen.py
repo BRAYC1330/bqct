@@ -1,7 +1,7 @@
 import os
 import torch
 from diffusers import StableDiffusionXLPipeline
-from PIL import Image, ImageEnhance
+from PIL import Image
 import io
 import logging
 import config
@@ -10,16 +10,6 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _model_dir = os.path.join(os.path.dirname(__file__), "models", "sdxl-base")
-
-
-def remove_yellow_tint(image):
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
-    enhancer = ImageEnhance.Contrast(image)
-    image = enhancer.enhance(1.2)
-    image = image.convert('L')
-    image = image.convert('RGB')
-    return image
 
 
 def _load_model():
@@ -70,8 +60,6 @@ def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | 
             width=width,
             height=height
         ).images[0]
-        
-        image = remove_yellow_tint(image)
         
         buffer = io.BytesIO()
         image.save(buffer, format="PNG", optimize=True)
