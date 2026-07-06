@@ -44,7 +44,7 @@ def _load_model():
         )
         _model.to("cpu")
         
-        lora_file = os.path.join(_lora_dir, "caricature.safetensors")
+        lora_file = os.path.join(_lora_dir, "caricature_sdxl_v2.safetensors")
         if os.path.exists(lora_file):
             logger.info(f"[local_image] Loading Caricature LoRA from {lora_file}...")
             try:
