@@ -77,7 +77,7 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, visual_sce
 
         safe_visual = visual_scene.replace("'", "").replace('"', '')
 
-        image_prompt = f"caricature, {safe_visual}, political cartoon, satirical, exaggerated features, editorial illustration"
+        image_prompt = f"Comic Style, {safe_visual}, editorial illustration, bold colors, dynamic composition"
 
         logger.info(f"[digest] Caricature scene: {safe_visual[:100]}")
         logger.info(f"[digest] Short keyword: {safe_keyword}")
