@@ -50,27 +50,31 @@ digest_refine: |
   Context: {summary}
   Insight:
 
-duotone_scene: |
-  Create a SHORT description (max 20 words) for a flat duotone illustration about this news.
+chart_scene: |
+  Analyze this news and determine its market/sentiment direction.
+  
+  Task: Output TWO things:
+  1. DIRECTION: UP (bullish/positive) or DOWN (bearish/negative)
+  2. PATTERN: Describe a candlestick chart pattern (5-10 candles) that represents this news
   
   Rules:
-  - Describe simple geometric shapes and forms
-  - Focus on abstract concepts, not realistic people
-  - Use simple nouns: circles, squares, arrows, buildings, symbols
-  - NO hands, NO faces, NO realistic portraits
-  - Max 20 words
+  - UP = positive news, growth, success, gains, bullish
+  - DOWN = negative news, decline, failure, losses, bearish
+  - Describe candle colors and arrangement only
+  - NO text, NO numbers, NO labels in the chart
+  - Max 30 words for pattern description
   
   Examples:
-  * Trump Putin news → "two circles connected by line, oil barrel shape between them"
-  * Bank crisis → "building shape crumbling, money symbols falling down"
-  * War news → "two triangular shapes facing each other, broken line between"
-  * Tech news → "robot geometric form, circuit patterns, screen shapes"
-  * Trade news → "two rectangular shapes connected by arrow, handshake symbol"
+  * Crypto pump news → "UP: green green green small red green green"
+  * Market crash → "DOWN: red red red small green red red red"
+  * Mixed results → "UP: red green red green green red green"
+  * Steady growth → "UP: green small green green small green green"
+  * Sudden drop → "DOWN: green green red red red red red"
   
   News context:
   {context}
   
-  Scene description:
+  Output format: DIRECTION: [UP/DOWN] | PATTERN: [candle sequence]
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
