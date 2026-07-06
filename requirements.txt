@@ -7,7 +7,10 @@ trafilatura==2.0.0
 regex==2024.11.6
 torch==2.3.1+cpu
 torchvision==0.18.1+cpu
-diffusers==0.29.2
-transformers==4.42.4
-accelerate==0.32.1
-safetensors==0.4.3
+diffusers>=0.30.0
+transformers>=4.43.0
+accelerate>=0.32.1
+safetensors>=0.4.3
+huggingface_hub
+gguf
+sentencepiece
