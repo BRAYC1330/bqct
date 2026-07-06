@@ -22,9 +22,11 @@ def _load_model():
 
     logger.info(f"[local_image] Loading FLUX.1-schnell GGUF from {_model_path}...")
     try:
+        token = os.environ.get("HF_API_TOKEN", "").strip()
         _model = FluxPipeline.from_single_file(
             _model_path,
-            torch_dtype=torch.float32
+            torch_dtype=torch.float32,
+            token=token if token else None
         )
         _model.to("cpu")
         logger.info("[local_image] FLUX.1-schnell GGUF loaded successfully")
