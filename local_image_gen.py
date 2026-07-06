@@ -32,7 +32,6 @@ def _load_model():
             local_files_only=True
         )
         _model.to("cpu")
-        
         logger.info("[local_image] Animagine XL loaded successfully")
         return _model
     except Exception as e:
@@ -53,16 +52,6 @@ def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | 
         guidance = 7.0
         logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
         
-def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | None:
-    try:
-        pipe = _load_model()
-        if pipe is None:
-            logger.warning("[local_image] Model not loaded")
-            return None
-        
-        steps = config.IMAGE_INFERENCE_STEPS
-        guidance = 1.        logger.info(f"[local_image] Generating image ({steps} steps, guidance {guidance}): {prompt[:100]}...")
-        
         image = pipe(
             prompt=prompt,
             num_inference_steps=steps,
@@ -70,11 +59,11 @@ def generate_image(prompt: str, width: int = 512, height: int = 512) -> bytes | 
             width=width,
             height=height
         ).images[0]
-
+        
         buffer = io.BytesIO()
         image.save(buffer, format="PNG", optimize=True)
         
-        if buffer.tell() > 900 * 512:
+        if buffer.tell() > 900 * 1024:
             buffer = io.BytesIO()
             image.save(buffer, format="JPEG", quality=85, optimize=True)
         
