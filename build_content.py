@@ -87,19 +87,25 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, summary: s
         safe_subtitle = short_keyword.replace("'", "").replace('"', '').upper()[:50]
         
         candles_json = _generate_chart_candles(llm, summary)
+        
+        logger.info(f"[digest] Raw Qwen chart output: {candles_json[:500]}")
+        
         if not candles_json:
             logger.error("[digest] Chart candles generation returned empty, failing digest")
             return None
-        logger.info(f"[digest] Raw Qwen output: {candles_json[:500]}")
+            
         _log_candles(candles_json)
+        
         image_bytes = chart_renderer.generate_chart_image(
             candles_json,
             title="AI SENTIMENT INDEX",
             subtitle=safe_subtitle
         )
+        
         if not image_bytes:
             logger.error("[digest] Chart render failed, failing digest")
             return None
+            
         logger.info(f"[digest] Chart rendered: {len(image_bytes)} bytes")
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
     except Exception as e:
@@ -118,6 +124,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     trophy = config.TREND_TROPHY
     refined_desc = ""
     summary = ""
+    
     if task_type == "digest_mini":
         lines = []
         for idx, item in enumerate(trends[:6]):
@@ -179,6 +186,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             return None, None
         refined_desc = desc
         body = title + desc
+        
     final = body + sig
     final_len = utils.count_graphemes(final)
     if final_len > max_total:
@@ -188,10 +196,12 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [FINAL DIGEST POST] ===")
         logger.info(final)
         logger.info("=== [END FINAL POST] ===")
+        
     embed = None
     if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type, llm=llm, summary=summary)
         if embed is None:
             logger.error("[digest] Image generation failed for digest_full, failing entire digest")
             return None, None
+            
     return final, embed
