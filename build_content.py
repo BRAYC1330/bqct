@@ -48,11 +48,21 @@ def _generate_chart_candles(llm, context: str) -> str:
             logger.info(prompt_text)
             logger.info("=== [END CHART SCENE PROMPT] ===")
             
-        output = llm(prompt_text, max_tokens=500, temperature=0.5, stop=["```"])
+        output = llm(prompt_text, max_tokens=500, temperature=0.4)
+        
+        if config.RAW_DEBUG:
+            logger.info(f"[digest] Raw LLM response object: {output}")
+            
         raw = _get_llm_text(output)
+        
+        if config.RAW_DEBUG:
+            logger.info(f"[digest] Raw LLM text output: '{raw}'")
+            
         return raw
     except Exception as e:
         logger.warning(f"[digest] Chart candles generation failed: {e}")
+        import traceback
+        logger.warning(f"[digest] Traceback: {traceback.format_exc()[:500]}")
         return ""
 
 def _log_candles(candles_json: str) -> None:
@@ -88,7 +98,7 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, summary: s
         
         candles_json = _generate_chart_candles(llm, summary)
         
-        logger.info(f"[digest] Raw Qwen chart output: {candles_json[:500]}")
+        logger.info(f"[digest] Raw Qwen chart output: '{candles_json[:500]}'")
         
         if not candles_json:
             logger.error("[digest] Chart candles generation returned empty, failing digest")
