@@ -18,18 +18,59 @@ GRID_SIZE = 12
 CELL_W = CHART_W / GRID_SIZE
 CELL_H = CHART_H / GRID_SIZE
 
+def _normalize_candle(c: dict) -> Optional[Dict]:
+    try:
+        o = c.get('o', c.get('open'))
+        h = c.get('h', c.get('high'))
+        l = c.get('l', c.get('low'))
+        c_val = c.get('c', c.get('close'))
+        if o is None or h is None or l is None or c_val is None:
+            return None
+        o = float(o)
+        h = float(h)
+        l = float(l)
+        c_val = float(c_val)
+        if any(v < 0 or v > 12 for v in [o, h, l, c_val]):
+            o = max(0, min(12, o))
+            h = max(0, min(12, h))
+            l = max(0, min(12, l))
+            c_val = max(0, min(12, c_val))
+        return {'o': o, 'h': h, 'l': l, 'c': c_val}
+    except (ValueError, TypeError):
+        return None
+
+def _try_fix_truncated_json(json_str: str) -> str:
+    open_braces = json_str.count('{')
+    close_braces = json_str.count('}')
+    if open_braces > close_braces:
+        last_complete = json_str.rfind('}')
+        if last_complete > 0:
+            json_str = json_str[:last_complete+1]
+            if not json_str.rstrip().endswith(']'):
+                json_str = json_str.rstrip() + '\n]'
+    return json_str
+
 def parse_candles_json(raw: str) -> Optional[List[Dict]]:
     try:
         raw = re.sub(r'```json\s*', '', raw, flags=re.I)
         raw = re.sub(r'```\s*', '', raw)
         raw = raw.strip()
         
-        first_array = re.search(r'\[[^\[\]]*\]', raw)
-        if not first_array:
+        match = re.search(r'\[[\s\S]*\]', raw)
+        if not match:
             return None
-        json_str = first_array.group(0)
+        json_str = match.group(0)
         
-        data = json.loads(json_str)
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError:
+            json_str = _try_fix_truncated_json(json_str)
+            try:
+                data = json.loads(json_str)
+            except json.JSONDecodeError:
+                logger.warning(f"[chart] JSON still invalid after fix attempt")
+                return None
+        
         if not isinstance(data, list):
             return None
         if len(data) < 8:
@@ -37,26 +78,15 @@ def parse_candles_json(raw: str) -> Optional[List[Dict]]:
             return None
         if len(data) > 12:
             data = data[:12]
+        
         if isinstance(data[0], dict):
             valid_candles = []
             for c in data:
                 if not isinstance(c, dict):
                     continue
-                if not all(k in c for k in ('o', 'h', 'l', 'c')):
-                    continue
-                try:
-                    o = float(c['o'])
-                    h = float(c['h'])
-                    l = float(c['l'])
-                    c_val = float(c['c'])
-                except (ValueError, TypeError):
-                    continue
-                if any(v < 0 or v > 12 for v in [o, h, l, c_val]):
-                    o = max(0, min(12, o))
-                    h = max(0, min(12, h))
-                    l = max(0, min(12, l))
-                    c_val = max(0, min(12, c_val))
-                valid_candles.append({'o': o, 'h': h, 'l': l, 'c': c_val})
+                normalized = _normalize_candle(c)
+                if normalized:
+                    valid_candles.append(normalized)
             if len(valid_candles) < 8:
                 return None
             return valid_candles
@@ -110,8 +140,16 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
       <stop offset="0%" style="stop-color:#050810"/>
       <stop offset="100%" style="stop-color:#0a1020"/>
     </linearGradient>
+    <linearGradient id="sentiment" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.15"/>
+      <stop offset="25%" style="stop-color:#88ff00;stop-opacity:0.12"/>
+      <stop offset="50%" style="stop-color:#888888;stop-opacity:0.08"/>
+      <stop offset="75%" style="stop-color:#ff8800;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#ff3366;stop-opacity:0.15"/>
+    </linearGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect x="{CHART_LEFT}" y="{CHART_TOP}" width="{CHART_W}" height="{CHART_H}" fill="url(#sentiment)"/>
   <text x="512" y="64" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
   <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
   <g stroke="#1a2030" stroke-width="0.6">'''
@@ -121,10 +159,17 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
     for i in range(GRID_SIZE + 1):
         y = CHART_TOP + i * CELL_H
         svg += f'\n    <line x1="{CHART_LEFT}" y1="{y:.1f}" x2="{CHART_RIGHT}" y2="{y:.1f}"/>'
-    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#c8d0e0">'
-    for v in [12, 9, 6, 3, 0]:
-        y = value_to_y(v) + 8
-        svg += f'\n    <text x="104" y="{y}" text-anchor="end">{v}</text>'
+    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="18" font-weight="bold">'
+    zones = [
+        (12, "EUPHORIA", "#00ff88"),
+        (9, "HOPE", "#88ff00"),
+        (6, "NEUTRAL", "#888888"),
+        (3, "FEAR", "#ff8800"),
+        (0, "PANIC", "#ff3366")
+    ]
+    for val, label, color in zones:
+        y = value_to_y(val) + 6
+        svg += f'\n    <text x="104" y="{y}" text-anchor="end" fill="{color}">{label}</text>'
     svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#c8d0e0">'
     for i in range(1, 13):
         x = CHART_LEFT + (i - 0.5) * CELL_W
