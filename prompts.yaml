@@ -60,19 +60,16 @@ chart_scene: |
   - Weak event → small body, long shadows (high uncertainty)
   - Mixed event → doji-like (open ≈ close, long shadows)
   
-  Output STRICT JSON array of 12 objects:
-  [{"o": open, "h": high, "l": low, "c": close}, ...]
+  Output STRICT JSON array of 12 objects.
+  Each object must have keys: "o" (open), "h" (high), "l" (low), "c" (close)
+  All values must be numbers in range [0, 12]
+  Each candle's "o" MUST equal previous candle's "c" (first candle "o" can be 5-7)
+  "h" must be >= max(o, c), "l" must be <= min(o, c)
   
-  Constraints:
-  - All values in range [0, 12]
-  - Each candle's "o" MUST equal previous candle's "c" (first candle "o" can be 5-7)
-  - "h" >= max(o, c), "l" <= min(o, c)
-  - NO text, NO explanations, ONLY JSON
+  NO text, NO explanations, NO markdown, NO code blocks. ONLY the JSON array.
   
   News:
   {context}
-  
-  JSON:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
