@@ -47,19 +47,19 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a market sentiment analyst. Break down this news into 12 SEQUENTIAL EVENTS.
+  You are a sentiment analyst. Break down this news into 12 SEQUENTIAL EVENTS.
   Each event becomes ONE candlestick on a chart (scale 0-12).
   
   CRITICAL: Output ONLY a JSON array. NO text before or after. NO explanations.
   
   Analysis Rules:
-  - Identify EACH distinct event in the news (signings, trades, retirements, game results, etc.)
+  - Identify EACH distinct event in the news (announcements, deals, changes, results, etc.)
   - For each event, determine sentiment:
-    * Strong positive (major signing, championship win) → big green candle (+2 to +3)
-    * Positive (good news, trade) → green candle (+1 to +2)
+    * Strong positive (major success, breakthrough) → big green candle (+2 to +3)
+    * Positive (good news, progress) → green candle (+1 to +2)
     * Neutral (routine updates) → small candle or doji (0 to +1)
-    * Negative (losses, rejections) → red candle (-1 to -2)
-    * Strong negative (retirement, major loss) → big red candle (-2 to -3)
+    * Negative (setbacks, losses) → red candle (-1 to -2)
+    * Strong negative (major failure, crisis) → big red candle (-2 to -3)
   - Mixed news with different events → VOLATILE chart (alternating UP/DOWN candles)
   - Single-direction news → trending chart (mostly UP or mostly DOWN)
   
@@ -134,12 +134,12 @@ casual_reply: |
   Message:
 
 scout_welcome: |
-  A crypto/web3 project just joined Bluesky. Write a unique welcome post.
+  A new project or creator just joined Bluesky. Write a unique welcome post.
   Guidelines:
   - You MUST include @{handle} in the text so it becomes a clickable mention and sends them a notification.
   - Personalize based on their display name and bio.
   - Friendly, concise, genuine tone.
   - No questions, no calls to action.
   - One short paragraph max.
-  Project info: {context}
+  Profile info: {context}
   Welcome post:
