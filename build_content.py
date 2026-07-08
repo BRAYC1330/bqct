@@ -76,18 +76,17 @@ def _log_candles(candles_json: str) -> None:
     except Exception as e:
         logger.warning(f"[digest] Candle logging failed: {e}")
 
-async def _generate_digest_embed(client, trends, task_type, llm=None, refined_desc: str = "") -> dict | None:
+async def _generate_digest_embed(client, trends, task_type, llm=None, summary: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
         import chart_renderer
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
-        summary = top_item.get("summary", "")
         short_keyword = _shorten_keyword(keyword, 3)
         safe_subtitle = short_keyword.replace("'", "").replace('"', '').upper()[:50]
-        news_context = refined_desc if refined_desc else summary
-        candles_json = _generate_chart_candles(llm, news_context)
+        
+        candles_json = _generate_chart_candles(llm, summary)
         if not candles_json:
             logger.error("[digest] Chart candles generation returned empty, failing digest")
             return None
@@ -118,6 +117,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     sep = config.TREND_SCORE_SEPARATOR
     trophy = config.TREND_TROPHY
     refined_desc = ""
+    summary = ""
     if task_type == "digest_mini":
         lines = []
         for idx, item in enumerate(trends[:6]):
@@ -190,7 +190,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [END FINAL POST] ===")
     embed = None
     if client and task_type == "digest_full":
-        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, refined_desc=refined_desc)
+        embed = await _generate_digest_embed(client, trends, task_type, llm=llm, summary=summary)
         if embed is None:
             logger.error("[digest] Image generation failed for digest_full, failing entire digest")
             return None, None
