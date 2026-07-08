@@ -1,3 +1,4 @@
+import re
 import config
 import utils
 import generator
@@ -35,51 +36,56 @@ def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
         return keyword
     return ' '.join(words[:max_words])
 
-async def _generate_digest_embed(client, trends: list, task_type: str, llm=None, refined_desc: str = "") -> dict | None:
+def _generate_chart_candles(llm, context: str) -> str:
+    if not llm:
+        return ""
+    try:
+        prompt_text = generator.load_prompt("chart_scene", context=context[:1500])
+        prompt_text = str(prompt_text).strip()
+        output = llm(prompt_text, max_tokens=400, temperature=0.4)
+        raw = _get_llm_text(output)
+        return raw
+    except Exception as e:
+        logger.warning(f"[digest] Chart candles generation failed: {e}")
+        return ""
+
+async def _generate_digest_embed(client, trends, task_type, llm=None, refined_desc: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
     try:
-        import local_image_gen
+        import chart_renderer
         
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
-
+        summary = top_item.get("summary", "")
+        
         short_keyword = _shorten_keyword(keyword, 3)
-        safe_keyword = short_keyword.replace("'", "").replace('"', '')[:50]
-
-        visual_source = refined_desc if refined_desc else top_item.get("summary", "")
-        safe_visual = visual_source.replace("'", "").replace('"', '')
-
-        image_prompt = (
-            f"A street art stencil mural in the style of Banksy on a weathered concrete wall. "
-            f"The artwork depicts this scene: {safe_visual} "
-            f"Monochrome stencil with selective color accents, satirical and thought-provoking composition. "
-            f"The word '{safe_keyword}' appears as a small hand-painted tag in the corner. "
-            f"If the topic mentions brands, cryptocurrencies, or projects, integrate their symbols as stenciled icons within the composition. "
-            f"Drips, overspray, raw urban texture."
+        safe_subtitle = short_keyword.replace("'", "").replace('"', '').upper()[:50]
+        
+        news_context = refined_desc if refined_desc else summary
+        
+        candles_json = _generate_chart_candles(llm, news_context)
+        if not candles_json:
+            logger.warning("[digest] Chart candles generation returned empty")
+            return None
+        
+        logger.info(f"[digest] Raw chart JSON: {candles_json[:300]}")
+        
+        image_bytes = chart_renderer.generate_chart_image(
+            candles_json,
+            title="AI SENTIMENT INDEX",
+            subtitle=safe_subtitle
         )
-
-        negative_prompt = (
-            "blurry, low quality, watermark, signature, blank wall, only text, typography only, "
-            "letters without illustration, random words, gibberish text, unrelated text, "
-            "stray letters, nonsense words"
-        )
-
-        logger.info(f"[digest] Visual prompt: {safe_visual}")
-        logger.info(f"[digest] Short keyword: {safe_keyword}")
-        logger.info(f"[digest] Image prompt: {image_prompt}")
-
-        w, h = map(int, config.IMAGE_ASPECT_RATIO.split("x"))
-        image_bytes = local_image_gen.generate_image(image_prompt, negative_prompt, w, h)
         
         if not image_bytes:
-            logger.warning("[digest] Image generation failed, posting text-only")
+            logger.warning("[digest] Chart render failed")
             return None
+        
+        logger.info(f"[digest] Chart rendered: {len(image_bytes)} bytes")
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         return None
-
 
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
     if not trends:
@@ -163,4 +169,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     embed = None
     if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type, llm=llm, refined_desc=refined_desc)
+        if embed is None:
+            logger.warning("[digest] Image generation failed for digest_full, skipping entire digest")
+            return None, None
     return final, embed
