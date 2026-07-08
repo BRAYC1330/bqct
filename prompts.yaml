@@ -50,26 +50,24 @@ chart_scene: |
   You are a market sentiment analyst. Analyze the news and break it down into 12 SEQUENTIAL EVENTS.
   Each event becomes ONE candlestick on a chart (scale 0-12).
   
+  CRITICAL: Output ONLY a JSON array. NO text before or after. NO explanations.
+  
   Rules:
-  - Identify 12 distinct moments/signals in the news (or extrapolate consequences)
-  - For each event, determine: sentiment direction (+/-), intensity (weak/medium/strong), volatility (uncertainty)
+  - Identify 12 distinct moments/signals in the news
   - First candle starts near 5-7 (neutral baseline)
   - Each subsequent candle's OPEN = previous candle's CLOSE
   - Strong positive event → big green candle (close much higher than open)
   - Strong negative event → big red candle (close much lower than open)
-  - Weak event → small body, long shadows (high uncertainty)
-  - Mixed event → doji-like (open ≈ close, long shadows)
+  - Weak event → small body, long shadows
+  - All values must be numbers in range [0, 12]
   
-  Output STRICT JSON array of 12 objects.
-  Each object must have keys: "o" (open), "h" (high), "l" (low), "c" (close)
-  All values must be numbers in range [0, 12]
-  Each candle's "o" MUST equal previous candle's "c" (first candle "o" can be 5-7)
-  "h" must be >= max(o, c), "l" must be <= min(o, c)
-  
-  NO text, NO explanations, NO markdown, NO code blocks. ONLY the JSON array.
+  Output format (STRICT JSON):
+  [{"o":6.0,"h":7.0,"l":5.5,"c":6.5},{"o":6.5,"h":8.0,"l":6.0,"c":7.5},...]
   
   News:
   {context}
+  
+  JSON:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
