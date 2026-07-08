@@ -6,12 +6,12 @@ from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-CANVAS_W = 512
-CANVAS_H = 512
-CHART_LEFT = 60
-CHART_RIGHT = 480
-CHART_TOP = 80
-CHART_BOTTOM = 440
+CANVAS_W = 1024
+CANVAS_H = 1024
+CHART_LEFT = 120
+CHART_RIGHT = 960
+CHART_TOP = 160
+CHART_BOTTOM = 880
 CHART_W = CHART_RIGHT - CHART_LEFT
 CHART_H = CHART_BOTTOM - CHART_TOP
 GRID_SIZE = 12
@@ -57,17 +57,17 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
     drop = min(c['l'] for c in candles)
     now_val = candles[-1]['c']
     
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#050810"/>
       <stop offset="100%" style="stop-color:#0a1020"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#bg)"/>
-  <text x="256" y="32" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="18" font-weight="bold" letter-spacing="2">{title}</text>
-  <text x="256" y="50" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="10" letter-spacing="1">{subtitle}</text>
-  <g stroke="#1a2030" stroke-width="0.3">'''
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <text x="512" y="64" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
+  <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
+  <g stroke="#1a2030" stroke-width="0.6">'''
     
     for i in range(GRID_SIZE + 1):
         x = CHART_LEFT + i * CELL_W
@@ -76,14 +76,14 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
         y = CHART_TOP + i * CELL_H
         svg += f'\n    <line x1="{CHART_LEFT}" y1="{y:.1f}" x2="{CHART_RIGHT}" y2="{y:.1f}"/>'
     
-    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#c8d0e0">'
+    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#c8d0e0">'
     for v in [12, 9, 6, 3, 0]:
-        y = value_to_y(v) + 4
-        svg += f'\n    <text x="52" y="{y}" text-anchor="end">{v}</text>'
-    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#c8d0e0">'
+        y = value_to_y(v) + 8
+        svg += f'\n    <text x="104" y="{y}" text-anchor="end">{v}</text>'
+    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#c8d0e0">'
     for i in range(1, 13):
         x = CHART_LEFT + (i - 0.5) * CELL_W
-        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 18}" text-anchor="middle">{i}</text>'
+        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 36}" text-anchor="middle">{i}</text>'
     svg += '\n  </g>'
     
     for i, c in enumerate(candles):
@@ -92,32 +92,32 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
         color = "#00ff88" if is_bull else "#ff3366"
         body_top = value_to_y(max(c['o'], c['c']))
         body_bot = value_to_y(min(c['o'], c['c']))
-        body_h = max(body_bot - body_top, 2)
+        body_h = max(body_bot - body_top, 4)
         wick_top = value_to_y(c['h'])
         wick_bot = value_to_y(c['l'])
         bar_w = CELL_W * 0.6
         x1 = cx - bar_w / 2
         
         svg += f'\n  <g>'
-        svg += f'\n    <line x1="{cx:.1f}" y1="{wick_top}" x2="{cx:.1f}" y2="{wick_bot}" stroke="{color}" stroke-width="2"/>'
-        svg += f'\n    <rect x="{x1:.1f}" y="{body_top}" width="{bar_w:.1f}" height="{body_h}" fill="{color}" stroke="{color}" stroke-width="0.5"/>'
+        svg += f'\n    <line x1="{cx:.1f}" y1="{wick_top}" x2="{cx:.1f}" y2="{wick_bot}" stroke="{color}" stroke-width="4"/>'
+        svg += f'\n    <rect x="{x1:.1f}" y="{body_top}" width="{bar_w:.1f}" height="{body_h}" fill="{color}" stroke="{color}" stroke-width="1"/>'
         svg += f'\n  </g>'
     
     svg += f'\n  <g>'
-    svg += f'\n    <rect x="380" y="480" width="10" height="10" fill="#00ff88"/>'
-    svg += f'\n    <text x="395" y="489" fill="#00ff88" font-family="Arial, sans-serif" font-size="11" font-weight="bold">BULLISH</text>'
-    svg += f'\n    <rect x="440" y="480" width="10" height="10" fill="#ff3366"/>'
-    svg += f'\n    <text x="455" y="489" fill="#ff3366" font-family="Arial, sans-serif" font-size="11" font-weight="bold">BEARISH</text>'
+    svg += f'\n    <rect x="760" y="960" width="20" height="20" fill="#00ff88"/>'
+    svg += f'\n    <text x="790" y="978" fill="#00ff88" font-family="Arial, sans-serif" font-size="22" font-weight="bold">BULLISH</text>'
+    svg += f'\n    <rect x="880" y="960" width="20" height="20" fill="#ff3366"/>'
+    svg += f'\n    <text x="910" y="978" fill="#ff3366" font-family="Arial, sans-serif" font-size="22" font-weight="bold">BEARISH</text>'
     svg += f'\n  </g>'
     svg += f'\n  <g>'
-    svg += f'\n    <circle cx="78" cy="490" r="4" fill="#00ff88"/>'
-    svg += f'\n    <text x="88" y="494" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="10" font-weight="bold">START: {start_val:.1f}</text>'
-    svg += f'\n    <circle cx="175" cy="490" r="4" fill="#00ff88"/>'
-    svg += f'\n    <text x="185" y="494" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="10" font-weight="bold">PEAK: {peak:.1f}</text>'
-    svg += f'\n    <circle cx="270" cy="490" r="4" fill="#ff3366"/>'
-    svg += f'\n    <text x="280" y="494" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="10" font-weight="bold">DROP: {drop:.1f}</text>'
-    svg += f'\n    <circle cx="365" cy="490" r="4" fill="#00ff88"/>'
-    svg += f'\n    <text x="375" y="494" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="10" font-weight="bold">NOW: {now_val:.1f}</text>'
+    svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
+    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">START: {start_val:.1f}</text>'
+    svg += f'\n    <circle cx="350" cy="980" r="8" fill="#00ff88"/>'
+    svg += f'\n    <text x="370" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">PEAK: {peak:.1f}</text>'
+    svg += f'\n    <circle cx="540" cy="980" r="8" fill="#ff3366"/>'
+    svg += f'\n    <text x="560" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">DROP: {drop:.1f}</text>'
+    svg += f'\n    <circle cx="730" cy="980" r="8" fill="#00ff88"/>'
+    svg += f'\n    <text x="750" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">NOW: {now_val:.1f}</text>'
     svg += f'\n  </g>'
     svg += '\n</svg>'
     
@@ -126,7 +126,7 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
 def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
     try:
         result = subprocess.run(
-            ["rsvg-convert", "-w", "512", "-h", "512", "-o", output_path],
+            ["rsvg-convert", "-w", "1024", "-h", "1024", "-o", output_path],
             input=svg_str.encode("utf-8"),
             capture_output=True
         )
