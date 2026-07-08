@@ -35,36 +35,59 @@ def parse_candles_json(raw: str) -> Optional[List[Dict]]:
                 json_str = json_str[:last_complete+1]
                 if not json_str.endswith(']'):
                     json_str += ']'
-        candles = json.loads(json_str)
-        if not isinstance(candles, list):
+        data = json.loads(json_str)
+        if not isinstance(data, list):
             return None
-        if len(candles) < 8:
-            logger.warning(f"[chart] Too few candles: {len(candles)}")
+        if len(data) < 8:
+            logger.warning(f"[chart] Too few items: {len(data)}")
             return None
-        if len(candles) > 12:
-            candles = candles[:12]
-        valid_candles = []
-        for c in candles:
-            if not isinstance(c, dict):
-                continue
-            if not all(k in c for k in ('o', 'h', 'l', 'c')):
-                continue
-            try:
-                o = float(c['o'])
-                h = float(c['h'])
-                l = float(c['l'])
-                c_val = float(c['c'])
-            except (ValueError, TypeError):
-                continue
-            if any(v < 0 or v > 12 for v in [o, h, l, c_val]):
-                o = max(0, min(12, o))
-                h = max(0, min(12, h))
-                l = max(0, min(12, l))
-                c_val = max(0, min(12, c_val))
-            valid_candles.append({'o': o, 'h': h, 'l': l, 'c': c_val})
-        if len(valid_candles) < 8:
+        if len(data) > 12:
+            data = data[:12]
+        if isinstance(data[0], dict):
+            valid_candles = []
+            for c in data:
+                if not isinstance(c, dict):
+                    continue
+                if not all(k in c for k in ('o', 'h', 'l', 'c')):
+                    continue
+                try:
+                    o = float(c['o'])
+                    h = float(c['h'])
+                    l = float(c['l'])
+                    c_val = float(c['c'])
+                except (ValueError, TypeError):
+                    continue
+                if any(v < 0 or v > 12 for v in [o, h, l, c_val]):
+                    o = max(0, min(12, o))
+                    h = max(0, min(12, h))
+                    l = max(0, min(12, l))
+                    c_val = max(0, min(12, c_val))
+                valid_candles.append({'o': o, 'h': h, 'l': l, 'c': c_val})
+            if len(valid_candles) < 8:
+                return None
+            return valid_candles
+        elif isinstance(data[0], (int, float)):
+            candles = []
+            prev_close = 6.0
+            for val in data:
+                try:
+                    close_val = float(val)
+                    if close_val < 0 or close_val > 12:
+                        close_val = max(0, min(12, close_val))
+                    open_val = prev_close
+                    high_val = max(open_val, close_val) + 0.5
+                    low_val = min(open_val, close_val) - 0.5
+                    high_val = max(0, min(12, high_val))
+                    low_val = max(0, min(12, low_val))
+                    candles.append({'o': open_val, 'h': high_val, 'l': low_val, 'c': close_val})
+                    prev_close = close_val
+                except (ValueError, TypeError):
+                    continue
+            if len(candles) < 8:
+                return None
+            return candles
+        else:
             return None
-        return valid_candles
     except Exception as e:
         logger.warning(f"[chart] JSON parse failed: {e}")
         logger.warning(f"[chart] Raw input: {raw[:300]}")
