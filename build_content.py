@@ -49,6 +49,27 @@ def _generate_chart_candles(llm, context: str) -> str:
         logger.warning(f"[digest] Chart candles generation failed: {e}")
         return ""
 
+def _log_candles(candles_json: str) -> None:
+    try:
+        import chart_renderer
+        candles = chart_renderer.parse_candles_json(candles_json)
+        if not candles:
+            logger.info("[digest] Candles parse failed, no coordinates to log")
+            return
+        candles = chart_renderer.validate_and_fix_candles(candles)
+        logger.info(f"[digest] === CHART COORDINATES ({len(candles)} candles) ===")
+        for i, c in enumerate(candles):
+            direction = "UP" if c['c'] >= c['o'] else "DOWN"
+            logger.info(f"[digest] Candle {i+1:2d}: O={c['o']:.1f} H={c['h']:.1f} L={c['l']:.1f} C={c['c']:.1f} | {direction}")
+        peak = max(c['h'] for c in candles)
+        drop = min(c['l'] for c in candles)
+        start = candles[0]['o']
+        now = candles[-1]['c']
+        logger.info(f"[digest] Stats: START={start:.1f} PEAK={peak:.1f} DROP={drop:.1f} NOW={now:.1f}")
+        logger.info("[digest] === END COORDINATES ===")
+    except Exception as e:
+        logger.warning(f"[digest] Candle logging failed: {e}")
+
 async def _generate_digest_embed(client, trends, task_type, llm=None, refined_desc: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
         return None
@@ -69,7 +90,8 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, refined_de
             logger.warning("[digest] Chart candles generation returned empty, using default pattern")
             candles_json = "[]"
         
-        logger.info(f"[digest] Raw chart JSON: {candles_json[:300]}")
+        logger.info(f"[digest] Raw Qwen output: {candles_json[:500]}")
+        _log_candles(candles_json)
         
         image_bytes = chart_renderer.generate_chart_image(
             candles_json,
