@@ -10,7 +10,7 @@ tavily_intent: |
   Result:
 
 chainbase_keyword: |
-  Find the main keyword for: "{query}"
+  Find the main keyword for: {query}
   Context hint: {context}
   Output ONLY one word.
   Result:
@@ -37,7 +37,7 @@ owner_reply: |
 
 digest_refine: |
   Write a concise news insight.
-  Topic: {keyword} — DO NOT use any of these exact words in your output: {keyword}
+  Topic: {keyword} - DO NOT use any of these exact words in your output: {keyword}
   Guidelines:
   - 2-3 sentences max. Focus on key facts, metrics, and impact.
   - Start with the core fact, end with a period.
@@ -47,16 +47,16 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a sentiment analyst. Break this news into 12 candlesticks (scale 0-12).
+  You are a sentiment analyst. Break this news into 12 candlesticks (scale 0 to 12).
   Output ONLY a JSON array. NO text. NO explanations.
 
   Rules:
   - First candle opens near 6.0
-  - Each next candle's "o" = previous candle's "c"
-  - All values in [0, 12]
-  - Every candle MUST have shadows: h > max(o,c), l < min(o,c)
+  - Each next candle open equals previous candle close
+  - All values between 0 and 12
+  - Every candle MUST have shadows: high greater than max(open, close), low less than min(open, close)
   - Candle bodies must vary: some BIG (3-5 units), some MEDIUM (1-2), some SMALL (0.5-1)
-  - For CRISIS/REVERSAL news: include at least one HUGE candle spanning 8+ units
+  - For CRISIS news: include at least one HUGE candle spanning 8+ units
   - For MIXED news: alternate directions
 
   News:
@@ -69,8 +69,8 @@ intent_check: |
   CASUAL = message consisting solely of reactions, acknowledgments, greetings, or emojis without any informational content, question, opinion, or statement related to the topic.
   SUBSTANTIVE = message containing any meaningful text that engages with the topic, asks a question, expresses an opinion, requests information, or makes a statement, regardless of whether emojis or reaction words are also present.
   Rule: Presence of emojis or reaction words does not make a message CASUAL if it also contains substantive textual content. Only messages with zero substantive content are CASUAL.
-  Message: "{message}"
-  Topic: "{root_topic}"
+  Message: {message}
+  Topic: {root_topic}
   Output ONE word: CASUAL or SUBSTANTIVE
   Result:
 
@@ -79,14 +79,14 @@ sentiment_check: |
   POSITIVE = supportive, constructive, enthusiastic.
   NEGATIVE = hostile, spam, dismissive.
   NEUTRAL = factual, question, ambiguous.
-  Comment: "{message}"
-  Topic: "{root_topic}"
+  Comment: {message}
+  Topic: {root_topic}
   Output ONE word: POSITIVE, NEUTRAL, or NEGATIVE.
   Result:
 
 validate_search: |
   Are these search results topically related to the query?
-  Query: "{query}"
+  Query: {query}
   Sample: {sample}
   Rules:
   - RELEVANT if results discuss the same topic, event, entity, or theme as the query, even if details differ.
@@ -103,7 +103,7 @@ keyword_regenerate: |
   Keyword:
 
 dyor_fallback: |
-  No search data found for "{keyword}".
+  No search data found for {keyword}.
   Respond based ONLY on the provided context. Do NOT invent facts, dates, names, or details that are not explicitly present in the context.
   If the context does not contain enough information to respond meaningfully, say so briefly and suggest DYOR.
   Context: {context}
