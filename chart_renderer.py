@@ -39,37 +39,23 @@ def _normalize_candle(c: dict) -> Optional[Dict]:
     except (ValueError, TypeError):
         return None
 
-def _try_fix_truncated_json(json_str: str) -> str:
-    open_braces = json_str.count('{')
-    close_braces = json_str.count('}')
-    if open_braces > close_braces:
-        last_complete = json_str.rfind('}')
-        if last_complete > 0:
-            json_str = json_str[:last_complete+1]
-            if not json_str.rstrip().endswith(']'):
-                json_str = json_str.rstrip() + '\n]'
-    return json_str
-
 def parse_candles_json(raw: str) -> Optional[List[Dict]]:
     try:
-        raw = re.sub(r'```json\s*', '', raw, flags=re.I)
+        raw = re.sub(r'```json[\s\S]*?```', '', raw, flags=re.I)
         raw = re.sub(r'```\s*', '', raw)
         raw = raw.strip()
         
-        match = re.search(r'\[[\s\S]*\]', raw)
-        if not match:
+        decoder = json.JSONDecoder()
+        idx = raw.find('[')
+        if idx == -1:
             return None
-        json_str = match.group(0)
         
         try:
-            data = json.loads(json_str)
-        except json.JSONDecodeError:
-            json_str = _try_fix_truncated_json(json_str)
-            try:
-                data = json.loads(json_str)
-            except json.JSONDecodeError:
-                logger.warning(f"[chart] JSON still invalid after fix attempt")
-                return None
+            data, _ = decoder.raw_decode(raw, idx)
+        except json.JSONDecodeError as e:
+            logger.warning(f"[chart] JSON decode failed: {e}")
+            logger.warning(f"[chart] Raw input: {raw[:300]}")
+            return None
         
         if not isinstance(data, list):
             return None

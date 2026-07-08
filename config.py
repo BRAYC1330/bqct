@@ -9,8 +9,8 @@ PAT = os.getenv("PAT", "")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY", "")
 BSKY_PDS_URL = os.getenv("BSKY_PDS_URL", "https://bsky.social")
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "qwen2.5-coder-14b-instruct-q5_k_m.gguf")
-MODEL_N_CTX = 14080
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "qwq-32b-q3_k_m.gguf")
+MODEL_N_CTX = 16000
 MODEL_N_THREADS = 4
 
 SEARCH_TIMEOUT = 30
