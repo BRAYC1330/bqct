@@ -18,12 +18,9 @@ def _get_llm_text(response) -> str:
     return response.get("choices", [{}])[0].get("text", "").strip()
 
 def _get_signature(source: str, has_search: bool) -> str:
-    if source == "tavily":
-        return SIG_TAVILY
-    if source == "chainbase":
-        return SIG_CHAINBASE
-    if has_search:
-        return SIG_CHAINBASE
+    if source == "tavily": return SIG_TAVILY
+    if source == "chainbase": return SIG_CHAINBASE
+    if has_search: return SIG_CHAINBASE
     return SIG_DEFAULT
 
 def get_no_data_response(keyword: str) -> str:
@@ -32,21 +29,36 @@ def get_no_data_response(keyword: str) -> str:
 
 def _shorten_keyword(keyword: str, max_words: int = 3) -> str:
     words = keyword.split()
-    if len(words) <= max_words:
-        return keyword
+    if len(words) <= max_words: return keyword
     return ' '.join(words[:max_words])
 
 def _generate_chart_candles(llm, context: str) -> str:
     if not llm:
+        logger.error("[digest] LLM not loaded")
         return ""
     try:
-        prompt_text = generator.load_prompt("chart_scene", context=context[:1500])
-        prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=500, temperature=0.3, stop=["```", "Note:", "Explanation:", "Analysis:"])
+        prompt_text = (
+            "You are a sentiment analyst. Break this news into 12 candlesticks (scale 0-12).\n"
+            "Output ONLY a JSON array. NO text. NO explanations.\n\n"
+            "Rules:\n"
+            "- First candle opens near 6.0\n"
+            "- Each next candle's 'o' = previous candle's 'c'\n"
+            "- All values in [0, 12]\n"
+            "- Every candle MUST have shadows: h > max(o,c), l < min(o,c)\n"
+            "- Candle bodies must vary: some BIG (3-5 units), some MEDIUM (1-2), some SMALL (0.5-1)\n"
+            "- For CRISIS/REVERSAL news: include at least one HUGE candle spanning 8+ units\n"
+            "- For MIXED news: alternate directions\n\n"
+            f"News:\n{context[:1000]}\n\nJSON:"
+        )
+        logger.info("[digest] Sending chart prompt to LLM...")
+        output = llm(prompt_text, max_tokens=500, temperature=0.3, stop=["```", "Note:", "Explanation:"])
         raw = _get_llm_text(output)
+        logger.info(f"[digest] LLM raw chart output: {raw[:300]}")
         return raw
     except Exception as e:
-        logger.warning(f"[digest] Chart candles generation failed: {e}")
+        logger.error(f"[digest] Chart generation exception: {repr(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return ""
 
 def _log_candles(candles_json: str) -> None:
@@ -85,7 +97,6 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, refined_de
         if not candles_json:
             logger.error("[digest] Chart candles generation returned empty, failing digest")
             return None
-        logger.info(f"[digest] Raw Qwen output: {candles_json[:500]}")
         _log_candles(candles_json)
         image_bytes = chart_renderer.generate_chart_image(
             candles_json,
