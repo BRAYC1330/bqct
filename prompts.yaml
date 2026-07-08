@@ -72,7 +72,7 @@ chart_scene: |
   - For CRISIS news: include at least one HUGE candle spanning 8+ units
   - Final candle MUST reflect overall sentiment based on value evaluation
   
-  Output ONLY a JSON array. NO text. NO explanations.
+  Output ONLY a JSON array with EXACTLY 4 keys per object: o, h, l, c. NO other keys. NO text. NO explanations.
   
   News:
   {context}
