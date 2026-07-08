@@ -165,7 +165,7 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
 def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
     try:
         result = subprocess.run(
-            ["rsvg-convert", "-w", "1024", "-h", "1024", "-o", output_path],
+            ["rsvg-convert", "-w", "1024", "-h", "1024", "-d", "150", "-o", output_path],
             input=svg_str.encode("utf-8"),
             capture_output=True
         )
