@@ -49,8 +49,8 @@ jobs:
         if: steps.checker.outputs.status == 'true'
         uses: actions/cache@v4
         with:
-          path: models/qwen2.5-coder-14b-instruct-q5_k_m.gguf
-          key: qwen-model-v1
+          path: models/qwq-32b-q3_k_m.gguf
+          key: qwq-32b-model-v1
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
@@ -64,7 +64,7 @@ jobs:
         run: |
           set -e
           mkdir -p models
-          FILE="models/qwen2.5-coder-14b-instruct-q5_k_m.gguf"
+          FILE="models/qwq-32b-q3_k_m.gguf"
           EXPECTED_SHA256="${{ secrets.MODEL_SHA256 }}"
           MIN_SIZE=100000000
           if [ -z "$EXPECTED_SHA256" ]; then
@@ -90,7 +90,7 @@ jobs:
           fi
           if [ ! -f "$FILE" ]; then
             echo "[INFO] Downloading Qwen model..."
-            curl -L --retry 5 --retry-delay 15 -o "$FILE" "https://huggingface.co/Qwen/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/qwen2.5-coder-14b-instruct-q5_k_m.gguf?download=true"
+            curl -L --retry 5 --retry-delay 15 -o "$FILE" "https://huggingface.co/Qwen/QwQ-32B-GGUF/resolve/main/qwq-32b-q3_k_m.gguf?download=true"
             FILE_SIZE=$(stat -c%s "$FILE" 2>/dev/null || echo 0)
             echo "[INFO] Downloaded file size: ${FILE_SIZE} bytes"
             if [ "$FILE_SIZE" -lt "$MIN_SIZE" ]; then
