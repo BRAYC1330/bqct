@@ -23,13 +23,10 @@ def parse_candles_json(raw: str) -> Optional[List[Dict]]:
         raw = re.sub(r'```json\s*', '', raw, flags=re.I)
         raw = re.sub(r'```\s*', '', raw)
         raw = raw.strip()
-        
         match = re.search(r'\[[\s\S]*\]', raw)
         if not match:
             return None
-        
         json_str = match.group(0)
-        
         open_braces = json_str.count('{')
         close_braces = json_str.count('}')
         if open_braces > close_braces:
@@ -38,26 +35,20 @@ def parse_candles_json(raw: str) -> Optional[List[Dict]]:
                 json_str = json_str[:last_complete+1]
                 if not json_str.endswith(']'):
                     json_str += ']'
-        
         candles = json.loads(json_str)
-        
         if not isinstance(candles, list):
             return None
-        
         if len(candles) < 8:
             logger.warning(f"[chart] Too few candles: {len(candles)}")
             return None
-        
         if len(candles) > 12:
             candles = candles[:12]
-        
         valid_candles = []
         for c in candles:
             if not isinstance(c, dict):
                 continue
             if not all(k in c for k in ('o', 'h', 'l', 'c')):
                 continue
-            
             try:
                 o = float(c['o'])
                 h = float(c['h'])
@@ -65,20 +56,15 @@ def parse_candles_json(raw: str) -> Optional[List[Dict]]:
                 c_val = float(c['c'])
             except (ValueError, TypeError):
                 continue
-            
             if any(v < 0 or v > 12 for v in [o, h, l, c_val]):
                 o = max(0, min(12, o))
                 h = max(0, min(12, h))
                 l = max(0, min(12, l))
                 c_val = max(0, min(12, c_val))
-            
             valid_candles.append({'o': o, 'h': h, 'l': l, 'c': c_val})
-        
         if len(valid_candles) < 8:
             return None
-        
         return valid_candles
-        
     except Exception as e:
         logger.warning(f"[chart] JSON parse failed: {e}")
         logger.warning(f"[chart] Raw input: {raw[:300]}")
@@ -101,7 +87,6 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
     peak = max(c['h'] for c in candles)
     drop = min(c['l'] for c in candles)
     now_val = candles[-1]['c']
-    
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -113,14 +98,12 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
   <text x="512" y="64" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
   <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
   <g stroke="#1a2030" stroke-width="0.6">'''
-    
     for i in range(GRID_SIZE + 1):
         x = CHART_LEFT + i * CELL_W
         svg += f'\n    <line x1="{x:.1f}" y1="{CHART_TOP}" x2="{x:.1f}" y2="{CHART_BOTTOM}"/>'
     for i in range(GRID_SIZE + 1):
         y = CHART_TOP + i * CELL_H
         svg += f'\n    <line x1="{CHART_LEFT}" y1="{y:.1f}" x2="{CHART_RIGHT}" y2="{y:.1f}"/>'
-    
     svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#c8d0e0">'
     for v in [12, 9, 6, 3, 0]:
         y = value_to_y(v) + 8
@@ -130,7 +113,6 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
         x = CHART_LEFT + (i - 0.5) * CELL_W
         svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 36}" text-anchor="middle">{i}</text>'
     svg += '\n  </g>'
-    
     for i, c in enumerate(candles):
         cx = CHART_LEFT + (i + 0.5) * CELL_W
         is_bull = c['c'] >= c['o']
@@ -142,12 +124,10 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
         wick_bot = value_to_y(c['l'])
         bar_w = CELL_W * 0.6
         x1 = cx - bar_w / 2
-        
         svg += f'\n  <g>'
         svg += f'\n    <line x1="{cx:.1f}" y1="{wick_top}" x2="{cx:.1f}" y2="{wick_bot}" stroke="{color}" stroke-width="4"/>'
         svg += f'\n    <rect x="{x1:.1f}" y="{body_top}" width="{bar_w:.1f}" height="{body_h}" fill="{color}" stroke="{color}" stroke-width="1"/>'
         svg += f'\n  </g>'
-    
     svg += f'\n  <g>'
     svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
     svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">START: {start_val:.1f}</text>'
@@ -159,7 +139,6 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
     svg += f'\n    <text x="750" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">NOW: {now_val:.1f}</text>'
     svg += f'\n  </g>'
     svg += '\n</svg>'
-    
     return svg
 
 def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
@@ -180,14 +159,11 @@ def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
 
 def generate_chart_image(candles_json: str, title: str = "AI SENTIMENT INDEX", subtitle: str = "") -> Optional[bytes]:
     candles = parse_candles_json(candles_json)
-    
     if not candles:
         logger.error("[chart] Failed to parse candles JSON, returning None")
         return None
-    
     candles = validate_and_fix_candles(candles)
     svg = render_chart_svg(candles, title, subtitle)
-    
     try:
         return svg_to_png(svg)
     except Exception as e:
