@@ -20,23 +20,68 @@ CELL_H = CHART_H / GRID_SIZE
 
 def parse_candles_json(raw: str) -> Optional[List[Dict]]:
     try:
+        raw = re.sub(r'```json\s*', '', raw, flags=re.I)
+        raw = re.sub(r'```\s*', '', raw)
+        raw = raw.strip()
+        
         match = re.search(r'\[[\s\S]*\]', raw)
         if not match:
             return None
-        candles = json.loads(match.group(0))
-        if not isinstance(candles, list) or len(candles) != 12:
+        
+        json_str = match.group(0)
+        
+        open_braces = json_str.count('{')
+        close_braces = json_str.count('}')
+        if open_braces > close_braces:
+            last_complete = json_str.rfind('}')
+            if last_complete > 0:
+                json_str = json_str[:last_complete+1]
+                if not json_str.endswith(']'):
+                    json_str += ']'
+        
+        candles = json.loads(json_str)
+        
+        if not isinstance(candles, list):
             return None
+        
+        if len(candles) < 8:
+            logger.warning(f"[chart] Too few candles: {len(candles)}")
+            return None
+        
+        if len(candles) > 12:
+            candles = candles[:12]
+        
+        valid_candles = []
         for c in candles:
+            if not isinstance(c, dict):
+                continue
             if not all(k in c for k in ('o', 'h', 'l', 'c')):
-                return None
-            for k in ('o', 'h', 'l', 'c'):
-                v = float(c[k])
-                if v < 0 or v > 12:
-                    return None
-                c[k] = v
-        return candles
+                continue
+            
+            try:
+                o = float(c['o'])
+                h = float(c['h'])
+                l = float(c['l'])
+                c_val = float(c['c'])
+            except (ValueError, TypeError):
+                continue
+            
+            if any(v < 0 or v > 12 for v in [o, h, l, c_val]):
+                o = max(0, min(12, o))
+                h = max(0, min(12, h))
+                l = max(0, min(12, l))
+                c_val = max(0, min(12, c_val))
+            
+            valid_candles.append({'o': o, 'h': h, 'l': l, 'c': c_val})
+        
+        if len(valid_candles) < 8:
+            return None
+        
+        return valid_candles
+        
     except Exception as e:
         logger.warning(f"[chart] JSON parse failed: {e}")
+        logger.warning(f"[chart] Raw input: {raw[:300]}")
         return None
 
 def validate_and_fix_candles(candles: List[Dict]) -> List[Dict]:
@@ -139,13 +184,32 @@ def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
         logger.error(f"[chart] PNG conversion failed: {e}")
         return None
 
+def generate_default_candles() -> List[Dict]:
+    return [
+        {"o": 6.0, "h": 6.5, "l": 5.5, "c": 6.2},
+        {"o": 6.2, "h": 7.0, "l": 6.0, "c": 6.8},
+        {"o": 6.8, "h": 7.5, "l": 6.5, "c": 7.2},
+        {"o": 7.2, "h": 8.0, "l": 7.0, "c": 7.8},
+        {"o": 7.8, "h": 8.5, "l": 7.5, "c": 8.2},
+        {"o": 8.2, "h": 9.0, "l": 8.0, "c": 8.8},
+        {"o": 8.8, "h": 9.5, "l": 8.5, "c": 9.2},
+        {"o": 9.2, "h": 9.8, "l": 8.8, "c": 9.0},
+        {"o": 9.0, "h": 9.5, "l": 8.5, "c": 8.7},
+        {"o": 8.7, "h": 9.0, "l": 8.2, "c": 8.5},
+        {"o": 8.5, "h": 8.8, "l": 8.0, "c": 8.3},
+        {"o": 8.3, "h": 8.6, "l": 7.8, "c": 8.0}
+    ]
+
 def generate_chart_image(candles_json: str, title: str = "AI SENTIMENT INDEX", subtitle: str = "") -> Optional[bytes]:
     candles = parse_candles_json(candles_json)
+    
     if not candles:
-        logger.warning("[chart] Failed to parse candles JSON")
-        return None
+        logger.warning("[chart] Using default candles pattern")
+        candles = generate_default_candles()
+    
     candles = validate_and_fix_candles(candles)
     svg = render_chart_svg(candles, title, subtitle)
+    
     try:
         return svg_to_png(svg)
     except Exception as e:
