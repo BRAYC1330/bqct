@@ -178,28 +178,12 @@ def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
         logger.error(f"[chart] PNG conversion failed: {e}")
         return None
 
-def generate_default_candles() -> List[Dict]:
-    return [
-        {"o": 6.0, "h": 6.5, "l": 5.5, "c": 6.2},
-        {"o": 6.2, "h": 7.0, "l": 6.0, "c": 6.8},
-        {"o": 6.8, "h": 7.5, "l": 6.5, "c": 7.2},
-        {"o": 7.2, "h": 8.0, "l": 7.0, "c": 7.8},
-        {"o": 7.8, "h": 8.5, "l": 7.5, "c": 8.2},
-        {"o": 8.2, "h": 9.0, "l": 8.0, "c": 8.8},
-        {"o": 8.8, "h": 9.5, "l": 8.5, "c": 9.2},
-        {"o": 9.2, "h": 9.8, "l": 8.8, "c": 9.0},
-        {"o": 9.0, "h": 9.5, "l": 8.5, "c": 8.7},
-        {"o": 8.7, "h": 9.0, "l": 8.2, "c": 8.5},
-        {"o": 8.5, "h": 8.8, "l": 8.0, "c": 8.3},
-        {"o": 8.3, "h": 8.6, "l": 7.8, "c": 8.0}
-    ]
-
 def generate_chart_image(candles_json: str, title: str = "AI SENTIMENT INDEX", subtitle: str = "") -> Optional[bytes]:
     candles = parse_candles_json(candles_json)
     
     if not candles:
-        logger.warning("[chart] Using default candles pattern")
-        candles = generate_default_candles()
+        logger.error("[chart] Failed to parse candles JSON, returning None")
+        return None
     
     candles = validate_and_fix_candles(candles)
     svg = render_chart_svg(candles, title, subtitle)
