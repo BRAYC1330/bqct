@@ -42,7 +42,7 @@ def _generate_chart_candles(llm, context: str) -> str:
     try:
         prompt_text = generator.load_prompt("chart_scene", context=context[:1500])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=400, temperature=0.4)
+        output = llm(prompt_text, max_tokens=400, temperature=0.4, stop=["```", "Note:", "Explanation:"])
         raw = _get_llm_text(output)
         return raw
     except Exception as e:
@@ -66,8 +66,8 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, refined_de
         
         candles_json = _generate_chart_candles(llm, news_context)
         if not candles_json:
-            logger.warning("[digest] Chart candles generation returned empty")
-            return None
+            logger.warning("[digest] Chart candles generation returned empty, using default pattern")
+            candles_json = "[]"
         
         logger.info(f"[digest] Raw chart JSON: {candles_json[:300]}")
         
@@ -85,6 +85,8 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, refined_de
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
+        import traceback
+        logger.warning(f"[digest] Traceback: {traceback.format_exc()[:500]}")
         return None
 
 async def build_digest(llm, trends, task_type: str, client=None, max_total: int = config.MAX_COMMENT_CHARS) -> tuple[str, dict | None]:
@@ -169,7 +171,4 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     embed = None
     if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type, llm=llm, refined_desc=refined_desc)
-        if embed is None:
-            logger.warning("[digest] Image generation failed for digest_full, skipping entire digest")
-            return None, None
     return final, embed
