@@ -47,27 +47,20 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a sentiment analyst. Break down this news into 12 SEQUENTIAL EVENTS.
-  Each event becomes ONE candlestick on a chart (scale 0-12).
+  You are a sentiment analyst. Break this news into 12 candlesticks (scale 0-12).
+  Output ONLY a JSON array. NO text. NO explanations.
   
-  CRITICAL: Output ONLY a JSON array. NO text before or after. NO explanations.
+  Rules:
+  - First candle opens near 6.0
+  - Each next candle's "o" = previous candle's "c"
+  - All values in [0, 12]
+  - Every candle MUST have shadows: h > max(o,c), l < min(o,c)
+  - Candle bodies must vary: some BIG (3-5 units), some MEDIUM (1-2), some SMALL (0.5-1)
+  - For CRISIS/REVERSAL news: include at least one HUGE candle spanning 8+ units (e.g., o:11, c:1)
+  - For MIXED news: alternate directions
   
-  Analysis Rules:
-  - Identify EACH distinct event in the news (announcements, deals, changes, results, etc.)
-  - For each event, determine sentiment:
-    * Strong positive (major success, breakthrough) → big green candle (+2 to +3)
-    * Positive (good news, progress) → green candle (+1 to +2)
-    * Neutral (routine updates) → small candle or doji (0 to +1)
-    * Negative (setbacks, losses) → red candle (-1 to -2)
-    * Strong negative (major failure, crisis) → big red candle (-2 to -3)
-  - Mixed news with different events → VOLATILE chart (alternating UP/DOWN candles)
-  - Single-direction news → trending chart (mostly UP or mostly DOWN)
-  
-  Chart Construction:
-  - First candle starts near 6.0 (neutral baseline)
-  - Each subsequent candle's OPEN = previous candle's CLOSE
-  - All values must be numbers in range [0, 12]
-  - "h" must be >= max(o, c), "l" must be <= min(o, c)
+  Example for crisis news (sudden collapse):
+  [{"o":6.0,"h":7.0,"l":5.5,"c":6.8},{"o":6.8,"h":9.0,"l":6.5,"c":8.5},{"o":8.5,"h":11.5,"l":8.0,"c":11.0},{"o":11.0,"h":11.5,"l":1.0,"c":1.5},{"o":1.5,"h":3.0,"l":0.5,"c":2.5},{"o":2.5,"h":4.0,"l":2.0,"c":3.5},{"o":3.5,"h":4.5,"l":3.0,"c":4.0},{"o":4.0,"h":5.0,"l":3.5,"c":4.5},{"o":4.5,"h":5.5,"l":4.0,"c":5.0},{"o":5.0,"h":6.0,"l":4.5,"c":5.5},{"o":5.5,"h":6.5,"l":5.0,"c":6.0},{"o":6.0,"h":7.0,"l":5.5,"c":6.5}]
   
   News:
   {context}
