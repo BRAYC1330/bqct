@@ -75,34 +75,26 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, refined_de
         return None
     try:
         import chart_renderer
-        
         top_item = trends[0]
         keyword = top_item.get("keyword", "news")
         summary = top_item.get("summary", "")
-        
         short_keyword = _shorten_keyword(keyword, 3)
         safe_subtitle = short_keyword.replace("'", "").replace('"', '').upper()[:50]
-        
         news_context = refined_desc if refined_desc else summary
-        
         candles_json = _generate_chart_candles(llm, news_context)
         if not candles_json:
             logger.error("[digest] Chart candles generation returned empty, failing digest")
             return None
-        
         logger.info(f"[digest] Raw Qwen output: {candles_json[:500]}")
         _log_candles(candles_json)
-        
         image_bytes = chart_renderer.generate_chart_image(
             candles_json,
             title="AI SENTIMENT INDEX",
             subtitle=safe_subtitle
         )
-        
         if not image_bytes:
             logger.error("[digest] Chart render failed, failing digest")
             return None
-        
         logger.info(f"[digest] Chart rendered: {len(image_bytes)} bytes")
         return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
     except Exception as e:
