@@ -49,7 +49,7 @@ digest_refine: |
 chart_scene: |
   You are a sentiment analyst. Break this news into 12 candlesticks (scale 0-12).
   Output ONLY a JSON array. NO text. NO explanations.
-  
+
   Rules:
   - First candle opens near 6.0
   - Each next candle's "o" = previous candle's "c"
@@ -58,10 +58,10 @@ chart_scene: |
   - Candle bodies must vary: some BIG (3-5 units), some MEDIUM (1-2), some SMALL (0.5-1)
   - For CRISIS/REVERSAL news: include at least one HUGE candle spanning 8+ units
   - For MIXED news: alternate directions
-  
+
   News:
   {context}
-  
+
   JSON:
 
 intent_check: |
