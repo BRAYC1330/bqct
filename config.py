@@ -9,7 +9,7 @@ PAT = os.getenv("PAT", "")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY", "")
 BSKY_PDS_URL = os.getenv("BSKY_PDS_URL", "https://bsky.social")
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "qwq-32b-q3_k_m.gguf")
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "qwen3-14b-q8_0.gguf")
 MODEL_N_CTX = 16000
 MODEL_N_THREADS = 4
 
@@ -23,7 +23,7 @@ TREND_STATS_EMOJI = "📊"
 TREND_EMOJIS = {"new": "🆕", "up": "↗️", "down": "↙️", "same": "➡️"}
 TREND_SCORE_SEPARATOR = "⛓️"
 TREND_TROPHY = "🏆"
-TICKER_LINK_EMOJI = "🔗"
+TICKER_LINK_EMOJI = ""
 
 MAX_COMMENT_CHARS = 300
 DIGEST_THRESHOLD_HOURS = 2
