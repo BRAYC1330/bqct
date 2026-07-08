@@ -2,14 +2,10 @@ tavily_intent: |
   Extract the core search intent from the thread and user query.
   Generate a SHORT search query (3-6 keywords) to find factual information.
   DO NOT copy the user's message. DO NOT write full sentences.
-  
   Note: [linked content] tags contain truncated web page excerpts (first 600 chars only), they may be incomplete.
-  
   Thread context:
   {context}
-  
   User query: {query}
-  
   Output strictly in this format: QUERY: [3-6 keywords] | TIME: [day/week/month/year or omit]
   Result:
 
@@ -51,39 +47,38 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  Analyze this news and determine its market/sentiment direction.
-  
-  Task: Output TWO things:
-  1. DIRECTION: UP (bullish/positive) or DOWN (bearish/negative)
-  2. PATTERN: Describe a candlestick chart pattern (5-10 candles) that represents this news
+  You are a market sentiment analyst. Analyze the news and break it down into 12 SEQUENTIAL EVENTS.
+  Each event becomes ONE candlestick on a chart (scale 0-12).
   
   Rules:
-  - UP = positive news, growth, success, gains, bullish
-  - DOWN = negative news, decline, failure, losses, bearish
-  - Describe candle colors and arrangement only
-  - NO text, NO numbers, NO labels in the chart
-  - Max 30 words for pattern description
+  - Identify 12 distinct moments/signals in the news (or extrapolate consequences)
+  - For each event, determine: sentiment direction (+/-), intensity (weak/medium/strong), volatility (uncertainty)
+  - First candle starts near 5-7 (neutral baseline)
+  - Each subsequent candle's OPEN = previous candle's CLOSE
+  - Strong positive event → big green candle (close much higher than open)
+  - Strong negative event → big red candle (close much lower than open)
+  - Weak event → small body, long shadows (high uncertainty)
+  - Mixed event → doji-like (open ≈ close, long shadows)
   
-  Examples:
-  * Crypto pump news → "UP: green green green small red green green"
-  * Market crash → "DOWN: red red red small green red red red"
-  * Mixed results → "UP: red green red green green red green"
-  * Steady growth → "UP: green small green green small green green"
-  * Sudden drop → "DOWN: green green red red red red red"
+  Output STRICT JSON array of 12 objects:
+  [{"o": open, "h": high, "l": low, "c": close}, ...]
   
-  News context:
+  Constraints:
+  - All values in range [0, 12]
+  - Each candle's "o" MUST equal previous candle's "c" (first candle "o" can be 5-7)
+  - "h" >= max(o, c), "l" <= min(o, c)
+  - NO text, NO explanations, ONLY JSON
+  
+  News:
   {context}
   
-  Output format: DIRECTION: [UP/DOWN] | PATTERN: [candle sequence]
+  JSON:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
-
   CASUAL = message consisting solely of reactions, acknowledgments, greetings, or emojis without any informational content, question, opinion, or statement related to the topic.
   SUBSTANTIVE = message containing any meaningful text that engages with the topic, asks a question, expresses an opinion, requests information, or makes a statement, regardless of whether emojis or reaction words are also present.
-
   Rule: Presence of emojis or reaction words does not make a message CASUAL if it also contains substantive textual content. Only messages with zero substantive content are CASUAL.
-
   Message: "{message}"
   Topic: "{root_topic}"
   Output ONE word: CASUAL or SUBSTANTIVE
@@ -113,10 +108,8 @@ validate_search: |
 keyword_regenerate: |
   From the QUERY below, extract ONE specific keyword.
   Ignore generic words. NEVER use: {tried_keywords}
-  
   QUERY: {query}
   Context: {root_topic}
-  
   Keyword:
 
 dyor_fallback: |
