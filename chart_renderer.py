@@ -23,18 +23,12 @@ def parse_candles_json(raw: str) -> Optional[List[Dict]]:
         raw = re.sub(r'```json\s*', '', raw, flags=re.I)
         raw = re.sub(r'```\s*', '', raw)
         raw = raw.strip()
-        match = re.search(r'\[[\s\S]*\]', raw)
-        if not match:
+        
+        first_array = re.search(r'\[[^\[\]]*\]', raw)
+        if not first_array:
             return None
-        json_str = match.group(0)
-        open_braces = json_str.count('{')
-        close_braces = json_str.count('}')
-        if open_braces > close_braces:
-            last_complete = json_str.rfind('}')
-            if last_complete > 0:
-                json_str = json_str[:last_complete+1]
-                if not json_str.endswith(']'):
-                    json_str += ']'
+        json_str = first_array.group(0)
+        
         data = json.loads(json_str)
         if not isinstance(data, list):
             return None
