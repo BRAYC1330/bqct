@@ -110,8 +110,16 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
       <stop offset="0%" style="stop-color:#050810"/>
       <stop offset="100%" style="stop-color:#0a1020"/>
     </linearGradient>
+    <linearGradient id="sentiment" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.15"/>
+      <stop offset="25%" style="stop-color:#88ff00;stop-opacity:0.12"/>
+      <stop offset="50%" style="stop-color:#888888;stop-opacity:0.08"/>
+      <stop offset="75%" style="stop-color:#ff8800;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#ff3366;stop-opacity:0.15"/>
+    </linearGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect x="{CHART_LEFT}" y="{CHART_TOP}" width="{CHART_W}" height="{CHART_H}" fill="url(#sentiment)"/>
   <text x="512" y="64" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
   <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
   <g stroke="#1a2030" stroke-width="0.6">'''
@@ -121,10 +129,17 @@ def render_chart_svg(candles: List[Dict], title: str = "AI SENTIMENT INDEX", sub
     for i in range(GRID_SIZE + 1):
         y = CHART_TOP + i * CELL_H
         svg += f'\n    <line x1="{CHART_LEFT}" y1="{y:.1f}" x2="{CHART_RIGHT}" y2="{y:.1f}"/>'
-    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#c8d0e0">'
-    for v in [12, 9, 6, 3, 0]:
-        y = value_to_y(v) + 8
-        svg += f'\n    <text x="104" y="{y}" text-anchor="end">{v}</text>'
+    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="18" font-weight="bold">'
+    zones = [
+        (12, "EUPHORIA", "#00ff88"),
+        (9, "HOPE", "#88ff00"),
+        (6, "NEUTRAL", "#888888"),
+        (3, "FEAR", "#ff8800"),
+        (0, "PANIC", "#ff3366")
+    ]
+    for val, label, color in zones:
+        y = value_to_y(val) + 6
+        svg += f'\n    <text x="104" y="{y}" text-anchor="end" fill="{color}">{label}</text>'
     svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#c8d0e0">'
     for i in range(1, 13):
         x = CHART_LEFT + (i - 0.5) * CELL_W
