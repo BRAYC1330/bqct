@@ -138,3 +138,16 @@ def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
     except Exception as e:
         logger.error(f"[chart] PNG conversion failed: {e}")
         return None
+
+def generate_chart_image(candles_json: str, title: str = "AI SENTIMENT INDEX", subtitle: str = "") -> Optional[bytes]:
+    candles = parse_candles_json(candles_json)
+    if not candles:
+        logger.warning("[chart] Failed to parse candles JSON")
+        return None
+    candles = validate_and_fix_candles(candles)
+    svg = render_chart_svg(candles, title, subtitle)
+    try:
+        return svg_to_png(svg)
+    except Exception as e:
+        logger.warning(f"[chart] PNG render failed: {e}")
+        return None
