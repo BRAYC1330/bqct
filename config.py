@@ -15,9 +15,7 @@ MODEL_N_THREADS = 4
 
 SEARCH_TIMEOUT = 30
 REQUEST_TIMEOUT = 15
-ENGLISH_ONLY_SEARCH = True
 ENGLISH_ASCII_RATIO = 0.8
-ALLOWED_LINK_DOMAINS = ["bsky.app", "atproto.com", "chainbase.com", "tavily.com"]
 MAX_SEARCH_RESULTS = 3
 
 SIGNATURE_ICONS = "💜💛"
@@ -40,20 +38,9 @@ LLM_TOKENS_KEYWORD = 10
 LLM_TOKENS_REGEN = 15
 
 RAW_DEBUG = os.getenv("DEBUG_OWNER", "false").lower() == "true"
-LOG_PROMPTS = os.getenv("LOG_PROMPTS", "false").lower() == "true"
 DIGEST_IMAGE_ENABLED = os.getenv("DIGEST_IMAGE", "true").lower() == "true"
-IMAGE_ASPECT_RATIO = os.getenv("IMAGE_ASPECT_RATIO", "512x512")
-IMAGE_INFERENCE_STEPS = int(os.getenv("IMAGE_INFERENCE_STEPS", "25"))
 
 SCOUT_HANDLES = [
     "chainbase.com", "buildermaps.io", "agentkey.app", "subq.ai",
     "qwen.ai", "zona.finance", "opensea.io",
 ]
-
-CTX_ROOT_POST = "[ROOT POST]"
-CTX_THREAD = "[THREAD]"
-CTX_RECENT_REPLIES = "[RECENT REPLIES]"
-CTX_CURRENT_QUERY = "[CURRENT QUERY]"
-CTX_SEARCH_RESULTS = "[SEARCH RESULTS]"
-CTX_EMBED = "[embed: {}]"
-CTX_LINKED_CONTENT = "[linked content, truncated — may be incomplete: {}]"
