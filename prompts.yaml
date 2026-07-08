@@ -57,7 +57,6 @@ chart_scene: |
   - Every candle MUST have shadows: high greater than max(open, close), low less than min(open, close)
   - Candle bodies must vary: some BIG (3-5 units), some MEDIUM (1-2), some SMALL (0.5-1)
   - For CRISIS news: include at least one HUGE candle spanning 8+ units
-  - For MIXED news: alternate directions
   - CRITICAL: Final candle MUST reflect overall news sentiment:
     * Positive news → final candle close >= 8.0
     * Negative news → final candle close <= 4.0
