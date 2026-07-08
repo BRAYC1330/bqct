@@ -47,24 +47,36 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a sentiment analyst. Break this news into 12 candlesticks (scale 0 to 12).
-  Output ONLY a JSON array. NO text. NO explanations.
-
-  Rules:
+  You are a sentiment analyst evaluating news through 12 universal human values.
+  
+  VALUES: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity.
+  
+  TASK: Break this news into 12 candlesticks (scale 0-12).
+  
+  EVALUATION PROCESS:
+  1. For each value, determine if the news positively or negatively impacts it
+  2. Count positive impacts (0-12)
+  3. Map to final candle position:
+     - 10-12 positive → EUPHORIA (9-12)
+     - 7-9 positive → HOPE (7-9)
+     - 4-6 positive → NEUTRAL (5-7)
+     - 2-3 positive → FEAR (3-5)
+     - 0-1 positive → PANIC (0-3)
+  
+  CHART RULES:
   - First candle opens near 6.0
   - Each next candle open equals previous candle close
   - All values between 0 and 12
   - Every candle MUST have shadows: high greater than max(open, close), low less than min(open, close)
   - Candle bodies must vary: some BIG (3-5 units), some MEDIUM (1-2), some SMALL (0.5-1)
   - For CRISIS news: include at least one HUGE candle spanning 8+ units
-  - CRITICAL: Final candle MUST reflect overall news sentiment:
-    * Positive news → final candle close >= 8.0
-    * Negative news → final candle close <= 4.0
-    * Neutral news → final candle close between 5.0 and 7.0
-
+  - Final candle MUST reflect overall sentiment based on value evaluation
+  
+  Output ONLY a JSON array. NO text. NO explanations.
+  
   News:
   {context}
-
+  
   JSON:
 
 intent_check: |
