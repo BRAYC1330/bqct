@@ -48,7 +48,7 @@ def _generate_chart_candles(llm, context: str) -> str:
             logger.info(prompt_text)
             logger.info("=== [END CHART SCENE PROMPT] ===")
             
-        output = llm(prompt_text, max_tokens=500, temperature=0.3)
+        output = llm(prompt_text, max_tokens=500, temperature=0.5, stop=["```"])
         raw = _get_llm_text(output)
         return raw
     except Exception as e:
