@@ -42,7 +42,7 @@ def _generate_chart_candles(llm, context: str) -> str:
     try:
         prompt_text = generator.load_prompt("chart_scene", context=context[:1500])
         prompt_text = str(prompt_text).strip()
-        output = llm(prompt_text, max_tokens=400, temperature=0.4, stop=["```", "Note:", "Explanation:"])
+        output = llm(prompt_text, max_tokens=500, temperature=0.3, stop=["```", "Note:", "Explanation:", "Analysis:"])
         raw = _get_llm_text(output)
         return raw
     except Exception as e:
