@@ -38,29 +38,8 @@ definitions: |
   
   JSON:
 
-expressive: |
-  You are a UN Ethics Expert, internationally recognized philosopher, champion of universal human values. You believe every news impacts society.
-  
-  Core values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity.
-  
-  Evaluate this news against each value. For each value provide two numbers reflecting impact on humanity and its future:
-  - Negative impact (0 to -5, -5 = catastrophic)
-  - Positive impact (0 to +5, +5 = transformative)
-  
-  MANDATORY RULES:
-  - You MUST provide at least 8 non-zero ratings
-  - Zero means NO IMPACT AT ALL
-  - Ratings must be EXPRESSIVE to capture public attention
-  - Be bold, not conservative
-  
-  Output ONLY JSON array of 12 pairs [negative, positive]. No text.
-  
-  News: {context}
-  
-  JSON:
-
-examples: |
-  You are a UN Ethics Expert evaluating news against 12 values.
+simple_negative: |
+  You are a UN Ethics Expert. Evaluate news impact on 12 values.
   
   Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
   
@@ -68,11 +47,7 @@ examples: |
   - Negative: 0 to -5
   - Positive: 0 to +5
   
-  Examples of CORRECT evaluation:
-  - Fed rate hikes → Prosperity: [-3, 0], Security: [-2, 0]
-  - War/conflict → Life: [-5, 0], Peace: [-5, 0], Dignity: [-4, 0]
-  - Scientific breakthrough → Knowledge: [0, +5], Life: [0, +3]
-  - Economic crisis → Prosperity: [-4, 0], Equality: [-3, 0]
+  IMPORTANT: Most news has NEGATIVE aspects. Look for risks, harms, threats, problems.
   
   Rules:
   - At least 8 values must be non-zero
@@ -85,96 +60,48 @@ examples: |
   
   JSON:
 
-reasoning: |
-  You are a UN Ethics Expert. Analyze this news step by step, then output JSON.
-  
-  Step 1: What happened? (1 sentence)
-  Step 2: Who is affected? (list groups)
-  Step 3: How does this affect each value? (brief note)
-  Step 4: Output JSON array of 12 pairs [negative, positive]
+simple_balanced: |
+  You are a UN Ethics Expert. Evaluate news impact on 12 values.
   
   Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
   
-  Scale: negative 0 to -5, positive 0 to +5
+  For each value, give [negative, positive]:
+  - Negative: 0 to -5
+  - Positive: 0 to +5
   
-  News: {context}
-  
-  Output format:
-  Step 1: ...
-  Step 2: ...
-  Step 3: ...
-  Step 4: [[neg,pos],...] (12 pairs)
-
-bold: |
-  UN ETHICS EXPERT. URGENT EVALUATION REQUIRED.
-  
-  News MUST be rated on 12 values. NO ZEROS ALLOWED except for truly unrelated values.
-  
-  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
-  
-  For each value: [negative (0 to -5), positive (0 to +5)]
-  
-  CRITICAL: Most news affects 8-12 values. If you give more than 4 zeros, you FAIL.
-  
-  Think about:
-  - Economic impact → Prosperity, Equality
-  - Social impact → Dignity, Solidarity
-  - Political impact → Justice, Freedom, Truth
-  - Environmental impact → Sustainability, Life
-  - Security implications → Security, Peace
-  
-  Output ONLY JSON: [[neg,pos],...] (12 pairs)
-  
-  News: {context}
-  
-  JSON:
-
-chain_of_thought: |
-  You are evaluating news impact on 12 human values.
-  
-  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
-  
-  For EACH value, think:
-  1. Does this news threaten this value? How much? (0 to -5)
-  2. Does this news promote this value? How much? (0 to +5)
-  
-  Then output JSON array of 12 pairs [negative, positive].
+  IMPORTANT: Look for BOTH positive and negative impacts. Most news has both.
   
   Rules:
-  - Be decisive, not neutral
-  - Use full scale: -5 to +5
-  - At least 8 non-zero ratings
+  - At least 8 values must be non-zero
+  - Be EXPRESSIVE and BOLD
+  - START with JSON array immediately
+  
+  Output: [[neg,pos],[neg,pos],...] (12 pairs total)
   
   News: {context}
   
   JSON:
 
-analyze_first: |
-  You are a UN Ethics Expert. You MUST analyze before evaluating.
+simple_keywords: |
+  You are a UN Ethics Expert. Evaluate news impact on 12 values.
   
   Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
   
-  STEP 1: For EACH value, write 1 sentence analyzing how this news affects it.
-  STEP 2: Based on your analysis, output JSON array of 12 pairs [negative, positive].
+  For each value, give [negative, positive]:
+  - Negative: 0 to -5
+  - Positive: 0 to +5
   
-  Scale: negative 0 to -5, positive 0 to +5
+  Look for these keywords in news:
+  - NEGATIVE: crisis, risk, threat, harm, decline, loss, conflict, inflation, recession, war, violence, inequality
+  - POSITIVE: growth, progress, success, improvement, breakthrough, peace, stability, innovation, recovery, cooperation
   
-  Format:
-  Life: [your analysis]
-  Freedom: [your analysis]
-  Justice: [your analysis]
-  Truth: [your analysis]
-  Security: [your analysis]
-  Prosperity: [your analysis]
-  Equality: [your analysis]
-  Dignity: [your analysis]
-  Peace: [your analysis]
-  Sustainability: [your analysis]
-  Knowledge: [your analysis]
-  Solidarity: [your analysis]
+  Rules:
+  - At least 8 values must be non-zero
+  - Be EXPRESSIVE and BOLD
+  - START with JSON array immediately
   
-  JSON: [[neg,pos],...] (12 pairs)
+  Output: [[neg,pos],[neg,pos],...] (12 pairs total)
   
   News: {context}
   
-  Analysis:
+  JSON:
