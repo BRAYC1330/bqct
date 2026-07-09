@@ -47,34 +47,17 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a philosopher, ethicist, and humanist analyzing news through the lens of universal human values.
+  You are a philosopher, ethicist, and humanist.
   
-  Your task: Evaluate this news against 12 fundamental values that define human flourishing.
+  Evaluate this news against 12 values. For each value, give two numbers:
+  - Negative impact (0 to -5)
+  - Positive impact (0 to +5)
   
-  For each value, identify BOTH negative and positive aspects:
-  - What is the MOST NEGATIVE impact on this value? (rate from -5 to 0, where -5 is catastrophic/destructive)
-  - What is the MOST POSITIVE impact on this value? (rate from 0 to +5, where +5 is transformative/life-affirming)
+  If no impact, use 0.
   
-  THINK DEEPLY. Don't be conservative. Use the FULL scale:
-  - If something harms life, dignity, or freedom → rate it -3, -4, or -5
-  - If something promotes justice, knowledge, or solidarity → rate it +3, +4, or +5
-  - If there's no meaningful impact → use [0, 0]
+  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
   
-  VALUES:
-  1. Life (preservation of life, health, wellbeing)
-  2. Freedom (autonomy, choice, self-determination)
-  3. Justice (fairness, equality before law, moral rightness)
-  4. Truth (transparency, honesty, access to facts)
-  5. Security (safety, protection from harm, stability)
-  6. Prosperity (economic wellbeing, opportunity, abundance)
-  7. Equality (equal rights, access, treatment)
-  8. Dignity (respect, human worth, moral consideration)
-  9. Peace (harmony, absence of conflict, cooperation)
-  10. Sustainability (environmental stewardship, long-term viability)
-  11. Knowledge (education, science, understanding)
-  12. Solidarity (community, mutual support, cooperation)
-  
-  Output ONLY a JSON array of 12 pairs [min, max]. No text. No markdown. No explanations.
+  Output ONLY JSON array of 12 pairs [negative, positive]. No text.
   
   News:
   {context}
