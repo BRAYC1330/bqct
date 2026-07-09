@@ -57,7 +57,9 @@ chart_scene: |
   
   Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
   
-  Output ONLY JSON array of 12 pairs [negative, positive]. No text.
+  Output ONLY a JSON array of 12 pairs. NO comments. NO explanations. NO text before or after.
+  
+  Example: [[-3,0],[-2,0],[-1,0],[0,0],[0,0],[-2,0],[-1,0],[-3,0],[-2,0],[0,0],[0,0],[0,0]]
   
   News:
   {context}
