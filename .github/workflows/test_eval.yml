@@ -11,17 +11,15 @@ on:
         description: 'Prompt variant (all = run all variants)'
         required: false
         type: choice
-        options:
-          - all
-          - simple
-          - definitions
-          - expressive
-          - examples
-          - reasoning
-          - bold
-          - chain_of_thought
-        default: 'all'
-concurrency:
+options:
+  - all
+  - simple
+  - definitions
+  - simple_negative
+  - simple_balanced
+  - simple_keywords
+default: 'all'concurrency:
+
   group: test-eval-${{ github.ref }}
   cancel-in-progress: true
 permissions:
