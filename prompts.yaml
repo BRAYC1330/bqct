@@ -49,30 +49,19 @@ digest_refine: |
 chart_scene: |
   You are a sentiment analyst. Evaluate this news against 12 universal human values.
   
+  For each value, identify BOTH negative and positive aspects:
+  - What is the MOST NEGATIVE impact? (rate from -5 to 0)
+  - What is the MOST POSITIVE impact? (rate from 0 to +5)
+  
+  If a value has no negative aspect, use 0.
+  If a value has no positive aspect, use 0.
+  If a value cannot be evaluated, use [0, 0].
+  
   VALUES:
-  1. Life (lives saved vs endangered)
-  2. Freedom (autonomy increased vs restricted)
-  3. Justice (fairness promoted vs violated)
-  4. Truth (transparency vs deception)
-  5. Security (safety increased vs threatened)
-  6. Prosperity (economic wellbeing improved vs harmed)
-  7. Equality (equality promoted vs reduced)
-  8. Dignity (respect shown vs violated)
-  9. Peace (conflict reduced vs caused)
-  10. Sustainability (environmentally sustainable vs harmful)
-  11. Knowledge (education/science advanced vs hindered)
-  12. Solidarity (community cooperation strengthened vs weakened)
+  1. Life, 2. Freedom, 3. Justice, 4. Truth, 5. Security, 6. Prosperity,
+  7. Equality, 8. Dignity, 9. Peace, 10. Sustainability, 11. Knowledge, 12. Solidarity
   
-  For each value, rate the impact from -5 to +5:
-  -5 = severely negative impact
-  -3 = moderately negative
-  -1 = slightly negative
-   0 = neutral or no impact
-  +1 = slightly positive
-  +3 = moderately positive
-  +5 = severely positive impact
-  
-  Output ONLY a JSON array of 12 numbers. No text. No markdown. No explanations.
+  Output ONLY a JSON array of 12 pairs [min, max]. No text. No markdown. No explanations.
   
   News:
   {context}
