@@ -30,14 +30,24 @@ def run_one(llm, name, prompt, news):
     logger.info(f"--- PROMPT ---\n{prompt}\n--- END PROMPT ---")
     
     t0 = time.time()
-    output = llm(prompt, max_tokens=500, temperature=0.3)
+    output = llm(prompt, max_tokens=1200, temperature=0.3)
     raw = output["choices"][0]["text"].strip()
     elapsed = time.time() - t0
     tokens = output['usage']['completion_tokens']
     
     logger.info(f"--- RAW ({tokens} tokens, {elapsed:.1f}s) ---\n{raw}\n--- END RAW ---")
     
-    values = chart_renderer.parse_values_json(raw)
+    # Ищем JSON в конце вывода (после рассуждений)
+    json_part = raw
+    if "JSON:" in raw:
+        json_part = raw.split("JSON:")[-1].strip()
+    elif "[[" in raw:
+        # Ищем последний JSON массив
+        last_bracket = raw.rfind("[[")
+        if last_bracket != -1:
+            json_part = raw[last_bracket:]
+    
+    values = chart_renderer.parse_values_json(json_part)
     
     if not values:
         logger.warning(f"[{name}] PARSE FAILED")
