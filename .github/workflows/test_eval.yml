@@ -13,11 +13,7 @@ on:
         type: choice
         options:
           - all
-          - simple
-          - definitions
-          - simple_negative
-          - simple_balanced
-          - simple_keywords
+          - simple_v2
         default: 'all'
 concurrency:
   group: test-eval-${{ github.ref }}
