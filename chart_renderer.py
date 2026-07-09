@@ -30,19 +30,30 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
         raw = raw.strip()
         
         decoder = json.JSONDecoder()
-        idx = raw.find('[')
-        if idx == -1:
-            return None
+        all_arrays = []
+        idx = 0
         
-        try:
-            data, _ = decoder.raw_decode(raw, idx)
-        except json.JSONDecodeError as e:
-            logger.warning(f"[chart] JSON decode failed: {e}")
+        while True:
+            idx = raw.find('[', idx)
+            if idx == -1:
+                break
+            
+            try:
+                data, end_idx = decoder.raw_decode(raw, idx)
+                if isinstance(data, list) and len(data) > 0:
+                    all_arrays.append((len(data), data, end_idx))
+                idx = end_idx
+            except json.JSONDecodeError:
+                idx += 1
+        
+        if not all_arrays:
+            logger.warning(f"[chart] No valid JSON arrays found")
             logger.warning(f"[chart] Raw input: {raw[:300]}")
             return None
         
-        if not isinstance(data, list):
-            return None
+        all_arrays.sort(key=lambda x: x[0], reverse=True)
+        _, data, _ = all_arrays[0]
+        
         if len(data) != 12:
             logger.warning(f"[chart] Expected 12 pairs, got {len(data)}")
             return None
