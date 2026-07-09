@@ -65,7 +65,7 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           CMAKE_ARGS="-DGGML_BLAS=OFF -DGGML_CUDA=OFF" pip install --prefer-binary llama-cpp-python==0.3.20
-          pip install pyyaml PyNaCl trafilatura regex Pillow
+          pip install pyyaml PyNaCl trafilatura regex Pillow httpx pydantic
           sudo apt-get update
           sudo apt-get install -y librsvg2-bin
       - name: Verify and Download Qwen Model
