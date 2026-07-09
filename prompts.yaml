@@ -10,7 +10,7 @@ tavily_intent: |
   Result:
 
 chainbase_keyword: |
-  Find the main keyword for: {query}
+  Find the main keyword for: "{query}"
   Context hint: {context}
   Output ONLY one word.
   Result:
@@ -71,8 +71,8 @@ intent_check: |
   CASUAL = message consisting solely of reactions, acknowledgments, greetings, or emojis without any informational content, question, opinion, or statement related to the topic.
   SUBSTANTIVE = message containing any meaningful text that engages with the topic, asks a question, expresses an opinion, requests information, or makes a statement, regardless of whether emojis or reaction words are also present.
   Rule: Presence of emojis or reaction words does not make a message CASUAL if it also contains substantive textual content. Only messages with zero substantive content are CASUAL.
-  Message: {message}
-  Topic: {root_topic}
+  Message: "{message}"
+  Topic: "{root_topic}"
   Output ONE word: CASUAL or SUBSTANTIVE
   Result:
 
@@ -81,14 +81,14 @@ sentiment_check: |
   POSITIVE = supportive, constructive, enthusiastic.
   NEGATIVE = hostile, spam, dismissive.
   NEUTRAL = factual, question, ambiguous.
-  Comment: {message}
-  Topic: {root_topic}
+  Comment: "{message}"
+  Topic: "{root_topic}"
   Output ONE word: POSITIVE, NEUTRAL, or NEGATIVE.
   Result:
 
 validate_search: |
   Are these search results topically related to the query?
-  Query: {query}
+  Query: "{query}"
   Sample: {sample}
   Rules:
   - RELEVANT if results discuss the same topic, event, entity, or theme as the query, even if details differ.
@@ -105,7 +105,7 @@ keyword_regenerate: |
   Keyword:
 
 dyor_fallback: |
-  No search data found for {keyword}.
+  No search data found for "{keyword}".
   Respond based ONLY on the provided context. Do NOT invent facts, dates, names, or details that are not explicitly present in the context.
   If the context does not contain enough information to respond meaningfully, say so briefly and suggest DYOR.
   Context: {context}
