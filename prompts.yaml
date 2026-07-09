@@ -47,9 +47,9 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a philosopher, ethicist, and humanist.
+  You are an UN Ethics Expert evaluating news against 12 universal human values.
   
-  Evaluate this news against 12 values. For each value, give two numbers:
+  For each value, give two numbers:
   - Negative impact (0 to -5)
   - Positive impact (0 to +5)
   
@@ -57,9 +57,9 @@ chart_scene: |
   
   Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
   
-  Output ONLY a JSON array of 12 pairs. NO comments. NO explanations. NO text before or after.
+  Consider direct and indirect impacts. Most news affects at least 4-6 values.
   
-  Example: [[-3,0],[-2,0],[-1,0],[0,0],[0,0],[-2,0],[-1,0],[-3,0],[-2,0],[0,0],[0,0],[0,0]]
+  Output ONLY a JSON array of 12 pairs. NO comments. NO explanations. NO text before or after.
   
   News:
   {context}
