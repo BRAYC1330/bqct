@@ -51,37 +51,25 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
             logger.warning(f"[chart] Raw input: {raw[:300]}")
             return None
         
-        all_arrays.sort(key=lambda x: x[0], reverse=True)
-        _, data, _ = all_arrays[0]
+        for _, data, _ in sorted(all_arrays, key=lambda x: x[0], reverse=True):
+            if len(data) == 12 and all(isinstance(item, list) and len(item) >= 2 for item in data):
+                values = []
+                for item in data:
+                    try:
+                        if len(item) == 3 and isinstance(item[0], str):
+                            min_val = max(-5, min(0, float(item[1])))
+                            max_val = max(0, min(5, float(item[2])))
+                        else:
+                            min_val = max(-5, min(0, float(item[0])))
+                            max_val = max(0, min(5, float(item[1])))
+                        values.append((min_val, max_val))
+                    except (ValueError, TypeError):
+                        values.append((0.0, 0.0))
+                return values
         
-        if len(data) != 12:
-            logger.warning(f"[chart] Expected 12 pairs, got {len(data)}")
-            return None
-        
-        values = []
-        for item in data:
-            if not isinstance(item, list):
-                values.append((0.0, 0.0))
-                continue
-            
-            if len(item) == 3 and isinstance(item[0], str):
-                try:
-                    min_val = max(-5, min(0, float(item[1])))
-                    max_val = max(0, min(5, float(item[2])))
-                    values.append((min_val, max_val))
-                except (ValueError, TypeError):
-                    values.append((0.0, 0.0))
-            elif len(item) == 2:
-                try:
-                    min_val = max(-5, min(0, float(item[0])))
-                    max_val = max(0, min(5, float(item[1])))
-                    values.append((min_val, max_val))
-                except (ValueError, TypeError):
-                    values.append((0.0, 0.0))
-            else:
-                values.append((0.0, 0.0))
-        
-        return values
+        logger.warning(f"[chart] No valid 12-pair array found")
+        logger.warning(f"[chart] Raw input: {raw[:300]}")
+        return None
     except Exception as e:
         logger.warning(f"[chart] JSON parse failed: {e}")
         logger.warning(f"[chart] Raw input: {raw[:300]}")
