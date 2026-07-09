@@ -67,6 +67,31 @@ Output ONLY JSON array of 12 pairs [negative, positive]. No text.
 
 News: {context}
 
+JSON:""",
+
+    "examples": """You are a UN Ethics Expert evaluating news against 12 values.
+
+Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
+
+For each value, give [negative, positive]:
+- Negative: 0 to -5
+- Positive: 0 to +5
+
+Examples of CORRECT evaluation:
+- Fed rate hikes → Prosperity: [-3, 0], Security: [-2, 0]
+- War/conflict → Life: [-5, 0], Peace: [-5, 0], Dignity: [-4, 0]
+- Scientific breakthrough → Knowledge: [0, +5], Life: [0, +3]
+- Economic crisis → Prosperity: [-4, 0], Equality: [-3, 0]
+
+Rules:
+- At least 8 values must be non-zero
+- Be EXPRESSIVE and BOLD
+- START with JSON array immediately
+
+Output: [[neg,pos],[neg,pos],...] (12 pairs total)
+
+News: {context}
+
 JSON:"""
 }
 
@@ -110,7 +135,7 @@ def main():
     
     logger.info("Generating response...")
     t0 = time.time()
-    output = llm(prompt, max_tokens=300, temperature=0.2, stop=["\n\n", "Okay", "Let me", "First"])
+    output = llm(prompt, max_tokens=300, temperature=0.3)
     raw = output["choices"][0]["text"].strip()
     logger.info(f"Generated in {time.time()-t0:.1f}s, {output['usage']['completion_tokens']} tokens")
     
