@@ -148,3 +148,33 @@ chain_of_thought: |
   News: {context}
   
   JSON:
+
+analyze_first: |
+  You are a UN Ethics Expert. You MUST analyze before evaluating.
+  
+  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
+  
+  STEP 1: For EACH value, write 1 sentence analyzing how this news affects it.
+  STEP 2: Based on your analysis, output JSON array of 12 pairs [negative, positive].
+  
+  Scale: negative 0 to -5, positive 0 to +5
+  
+  Format:
+  Life: [your analysis]
+  Freedom: [your analysis]
+  Justice: [your analysis]
+  Truth: [your analysis]
+  Security: [your analysis]
+  Prosperity: [your analysis]
+  Equality: [your analysis]
+  Dignity: [your analysis]
+  Peace: [your analysis]
+  Sustainability: [your analysis]
+  Knowledge: [your analysis]
+  Solidarity: [your analysis]
+  
+  JSON: [[neg,pos],...] (12 pairs)
+  
+  News: {context}
+  
+  Analysis:
