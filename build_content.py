@@ -108,7 +108,7 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, summary: s
         
         image_bytes = chart_renderer.generate_chart_image(
             candles_json,
-            title="AI SENTIMENT INDEX",
+            title="SENTIMENT ANALYSIS",
             subtitle=safe_subtitle
         )
         
@@ -117,7 +117,13 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, summary: s
             return None
             
         logger.info(f"[digest] Chart rendered: {len(image_bytes)} bytes")
-        return await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
+        
+        embed = await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
+        
+        if config.RAW_DEBUG:
+            logger.info(f"[digest] Embed structure: {embed}")
+        
+        return embed
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
         import traceback
@@ -213,5 +219,6 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         if embed is None:
             logger.error("[digest] Image generation failed for digest_full, failing entire digest")
             return None, None
+        logger.info(f"[digest] Embed generated successfully, passing to create_post")
             
     return final, embed
