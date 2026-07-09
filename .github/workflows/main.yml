@@ -60,6 +60,14 @@ jobs:
         with:
           path: models/Qwen3-14B-Q5_K_M.gguf
           key: qwen3-14b-q5km-v1
+      - name: Cache heavy pip dependencies
+        if: steps.checker.outputs.status == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: heavy-deps-ubuntu-24.04-v1
+          restore-keys: |
+            heavy-deps-ubuntu-24.04-
       - name: Install heavy deps
         if: steps.checker.outputs.status == 'true'
         run: |
