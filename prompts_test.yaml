@@ -23,6 +23,7 @@ simple_v2: |
   - Positive: 0 to +5 (how much this news promotes the value)
   
   CRITICAL RULES:
+  - NO "maybe" or "perhaps" - evaluate based on MOST LIKELY consequences
   - Every news event MUST have impact on society - both positive and negative aspects
   - Rarely do positive and negative impacts balance out to zero
   - Consider the butterfly effect: even small economic decisions affect millions of lives
