@@ -48,7 +48,7 @@ def _generate_chart_candles(llm, context: str) -> str:
             logger.info(prompt_text)
             logger.info("=== [END CHART SCENE PROMPT] ===")
             
-        output = llm(prompt_text, max_tokens=800, temperature=0.4, stop=["\n\n\n", "Note:", "Explanation:", "Analysis:"])
+        output = llm(prompt_text, max_tokens=200, temperature=0.4, stop=["\n\n\n", "Note:", "Explanation:", "Analysis:"])
         
         if config.RAW_DEBUG:
             logger.info(f"[digest] Raw LLM response object: {output}")
@@ -68,23 +68,22 @@ def _generate_chart_candles(llm, context: str) -> str:
 def _log_candles(candles_json: str) -> None:
     try:
         import chart_renderer
-        candles = chart_renderer.parse_candles_json(candles_json)
-        if not candles:
-            logger.info("[digest] Candles parse failed, no coordinates to log")
+        values = chart_renderer.parse_values_json(candles_json)
+        if not values:
+            logger.info("[digest] Values parse failed, no coordinates to log")
             return
-        candles = chart_renderer.validate_and_fix_candles(candles)
-        logger.info(f"[digest] === CHART COORDINATES ({len(candles)} candles) ===")
-        for i, c in enumerate(candles):
-            direction = "UP" if c['c'] >= c['o'] else "DOWN"
-            logger.info(f"[digest] Candle {i+1:2d}: O={c['o']:.1f} H={c['h']:.1f} L={c['l']:.1f} C={c['c']:.1f} | {direction}")
-        peak = max(c['h'] for c in candles)
-        drop = min(c['l'] for c in candles)
-        start = candles[0]['o']
-        now = candles[-1]['c']
-        logger.info(f"[digest] Stats: START={start:.1f} PEAK={peak:.1f} DROP={drop:.1f} NOW={now:.1f}")
-        logger.info("[digest] === END COORDINATES ===")
+        
+        logger.info(f"[digest] === VALUES ANALYSIS (12 values) ===")
+        for i, (label, val) in enumerate(zip(chart_renderer.VALUES, values)):
+            direction = "POSITIVE" if val > 0 else "NEGATIVE" if val < 0 else "NEUTRAL"
+            logger.info(f"[digest] {label:12s}: {val:+.1f} | {direction}")
+        
+        avg = sum(values) / len(values)
+        positive_count = sum(1 for v in values if v > 0)
+        logger.info(f"[digest] Stats: AVG={avg:+.1f} POSITIVE={positive_count}/12")
+        logger.info("[digest] === END VALUES ===")
     except Exception as e:
-        logger.warning(f"[digest] Candle logging failed: {e}")
+        logger.warning(f"[digest] Values logging failed: {e}")
 
 async def _generate_digest_embed(client, trends, task_type, llm=None, summary: str = "") -> dict | None:
     if not config.DIGEST_IMAGE_ENABLED:
