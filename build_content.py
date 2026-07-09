@@ -48,7 +48,7 @@ def _generate_chart_candles(llm, context: str) -> str:
             logger.info(prompt_text)
             logger.info("=== [END CHART SCENE PROMPT] ===")
             
-        output = llm(prompt_text, max_tokens=200, temperature=0.3)
+        output = llm(prompt_text, max_tokens=300, temperature=0.3)
         
         if config.RAW_DEBUG:
             logger.info(f"[digest] Raw LLM response object: {output}")
