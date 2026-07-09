@@ -59,15 +59,26 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
             return None
         
         values = []
-        for pair in data:
-            if not isinstance(pair, list) or len(pair) != 2:
+        for item in data:
+            if not isinstance(item, list):
                 values.append((0.0, 0.0))
                 continue
-            try:
-                min_val = max(-5, min(0, float(pair[0])))
-                max_val = max(0, min(5, float(pair[1])))
-                values.append((min_val, max_val))
-            except (ValueError, TypeError):
+            
+            if len(item) == 3 and isinstance(item[0], str):
+                try:
+                    min_val = max(-5, min(0, float(item[1])))
+                    max_val = max(0, min(5, float(item[2])))
+                    values.append((min_val, max_val))
+                except (ValueError, TypeError):
+                    values.append((0.0, 0.0))
+            elif len(item) == 2:
+                try:
+                    min_val = max(-5, min(0, float(item[0])))
+                    max_val = max(0, min(5, float(item[1])))
+                    values.append((min_val, max_val))
+                except (ValueError, TypeError):
+                    values.append((0.0, 0.0))
+            else:
                 values.append((0.0, 0.0))
         
         return values
