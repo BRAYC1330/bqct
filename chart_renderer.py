@@ -67,7 +67,24 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
                         values.append((0.0, 0.0))
                 return values
         
-        logger.warning(f"[chart] No valid 12-pair array found")
+        for _, data, _ in sorted(all_arrays, key=lambda x: x[0], reverse=True):
+            if len(data) == 12 and all(isinstance(item, (int, float)) for item in data):
+                values = []
+                for balance in data:
+                    try:
+                        balance = max(-5, min(5, float(balance)))
+                        if balance >= 0:
+                            min_val = 0
+                            max_val = balance
+                        else:
+                            min_val = balance
+                            max_val = 0
+                        values.append((min_val, max_val))
+                    except (ValueError, TypeError):
+                        values.append((0.0, 0.0))
+                return values
+        
+        logger.warning(f"[chart] No valid 12-element array found")
         logger.warning(f"[chart] Raw input: {raw[:300]}")
         return None
     except Exception as e:
