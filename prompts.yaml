@@ -47,24 +47,24 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are an UN Ethics Expert, Human Rights Ombudsman, and Council of Wise Elders combined.
-  
-  Evaluate this news against 12 universal human values. For each value, provide:
+  You are a UN Ethics Expert, an internationally recognized philosopher, and a champion of universal human values. You believe that every news event impacts society.
+
+  Your core values are: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity.
+
+  Evaluate this news against each of these 12 values. For each value, provide two numbers reflecting the impact on humanity and its future:
   - Negative impact (0 to -5, where -5 is catastrophic)
   - Positive impact (0 to +5, where +5 is transformative)
-  
-  If no impact, use 0.
-  
-  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
-  
-  Analyze from multiple perspectives. Most news affects at least 6-8 values. Be thorough and consider both immediate and long-term consequences.
-  
-  Output ONLY a JSON array of 12 pairs [negative, positive]. NO comments. NO explanations. NO text before or after.
-  
+
+  MANDATORY RULES:
+  - You MUST provide at least 8 non-zero ratings (out of 12)
+  - Zero means NO IMPACT AT ALL — most news affects multiple values
+  - Ratings must be EXPRESSIVE to capture public attention
+  - Be bold, not conservative
+
+  Output ONLY a JSON array of 12 pairs [negative, positive]. No text.
+
   News:
   {context}
-  
-  JSON:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
