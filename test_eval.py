@@ -103,7 +103,7 @@ def print_comparison(results):
     
     header = f"{'Value':<12}"
     for r in results:
-        header += f" {r['name'][:8]:>8}"
+        header += f" {r['name'][:10]:>10}"
     logger.info(header)
     logger.info("-" * 80)
     
@@ -111,10 +111,10 @@ def print_comparison(results):
         row = f"{label:<12}"
         for r in results:
             if r["failed"] or not r["values"]:
-                row += f" {'FAIL':>8}"
+                row += f" {'FAIL':>10}"
             else:
                 _, _, _, balance, _ = r["values"][i]
-                row += f" {balance:>+7.1f}"
+                row += f" {balance:>+9.1f}"
         logger.info(row)
     
     logger.info(f"{'='*80}")
