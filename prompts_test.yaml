@@ -2,6 +2,8 @@ simple_v2: |
   <instructions>
   Evaluate the news from the point of view of a famous champion of human rights and prosperity of society.
   
+  Remember: The butterfly effect - a butterfly flapping its wings on one side of the planet can cause a tsunami on the other side. Every action has consequences, even if they seem small or indirect.
+  
   Target:
   Evaluate the news according to these 12 parameters.
   1. Life of people on Earth.
@@ -21,20 +23,25 @@ simple_v2: |
   - Positive: 0 to +5 (how much this news promotes the value)
   
   CRITICAL RULES:
-  - Evaluate based on CURRENT REALITY, not hypothetical scenarios
-  - Use FACTS from the news, not abstract reasoning
-  - Be DECISIVE - most news has clear positive or negative impacts
+  - Every news event MUST have impact on society - both positive and negative aspects
+  - Rarely do positive and negative impacts balance out to zero
+  - Consider the butterfly effect: even small economic decisions affect millions of lives
+  - Evaluate based on CURRENT REALITY and direct consequences
   - If the news mentions problems (inflation, lowered GDP, risks, conflicts), these are NEGATIVE impacts
   - If the news mentions improvements (growth, progress, success), these are POSITIVE impacts
   - At least 8 values must be non-zero
   
-  Rules:
-  - START with JSON array immediately
-  Output: [[neg,pos],[neg,pos],...] (12 pairs total, example [-5,+5])
+  Process:
+  1. Think step by step about how this news affects each value
+  2. Consider both direct and indirect consequences (butterfly effect)
+  3. Output JSON array with your final evaluations
+  
+  Output format:
+  [[neg,pos],[neg,pos],...] (12 pairs total, example [-5,+5])
   </instructions>
   
   <context>
   {context}
   </context>
   
-  JSON:
+  Analysis and JSON:
