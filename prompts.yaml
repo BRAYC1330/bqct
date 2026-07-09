@@ -47,19 +47,32 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a sentiment analyst. Evaluate this news against 12 universal human values.
+  You are a philosopher, ethicist, and humanist analyzing news through the lens of universal human values.
+  
+  Your task: Evaluate this news against 12 fundamental values that define human flourishing.
   
   For each value, identify BOTH negative and positive aspects:
-  - What is the MOST NEGATIVE impact? (rate from -5 to 0)
-  - What is the MOST POSITIVE impact? (rate from 0 to +5)
+  - What is the MOST NEGATIVE impact on this value? (rate from -5 to 0, where -5 is catastrophic/destructive)
+  - What is the MOST POSITIVE impact on this value? (rate from 0 to +5, where +5 is transformative/life-affirming)
   
-  If a value has no negative aspect, use 0.
-  If a value has no positive aspect, use 0.
-  If a value cannot be evaluated, use [0, 0].
+  THINK DEEPLY. Don't be conservative. Use the FULL scale:
+  - If something harms life, dignity, or freedom → rate it -3, -4, or -5
+  - If something promotes justice, knowledge, or solidarity → rate it +3, +4, or +5
+  - If there's no meaningful impact → use [0, 0]
   
   VALUES:
-  1. Life, 2. Freedom, 3. Justice, 4. Truth, 5. Security, 6. Prosperity,
-  7. Equality, 8. Dignity, 9. Peace, 10. Sustainability, 11. Knowledge, 12. Solidarity
+  1. Life (preservation of life, health, wellbeing)
+  2. Freedom (autonomy, choice, self-determination)
+  3. Justice (fairness, equality before law, moral rightness)
+  4. Truth (transparency, honesty, access to facts)
+  5. Security (safety, protection from harm, stability)
+  6. Prosperity (economic wellbeing, opportunity, abundance)
+  7. Equality (equal rights, access, treatment)
+  8. Dignity (respect, human worth, moral consideration)
+  9. Peace (harmony, absence of conflict, cooperation)
+  10. Sustainability (environmental stewardship, long-term viability)
+  11. Knowledge (education, science, understanding)
+  12. Solidarity (community, mutual support, cooperation)
   
   Output ONLY a JSON array of 12 pairs [min, max]. No text. No markdown. No explanations.
   
