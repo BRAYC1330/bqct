@@ -1,5 +1,6 @@
 simple_v2: |
-  Evaluate the news from the point of view of a famous champion of human rights and prosperity of society
+  <instructions>
+  Evaluate the news from the point of view of a famous champion of human rights and prosperity of society.
   
   Target:
   Evaluate the news according to these 12 parameters.
@@ -21,9 +22,11 @@ simple_v2: |
   
   Rules:
   - START with JSON array immediately
-  
   Output: [[neg,pos],[neg,pos],...] (12 pairs total, example [-5,+5])
+  </instructions>
   
-  News: {context}
+  <context>
+  {context}
+  </context>
   
   JSON:
