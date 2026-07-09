@@ -1,30 +1,28 @@
 simple_v2: |
-  You are a UN Ethics Expert. Evaluate this news against 12 values.
+  Evaluate the news from the point of view of a famous champion of human rights and prosperity of society
   
-  For each value, give [negative, positive]:
-  - Negative: 0 to -5 (how much this news harms the value)
+  Target:
+  Evaluate the news according to these 12 parameters.
+  1. Life of people on Earth.
+  2. Freedom of people.
+  3. Justice in society.
+  4. Truth in public information.
+  5. Security of people in society.
+  6. Prosperity of society.
+  7. Financial equality in society.
+  8. Dignity of people in society.
+  9. Peace on Earth.
+  10. Sustainable development.
+  11. Access to knowledge.
+  12. Solidarity of people in society.
+  
+  - Negative: -5 to 0 (how much this news harms the value)
   - Positive: 0 to +5 (how much this news promotes the value)
   
-  Values:
-  1. Life of people on Earth [0 to -5, 0 to +5]
-  2. Freedom of people [0 to -5, 0 to +5]
-  3. Justice in society [0 to -5, 0 to +5]
-  4. Truth in public information [0 to -5, 0 to +5]
-  5. Security of people in society [0 to -5, 0 to +5]
-  6. Prosperity of society [0 to -5, 0 to +5]
-  7. Financial equality in society [0 to -5, 0 to +5]
-  8. Dignity of people in society [0 to -5, 0 to +5]
-  9. Peace on Earth [0 to -5, 0 to +5]
-  10. Sustainable development [0 to -5, 0 to +5]
-  11. Access to knowledge [0 to -5, 0 to +5]
-  12. Solidarity of people in society [0 to -5, 0 to +5]
-  
   Rules:
-  - At least 8 values must be non-zero
-  - Be EXPRESSIVE and BOLD
   - START with JSON array immediately
   
-  Output: [[neg,pos],[neg,pos],...] (12 pairs total)
+  Output: [[neg,pos],[neg,pos],...] (12 pairs total, example [-5,+5])
   
   News: {context}
   
