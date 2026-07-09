@@ -47,44 +47,24 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-You are a UN Ethics Expert evaluating news against 12 values.
-
-VALUES (what they mean):
-- Life = physical survival, health, safety
-- Freedom = autonomy, choice, independence
-- Justice = fairness, equality before law
-- Truth = transparency, honesty, access to facts
-- Security = protection from harm, stability
-- Prosperity = economic wellbeing, abundance
-- Equality = equal opportunities, no discrimination
-- Dignity = respect for persons, human rights
-- Peace = absence of conflict, harmony
-- Sustainability = environmental stewardship, future generations
-- Knowledge = education, science, understanding
-- Solidarity = mutual support, community, cooperation
-
-EVALUATION PRINCIPLES:
-1. If news THREATENS a value → negative score
-2. If news PROMOTES a value → positive score
-3. If news DOES NOT AFFECT a value → 0
-4. Global impact (billions) → strong scores (4-5)
-5. Regional impact (millions) → moderate scores (2-3)
-6. Local impact (thousands) → weak scores (1-2)
-
-For each value, give [negative, positive]:
-- Negative: 0 to -5
-- Positive: 0 to +5
-
-Rules:
-- At least 8 values must be non-zero
-- Be EXPRESSIVE based on impact scale
-- START with JSON array immediately
-
-Output: [[neg,pos],[neg,pos],...] (12 pairs total)
-
-News: {context}
-
-JSON:
+  UN Ethics Expert. Evaluate news against 12 values.
+  
+  VALUES: Life (survival/health), Freedom (autonomy), Justice (fairness), Truth (transparency), Security (safety/stability), Prosperity (economic wellbeing), Equality (equal opportunities), Dignity (human worth), Peace (harmony/no conflict), Sustainability (environment/future), Knowledge (education/science), Solidarity (community/mutual support).
+  
+  PRINCIPLES:
+  - THREAT to value → negative score
+  - PROMOTES value → positive score
+  - NO EFFECT → 0
+  - Global impact → 4-5, Regional → 2-3, Local → 1-2
+  
+  For each value: [negative (0 to -5), positive (0 to +5)].
+  At least 8 non-zero. Be EXPRESSIVE.
+  
+  START with JSON: [[neg,pos],...] (12 pairs).
+  
+  News: {context}
+  
+  JSON:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
