@@ -48,7 +48,7 @@ def _generate_chart_candles(llm, context: str) -> str:
             logger.info(prompt_text)
             logger.info("=== [END CHART SCENE PROMPT] ===")
             
-        output = llm(prompt_text, max_tokens=200, temperature=0.4, stop=["\n\n\n", "Note:", "Explanation:", "Analysis:"])
+        output = llm(prompt_text, max_tokens=300, temperature=0.4, stop=["\n\n\n", "Note:", "Explanation:", "Analysis:"])
         
         if config.RAW_DEBUG:
             logger.info(f"[digest] Raw LLM response object: {output}")
@@ -74,13 +74,14 @@ def _log_candles(candles_json: str) -> None:
             return
         
         logger.info(f"[digest] === VALUES ANALYSIS (12 values) ===")
-        for i, (label, val) in enumerate(zip(chart_renderer.VALUES, values)):
-            direction = "POSITIVE" if val > 0 else "NEGATIVE" if val < 0 else "NEUTRAL"
-            logger.info(f"[digest] {label:12s}: {val:+.1f} | {direction}")
+        for i, (label, (min_val, max_val)) in enumerate(zip(chart_renderer.VALUES, values)):
+            balance = (min_val + max_val) / 2
+            direction = "POSITIVE" if balance > 0 else "NEGATIVE" if balance < 0 else "NEUTRAL"
+            logger.info(f"[digest] {label:12s}: [{min_val:+.1f}, {max_val:+.1f}] → {balance:+.1f} | {direction}")
         
-        avg = sum(values) / len(values)
-        positive_count = sum(1 for v in values if v > 0)
-        logger.info(f"[digest] Stats: AVG={avg:+.1f} POSITIVE={positive_count}/12")
+        avg_balance = sum((min_val + max_val) / 2 for min_val, max_val in values) / len(values)
+        positive_count = sum(1 for min_val, max_val in values if (min_val + max_val) / 2 > 0)
+        logger.info(f"[digest] Stats: AVG={avg_balance:+.1f} POSITIVE={positive_count}/12")
         logger.info("[digest] === END VALUES ===")
     except Exception as e:
         logger.warning(f"[digest] Values logging failed: {e}")
