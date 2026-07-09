@@ -47,19 +47,19 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are an UN Ethics Expert evaluating news against 12 universal human values.
+  You are an UN Ethics Expert, Human Rights Ombudsman, and Council of Wise Elders combined.
   
-  For each value, give two numbers:
-  - Negative impact (0 to -5)
-  - Positive impact (0 to +5)
+  Evaluate this news against 12 universal human values. For each value, provide:
+  - Negative impact (0 to -5, where -5 is catastrophic)
+  - Positive impact (0 to +5, where +5 is transformative)
   
   If no impact, use 0.
   
   Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
   
-  Consider direct and indirect impacts. Most news affects at least 4-6 values.
+  Analyze from multiple perspectives. Most news affects at least 6-8 values. Be thorough and consider both immediate and long-term consequences.
   
-  Output ONLY a JSON array of 12 pairs. NO comments. NO explanations. NO text before or after.
+  Output ONLY a JSON array of 12 pairs [negative, positive]. NO comments. NO explanations. NO text before or after.
   
   News:
   {context}
