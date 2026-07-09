@@ -2,7 +2,7 @@ import json
 import re
 import logging
 import subprocess
-from typing import List, Optional
+from typing import List, Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ VALUES = [
     "Equality", "Dignity", "Peace", "Sustain", "Knowledge", "Solidarity"
 ]
 
-def parse_values_json(raw: str) -> Optional[List[float]]:
+def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
     try:
         raw = re.sub(r'```json\s*', '', raw, flags=re.I)
         raw = re.sub(r'```\s*', '', raw)
@@ -44,17 +44,20 @@ def parse_values_json(raw: str) -> Optional[List[float]]:
         if not isinstance(data, list):
             return None
         if len(data) != 12:
-            logger.warning(f"[chart] Expected 12 values, got {len(data)}")
+            logger.warning(f"[chart] Expected 12 pairs, got {len(data)}")
             return None
         
         values = []
-        for val in data:
+        for pair in data:
+            if not isinstance(pair, list) or len(pair) != 2:
+                values.append((0.0, 0.0))
+                continue
             try:
-                v = float(val)
-                v = max(-5, min(5, v))
-                values.append(v)
+                min_val = max(-5, min(0, float(pair[0])))
+                max_val = max(0, min(5, float(pair[1])))
+                values.append((min_val, max_val))
             except (ValueError, TypeError):
-                values.append(0.0)
+                values.append((0.0, 0.0))
         
         return values
     except Exception as e:
@@ -62,19 +65,16 @@ def parse_values_json(raw: str) -> Optional[List[float]]:
         logger.warning(f"[chart] Raw input: {raw[:300]}")
         return None
 
-def value_to_color(v: float) -> str:
-    if v >= 4:
+def get_bar_color(min_val: float, max_val: float) -> str:
+    balance = (min_val + max_val) / 2
+    if balance > 2:
         return "#00ff88"
-    elif v >= 2:
+    elif balance > 0.5:
         return "#88ff00"
-    elif v >= 0.5:
-        return "#ccff00"
-    elif v >= -0.5:
+    elif balance > -0.5:
         return "#888888"
-    elif v >= -2:
+    elif balance > -2:
         return "#ffaa00"
-    elif v >= -4:
-        return "#ff6600"
     else:
         return "#ff3366"
 
@@ -82,9 +82,9 @@ def value_to_y(v: float) -> int:
     normalized = (v + 5) / 10
     return int(CHART_BOTTOM - normalized * CHART_H)
 
-def render_values_svg(values: List[float], title: str = "SENTIMENT ANALYSIS", subtitle: str = "") -> str:
-    avg = sum(values) / len(values)
-    positive_count = sum(1 for v in values if v > 0)
+def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT ANALYSIS", subtitle: str = "") -> str:
+    avg_balance = sum((min_val + max_val) / 2 for min_val, max_val in values) / len(values)
+    positive_count = sum(1 for min_val, max_val in values if (min_val + max_val) / 2 > 0)
     
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
@@ -115,19 +115,19 @@ def render_values_svg(values: List[float], title: str = "SENTIMENT ANALYSIS", su
     zero_y = value_to_y(0)
     svg += f'\n  <line x1="{CHART_LEFT}" y1="{zero_y}" x2="{CHART_RIGHT}" y2="{zero_y}" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,5"/>'
     
-    for i, v in enumerate(values):
+    for i, (min_val, max_val) in enumerate(values):
         x = CHART_LEFT + i * BAR_WIDTH + BAR_GAP / 2
-        color = value_to_color(v)
-        bar_y = value_to_y(v)
-        bar_height = abs(bar_y - zero_y)
+        color = get_bar_color(min_val, max_val)
         
-        if v >= 0:
-            svg += f'\n  <rect x="{x:.1f}" y="{bar_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
-        else:
-            svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
+        min_y = value_to_y(min_val)
+        max_y = value_to_y(max_val)
+        bar_height = abs(min_y - max_y)
         
-        value_y = bar_y - 10 if v >= 0 else bar_y + bar_height + 20
-        svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{value_y:.1f}" text-anchor="middle" fill="{color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{v:+.1f}</text>'
+        svg += f'\n  <rect x="{x:.1f}" y="{max_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
+        
+        balance = (min_val + max_val) / 2
+        value_y = max_y - 10
+        svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{value_y:.1f}" text-anchor="middle" fill="{color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
     
     svg += '\n  <g font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#c8d0e0">'
     for i, label in enumerate(VALUES):
@@ -137,7 +137,7 @@ def render_values_svg(values: List[float], title: str = "SENTIMENT ANALYSIS", su
     
     svg += f'\n  <g>'
     svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
-    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">AVG: {avg:+.1f}</text>'
+    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">AVG: {avg_balance:+.1f}</text>'
     svg += f'\n    <circle cx="350" cy="980" r="8" fill="#88ff00"/>'
     svg += f'\n    <text x="370" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">POSITIVE: {positive_count}/12</text>'
     svg += f'\n  </g>'
