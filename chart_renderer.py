@@ -76,8 +76,7 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
         logger.warning(f"[chart] Raw input: {raw[:300]}")
         return None
 
-def get_bar_color(min_val: float, max_val: float) -> str:
-    balance = (min_val + max_val) / 2
+def get_bar_color(balance: float) -> str:
     if balance > 2:
         return "#00ff88"
     elif balance > 0.5:
@@ -94,7 +93,7 @@ def value_to_y(v: float) -> int:
     return int(CHART_BOTTOM - normalized * CHART_H)
 
 def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT ANALYSIS", subtitle: str = "") -> str:
-    avg_balance = sum((min_val + max_val) / 2 for min_val, max_val in values) / len(values)
+    net_balance = sum((min_val + max_val) / 2 for min_val, max_val in values)
     positive_count = sum(1 for min_val, max_val in values if (min_val + max_val) / 2 > 0)
     
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
@@ -127,17 +126,20 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
     svg += f'\n  <line x1="{CHART_LEFT}" y1="{zero_y}" x2="{CHART_RIGHT}" y2="{zero_y}" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,5"/>'
     
     for i, (min_val, max_val) in enumerate(values):
-        x = CHART_LEFT + i * BAR_WIDTH + BAR_GAP / 2
-        color = get_bar_color(min_val, max_val)
-        
-        min_y = value_to_y(min_val)
-        max_y = value_to_y(max_val)
-        bar_height = abs(min_y - max_y)
-        
-        svg += f'\n  <rect x="{x:.1f}" y="{max_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
-        
         balance = (min_val + max_val) / 2
-        value_y = max_y - 10
+        x = CHART_LEFT + i * BAR_WIDTH + BAR_GAP / 2
+        color = get_bar_color(balance)
+        
+        balance_y = value_to_y(balance)
+        bar_height = abs(balance_y - zero_y)
+        
+        if abs(balance) > 0.01:
+            if balance >= 0:
+                svg += f'\n  <rect x="{x:.1f}" y="{balance_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
+            else:
+                svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
+        
+        value_y = balance_y - 10 if balance >= 0 else balance_y + bar_height + 20
         svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{value_y:.1f}" text-anchor="middle" fill="{color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
     
     svg += '\n  <g font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#c8d0e0">'
@@ -148,7 +150,7 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
     
     svg += f'\n  <g>'
     svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
-    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">AVG: {avg_balance:+.1f}</text>'
+    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">NET: {net_balance:+.1f}</text>'
     svg += f'\n    <circle cx="350" cy="980" r="8" fill="#88ff00"/>'
     svg += f'\n    <text x="370" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">POSITIVE: {positive_count}/12</text>'
     svg += f'\n  </g>'
