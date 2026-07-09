@@ -20,6 +20,14 @@ simple_v2: |
   - Negative: -5 to 0 (how much this news harms the value)
   - Positive: 0 to +5 (how much this news promotes the value)
   
+  CRITICAL RULES:
+  - Evaluate based on CURRENT REALITY, not hypothetical scenarios
+  - Use FACTS from the news, not abstract reasoning
+  - Be DECISIVE - most news has clear positive or negative impacts
+  - If the news mentions problems (inflation, lowered GDP, risks, conflicts), these are NEGATIVE impacts
+  - If the news mentions improvements (growth, progress, success), these are POSITIVE impacts
+  - At least 8 values must be non-zero
+  
   Rules:
   - START with JSON array immediately
   Output: [[neg,pos],[neg,pos],...] (12 pairs total, example [-5,+5])
