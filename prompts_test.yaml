@@ -1,99 +1,23 @@
-simple: |
-  You are a UN Ethics Expert evaluating news against 12 values.
-  
-  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
+simple_v2: |
+  You are a UN Ethics Expert. Evaluate this news against 12 values.
   
   For each value, give [negative, positive]:
-  - Negative: 0 to -5 (-5 = catastrophic)
-  - Positive: 0 to +5 (+5 = transformative)
+  - Negative: 0 to -5 (how much this news harms the value)
+  - Positive: 0 to +5 (how much this news promotes the value)
   
-  Rules:
-  - At least 8 values must be non-zero
-  - Be EXPRESSIVE and BOLD
-  - START with JSON array immediately
-  
-  Output: [[neg,pos],[neg,pos],...] (12 pairs total)
-  
-  News: {context}
-  
-  JSON:
-
-definitions: |
-  UN Ethics Expert. Evaluate news against 12 values.
-  
-  VALUES: Life (survival/health), Freedom (autonomy), Justice (fairness), Truth (transparency), Security (safety/stability), Prosperity (economic wellbeing), Equality (equal opportunities), Dignity (human worth), Peace (harmony/no conflict), Sustainability (environment/future), Knowledge (education/science), Solidarity (community/mutual support).
-  
-  PRINCIPLES:
-  - THREAT to value → negative score
-  - PROMOTES value → positive score
-  - NO EFFECT → 0
-  - Global impact → 4-5, Regional → 2-3, Local → 1-2
-  
-  For each value: [negative (0 to -5), positive (0 to +5)].
-  At least 8 non-zero. Be EXPRESSIVE.
-  
-  START with JSON: [[neg,pos],...] (12 pairs).
-  
-  News: {context}
-  
-  JSON:
-
-simple_negative: |
-  You are a UN Ethics Expert. Evaluate news impact on 12 values.
-  
-  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
-  
-  For each value, give [negative, positive]:
-  - Negative: 0 to -5
-  - Positive: 0 to +5
-  
-  IMPORTANT: Most news has NEGATIVE aspects. Look for risks, harms, threats, problems.
-  
-  Rules:
-  - At least 8 values must be non-zero
-  - Be EXPRESSIVE and BOLD
-  - START with JSON array immediately
-  
-  Output: [[neg,pos],[neg,pos],...] (12 pairs total)
-  
-  News: {context}
-  
-  JSON:
-
-simple_balanced: |
-  You are a UN Ethics Expert. Evaluate news impact on 12 values.
-  
-  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
-  
-  For each value, give [negative, positive]:
-  - Negative: 0 to -5
-  - Positive: 0 to +5
-  
-  IMPORTANT: Look for BOTH positive and negative impacts. Most news has both.
-  
-  Rules:
-  - At least 8 values must be non-zero
-  - Be EXPRESSIVE and BOLD
-  - START with JSON array immediately
-  
-  Output: [[neg,pos],[neg,pos],...] (12 pairs total)
-  
-  News: {context}
-  
-  JSON:
-
-simple_keywords: |
-  You are a UN Ethics Expert. Evaluate news impact on 12 values.
-  
-  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
-  
-  For each value, give [negative, positive]:
-  - Negative: 0 to -5
-  - Positive: 0 to +5
-  
-  Look for these keywords in news:
-  - NEGATIVE: crisis, risk, threat, harm, decline, loss, conflict, inflation, recession, war, violence, inequality
-  - POSITIVE: growth, progress, success, improvement, breakthrough, peace, stability, innovation, recovery, cooperation
+  Values:
+  1. Life of people on Earth [0 to -5, 0 to +5]
+  2. Freedom of people [0 to -5, 0 to +5]
+  3. Justice in society [0 to -5, 0 to +5]
+  4. Truth in public information [0 to -5, 0 to +5]
+  5. Security of people in society [0 to -5, 0 to +5]
+  6. Prosperity of society [0 to -5, 0 to +5]
+  7. Financial equality in society [0 to -5, 0 to +5]
+  8. Dignity of people in society [0 to -5, 0 to +5]
+  9. Peace on Earth [0 to -5, 0 to +5]
+  10. Sustainable development [0 to -5, 0 to +5]
+  11. Access to knowledge [0 to -5, 0 to +5]
+  12. Solidarity of people in society [0 to -5, 0 to +5]
   
   Rules:
   - At least 8 values must be non-zero
