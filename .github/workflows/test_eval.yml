@@ -16,6 +16,9 @@ on:
           - definitions
           - expressive
           - examples
+          - reasoning
+          - bold
+          - chain_of_thought
         default: 'simple'
 concurrency:
   group: test-eval-${{ github.ref }}
