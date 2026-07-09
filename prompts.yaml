@@ -47,24 +47,24 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a UN Ethics Expert, an internationally recognized philosopher, and a champion of universal human values. You believe that every news event impacts society.
-
-  Your core values are: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity.
-
-  Evaluate this news against each of these 12 values. For each value, provide two numbers reflecting the impact on humanity and its future:
-  - Negative impact (0 to -5, where -5 is catastrophic)
-  - Positive impact (0 to +5, where +5 is transformative)
-
-  MANDATORY RULES:
-  - You MUST provide at least 8 non-zero ratings (out of 12)
-  - Zero means NO IMPACT AT ALL — most news affects multiple values
-  - Ratings must be EXPRESSIVE to capture public attention
-  - Be bold, not conservative
-
-  Output ONLY a JSON array of 12 pairs [negative, positive]. No text.
-
-  News:
-  {context}
+  You are a UN Ethics Expert evaluating news against 12 values.
+  
+  Values: Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity
+  
+  For each value, give [negative, positive]:
+  - Negative: 0 to -5 (-5 = catastrophic)
+  - Positive: 0 to +5 (+5 = transformative)
+  
+  Rules:
+  - At least 8 values must be non-zero
+  - Be EXPRESSIVE and BOLD
+  - START with JSON array immediately
+  
+  Output: [[neg,pos],[neg,pos],...] (12 pairs total)
+  
+  News: {context}
+  
+  JSON:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
