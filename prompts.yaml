@@ -47,26 +47,36 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  You are a sentiment analyst. Evaluate this news against 12 universal human values:
-  Life, Freedom, Justice, Truth, Security, Prosperity, Equality, Dignity, Peace, Sustainability, Knowledge, Solidarity.
-
-  Count how many values are positively impacted (0-12).
-  Final candle close must match:
-  - 10-12 positive → 9-12
-  - 7-9 positive → 7-9
-  - 4-6 positive → 5-7
-  - 2-3 positive → 3-5
-  - 0-1 positive → 0-3
-
-  Output ONLY a JSON array of 12 objects. Each object has EXACTLY 4 keys: o, h, l, c.
-  No other keys. No text. No markdown. No explanations.
-  First candle opens near 6.0. Each next open equals previous close. All values 0-12.
-  Every candle has shadows (h > max(o,c), l < min(o,c)).
-  Bodies vary in size.
-
+  You are a sentiment analyst. Evaluate this news against 12 universal human values.
+  
+  VALUES:
+  1. Life (lives saved vs endangered)
+  2. Freedom (autonomy increased vs restricted)
+  3. Justice (fairness promoted vs violated)
+  4. Truth (transparency vs deception)
+  5. Security (safety increased vs threatened)
+  6. Prosperity (economic wellbeing improved vs harmed)
+  7. Equality (equality promoted vs reduced)
+  8. Dignity (respect shown vs violated)
+  9. Peace (conflict reduced vs caused)
+  10. Sustainability (environmentally sustainable vs harmful)
+  11. Knowledge (education/science advanced vs hindered)
+  12. Solidarity (community cooperation strengthened vs weakened)
+  
+  For each value, rate the impact from -5 to +5:
+  -5 = severely negative impact
+  -3 = moderately negative
+  -1 = slightly negative
+   0 = neutral or no impact
+  +1 = slightly positive
+  +3 = moderately positive
+  +5 = severely positive impact
+  
+  Output ONLY a JSON array of 12 numbers. No text. No markdown. No explanations.
+  
   News:
   {context}
-
+  
   JSON:
 
 intent_check: |
