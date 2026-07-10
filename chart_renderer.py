@@ -183,11 +183,11 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
   <rect width="1024" height="1024" fill="url(#bg)"/>
   
   <g font-family="Arial, sans-serif" font-size="20" font-weight="bold">
-    <circle cx="120" cy="40" r="8" fill="#00ff88"/>
-    <text x="140" y="48" fill="#c8d0e0">NET: {net_balance:+.1f}</text>
+    <circle cx="50" cy="40" r="8" fill="#00ff88"/>
+    <text x="70" y="48" fill="#cccccc">NET: {net_balance:+.1f}</text>
     <text x="512" y="48" text-anchor="middle" fill="#ffffff" font-size="36" letter-spacing="4">{title}</text>
-    <text x="904" y="48" text-anchor="end" fill="#c8d0e0">POSITIVE: {positive_count}/12</text>
-    <circle cx="884" cy="40" r="8" fill="#88ff00"/>
+    <text x="954" y="48" text-anchor="end" fill="#cccccc">POSITIVE: {positive_count}/12</text>
+    <circle cx="834" cy="40" r="8" fill="#88ff00"/>
   </g>
   
   <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
@@ -225,7 +225,7 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
         abbr = VALUE_ABBR[label]
         svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{abbr}</text>'
     svg += '\n  </g>'
-    svg += '\n  <g font-family="Arial, sans-serif" font-size="14" fill="#8892a8">'
+    svg += '\n  <g font-family="Arial, sans-serif" font-size="16" fill="#cccccc">'
     svg += '\n    <text x="512" y="940" text-anchor="middle">Parameters relate to universal human values:</text>'
     legend_text = "LI - Life, FR - Freedom, JU - Justice, TR - Truth, SE - Security, PR - Prosperity, EQ - Equality, DI - Dignity, PE - Peace, SU - Sustainability, KN - Knowledge, SO - Solidarity"
     svg += f'\n    <text x="512" y="970" text-anchor="middle">{legend_text}</text>'
