@@ -154,6 +154,12 @@ def get_bar_color(balance: float) -> str:
     else:
         return "#ff3366"
 
+def get_text_color_for_bar(bar_color: str) -> str:
+    if bar_color in ["#00ff88", "#88ff00"]:
+        return "#050810"
+    else:
+        return "#ffffff"
+
 def value_to_y(v: float) -> int:
     normalized = (v + 5) / 10
     return int(CHART_BOTTOM - normalized * CHART_H)
@@ -188,19 +194,21 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
         balance = (min_val + max_val) / 2
         x = CHART_LEFT + i * BAR_WIDTH + BAR_GAP / 2
         color = get_bar_color(balance)
+        text_color = get_text_color_for_bar(color)
         balance_y = value_to_y(balance)
         bar_height = abs(balance_y - zero_y)
         if abs(balance) > 0.01:
             if balance >= 0:
                 svg += f'\n  <rect x="{x:.1f}" y="{balance_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
+                text_y = balance_y + bar_height / 2 + 5
             else:
                 svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
-        value_y = balance_y - 10 if balance >= 0 else balance_y + bar_height + 20
-        svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{value_y:.1f}" text-anchor="middle" fill="{color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
+                text_y = zero_y + bar_height / 2 + 5
+            svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{text_y:.1f}" text-anchor="middle" fill="{text_color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
     svg += '\n  <g font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#c8d0e0">'
     for i, label in enumerate(VALUES):
         x = CHART_LEFT + i * BAR_WIDTH + BAR_WIDTH / 2
-        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{label}</text>'
+        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{label.upper()}</text>'
     svg += '\n  </g>'
     svg += f'\n  <g>'
     svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
