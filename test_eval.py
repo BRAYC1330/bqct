@@ -28,9 +28,12 @@ def parse_bracket_format(raw: str):
     """Парсит формат: [-1, +2] или [-1,+2] или **[-1, +2]**"""
     values = []
     
+    # Убираем markdown
+    clean = raw.replace('**', '').replace('*', '')
+    
     # Ищем все пары в квадратных скобках: [-1, +2] или [-1,+2]
     pattern = r'\[\s*([-\d.]+)\s*,\s*\+?([-\d.]+)\s*\]'
-    matches = re.findall(pattern, raw)
+    matches = re.findall(pattern, clean)
     
     if len(matches) != 12:
         logger.warning(f"[chart] Expected 12 pairs, got {len(matches)}")
@@ -47,15 +50,18 @@ def parse_bracket_format(raw: str):
     return values
 
 def parse_text_format(raw: str):
-    """Парсит формат: 'Negative: -2 ... Positive: +2' для каждого параметра"""
+    """Парсит формат: '**Negative: -0** | **Positive: +5**' или 'Negative: -2 ... Positive: +2'"""
     values = []
+    
+    # Убираем markdown
+    clean = raw.replace('**', '').replace('*', '')
     
     # Ищем все пары Negative/Positive
     neg_pattern = r'Negative:\s*([-\d.]+)'
     pos_pattern = r'Positive:\s*\+?([-\d.]+)'
     
-    neg_matches = re.findall(neg_pattern, raw)
-    pos_matches = re.findall(pos_pattern, raw)
+    neg_matches = re.findall(neg_pattern, clean)
+    pos_matches = re.findall(pos_pattern, clean)
     
     if len(neg_matches) < 12 or len(pos_matches) < 12:
         logger.warning(f"[chart] Expected 12 pairs, got {len(neg_matches)} neg, {len(pos_matches)} pos")
@@ -89,7 +95,7 @@ def run_one(llm, name, prompt, news):
     values = parse_bracket_format(raw)
     
     if not values:
-        # Пробуем парсер для текстового формата
+        # Пробуем парсер для текстового формата (с markdown)
         values = parse_text_format(raw)
     
     if not values:
