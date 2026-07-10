@@ -23,26 +23,17 @@ simple_v2: |
   - Positive: 0 to +5 (how much this news promotes the value)
   
   CRITICAL RULES:
-  - FORBIDDEN WORDS: "maybe", "perhaps", "not sure", "could be", "might be" - NEVER use them
-  - Evaluate based on MOST LIKELY consequences only
-  - Every news event MUST have impact on society - both positive and negative aspects
-  - Rarely do positive and negative impacts balance out to zero
-  - Consider the butterfly effect: even small economic decisions affect millions of lives
-  - Evaluate based on CURRENT REALITY and direct consequences
-  - If the news mentions problems (inflation, lowered GDP, risks, conflicts), these are NEGATIVE impacts
-  - If the news mentions improvements (growth, progress, success), these are POSITIVE impacts
-  - At least 8 values must be non-zero
+  - FORBIDDEN WORDS: "maybe", "perhaps", "not sure", "could be", "might be" - NEVER use them.
+  - Evaluate based on MOST LIKELY consequences only.
+  - Every news event MUST have impact on society - both positive and negative aspects.
   
   Process:
-  1. For EACH value, write ONE SENTENCE explaining the impact
-  2. Then output JSON array with your final evaluations
+  - Then output JSON array with your final evaluations.
   
   Output format:
-  1. Life: [one sentence]
-  2. Freedom: [one sentence]
-  ...
-  12. Solidarity: [one sentence]
-  JSON: [[neg,pos],[neg,pos],...] (12 pairs total, example [-5,+5])
+  parameter: [-rate, +rate]
+
+  JSON: [[-value,+value],[-value,+value],...] (12 pairs total, example [-5,+5])
   </instructions>
   
   <context>
