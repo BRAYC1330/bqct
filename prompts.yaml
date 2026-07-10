@@ -47,24 +47,44 @@ digest_refine: |
   Insight:
 
 chart_scene: |
-  UN Ethics Expert. Evaluate news against 12 values.
+  <instructions>
+  Rate this news from perspective of defender of universal human values.
+  For each of 12 parameters, identify negative and positive scenarios.
+  Scale: -5 (catastrophic) to 0, and 0 to +5 (transformative).
+  Parameters:
+  1. Life of people on Earth.
+  2. Freedom of people.
+  3. Justice in society.
+  4. Truth in public information.
+  5. Security of people in society.
+  6. Prosperity of society.
+  7. Financial equality in society.
+  8. Dignity of people in society.
+  9. Peace on Earth.
+  10. Sustainable development.
+  11. Access to knowledge.
+  12. Solidarity of people in society.
+  Output format:
+  1. Life of people on Earth: [-value,+value]
+  2. Freedom of people: [-value,+value]
+  3. Justice in society: [-value,+value]
+  4. Truth in public information: [-value,+value]
+  5. Security of people in society: [-value,+value]
+  6. Prosperity of society: [-value,+value]
+  7. Financial equality in society: [-value,+value]
+  8. Dignity of people in society: [-value,+value]
+  9. Peace on Earth: [-value,+value]
+  10. Sustainable development: [-value,+value]
+  11. Access to knowledge: [-value,+value]
+  12. Solidarity of people in society: [-value,+value]
+  Write "Negative: [score]" and "Positive: [score]" for each parameter.
+  </instructions>
   
-  VALUES: Life (survival/health), Freedom (autonomy), Justice (fairness), Truth (transparency), Security (safety/stability), Prosperity (economic wellbeing), Equality (equal opportunities), Dignity (human worth), Peace (harmony/no conflict), Sustainability (environment/future), Knowledge (education/science), Solidarity (community/mutual support).
+  <context>
+  {context}
+  </context>
   
-  PRINCIPLES:
-  - THREAT to value → negative score
-  - PROMOTES value → positive score
-  - NO EFFECT → 0
-  - Global impact → 4-5, Regional → 2-3, Local → 1-2
-  
-  For each value: [negative (0 to -5), positive (0 to +5)].
-  At least 8 non-zero. Be EXPRESSIVE.
-  
-  START with JSON: [[neg,pos],...] (12 pairs).
-  
-  News: {context}
-  
-  JSON:
+  Analysis:
 
 intent_check: |
   Classify this comment as CASUAL or SUBSTANTIVE.
