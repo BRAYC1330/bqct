@@ -173,6 +173,7 @@ def value_to_y(v: float) -> int:
 def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT ANALYSIS", subtitle: str = "") -> str:
     net_balance = sum((min_val + max_val) / 2 for min_val, max_val in values)
     positive_count = sum(1 for min_val, max_val in values if (min_val + max_val) / 2 > 0)
+    negative_count = sum(1 for min_val, max_val in values if (min_val + max_val) / 2 < 0)
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -182,13 +183,15 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
   
-  <g font-family="Arial, sans-serif" font-size="20" font-weight="bold">
-    <circle cx="50" cy="40" r="8" fill="#00ff88"/>
-    <text x="70" y="48" fill="#cccccc">NET: {net_balance:+.1f}</text>
-    <text x="512" y="48" text-anchor="middle" fill="#ffffff" font-size="36" letter-spacing="4">{title}</text>
-    <text x="954" y="48" text-anchor="end" fill="#cccccc">POSITIVE: {positive_count}/12</text>
-    <circle cx="834" cy="40" r="8" fill="#88ff00"/>
-  </g>
+  <text x="60" y="48" fill="#cccccc" font-family="Arial, sans-serif" font-size="20" font-weight="bold">P</text>
+  <circle cx="80" cy="42" r="8" fill="#00ff88"/>
+  <text x="92" y="48" fill="#cccccc" font-family="Arial, sans-serif" font-size="20" font-weight="bold">SITIVE: {positive_count}/12</text>
+  
+  <text x="512" y="48" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
+  
+  <text x="828" y="48" text-anchor="end" fill="#cccccc" font-family="Arial, sans-serif" font-size="20" font-weight="bold">NEGATI</text>
+  <polygon points="833,34 845,34 839,48" fill="#ff3366"/>
+  <text x="848" y="48" fill="#cccccc" font-family="Arial, sans-serif" font-size="20" font-weight="bold">E: {negative_count}/12</text>
   
   <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
   
@@ -225,10 +228,13 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
         abbr = VALUE_ABBR[label]
         svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{abbr}</text>'
     svg += '\n  </g>'
-    svg += '\n  <g font-family="Arial, sans-serif" font-size="16" fill="#cccccc">'
-    svg += '\n    <text x="512" y="940" text-anchor="middle">Parameters relate to universal human values:</text>'
-    legend_text = "LI - Life, FR - Freedom, JU - Justice, TR - Truth, SE - Security, PR - Prosperity, EQ - Equality, DI - Dignity, PE - Peace, SU - Sustainability, KN - Knowledge, SO - Solidarity"
-    svg += f'\n    <text x="512" y="970" text-anchor="middle">{legend_text}</text>'
+    svg += f'\n  <g font-family="Arial, sans-serif" font-size="16" fill="#cccccc">'
+    svg += f'\n    <text x="512" y="930" text-anchor="middle">NET: {net_balance:+.1f}</text>'
+    svg += '\n    <text x="512" y="958" text-anchor="middle">Parameters relate to universal human values:</text>'
+    legend_line1 = "LI - Life, FR - Freedom, JU - Justice, TR - Truth, SE - Security, PR - Prosperity"
+    legend_line2 = "EQ - Equality, DI - Dignity, PE - Peace, SU - Sustainability, KN - Knowledge, SO - Solidarity"
+    svg += f'\n    <text x="512" y="986" text-anchor="middle">{legend_line1}</text>'
+    svg += f'\n    <text x="512" y="1014" text-anchor="middle">{legend_line2}</text>'
     svg += '\n  </g>'
     svg += '\n</svg>'
     return svg
