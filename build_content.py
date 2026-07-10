@@ -46,7 +46,7 @@ def _generate_chart_candles(llm, context: str) -> str:
             logger.info("=== [CHART SCENE PROMPT] ===")
             logger.info(prompt_text)
             logger.info("=== [END CHART SCENE PROMPT] ===")
-        output = llm(prompt_text, max_tokens=1500, temperature=0.3)
+        output = llm(prompt_text, max_tokens=1500, temperature=0.3, stop=["\n\n", "Okay", "Let me", "First", "The news"])
         if config.RAW_DEBUG:
             logger.info(f"[digest] Raw LLM response object: {output}")
         raw = _get_llm_text(output)
@@ -157,38 +157,58 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         if max_desc < 30:
             logger.warning(f"[digest] max_desc too small: {max_desc} < 30")
             return None, None
-        prompt_text = generator.load_prompt("digest_refine", keyword=kw, summary=summary, max_chars=min(max_desc, config.DIGEST_DESC_MAX_CHARS))
-        prompt_text = str(prompt_text).strip()
-        if config.RAW_DEBUG:
-            logger.info("=== [DIGEST PROMPT] ===")
-            logger.info(prompt_text)
-            logger.info("=== [DIGEST PROMPT END ===")
-        try:
-            output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5)
-            desc = _get_llm_text(output)
-            desc = utils.compress_numbers(desc)
+        
+        desc = None
+        for attempt in range(3):
+            prompt_text = generator.load_prompt("digest_refine", keyword=kw, summary=summary, max_chars=min(max_desc, config.DIGEST_DESC_MAX_CHARS))
+            prompt_text = str(prompt_text).strip()
             if config.RAW_DEBUG:
-                logger.info("=== [DIGEST RAW OUTPUT] ===")
-                logger.info(desc)
-                logger.info("=== [END DIGEST OUTPUT] ===")
-        except TypeError as e:
-            logger.error(f"[digest] LLM TypeError: {repr(e)} | prompt_type={type(prompt_text)} | len={len(prompt_text)}")
+                logger.info(f"=== [DIGEST PROMPT ATTEMPT {attempt+1}] ===")
+                logger.info(prompt_text)
+                logger.info("=== [DIGEST PROMPT END ===")
+            try:
+                output = llm(prompt_text, max_tokens=config.DIGEST_DESC_MAX_TOKENS, temperature=0.5, stop=["\n\n", "Okay", "Let me", "First", "The news"])
+                desc = _get_llm_text(output)
+                desc = utils.compress_numbers(desc)
+                if config.RAW_DEBUG:
+                    logger.info(f"=== [DIGEST RAW OUTPUT ATTEMPT {attempt+1}] ===")
+                    logger.info(desc)
+                    logger.info("=== [END DIGEST OUTPUT] ===")
+            except TypeError as e:
+                logger.error(f"[digest] LLM TypeError: {repr(e)} | prompt_type={type(prompt_text)} | len={len(prompt_text)}")
+                desc = summary[:max_desc] if summary else "No summary available."
+            except Exception as e:
+                logger.error(f"[digest] LLM failed: {repr(e)}")
+                desc = summary[:max_desc] if summary else "No summary available."
+            
+            desc_chars = utils.count_graphemes(desc)
+            desc_limit = min(max_desc, config.DIGEST_DESC_MAX_CHARS)
+            
+            if desc_chars <= desc_limit and desc.endswith('.'):
+                logger.info(f"[digest] Valid description on attempt {attempt+1}")
+                break
+            else:
+                logger.warning(f"[digest] Invalid description on attempt {attempt+1}: length={desc_chars}, ends_with_period={desc.endswith('.')}, retrying")
+        
+        if not desc:
             desc = summary[:max_desc] if summary else "No summary available."
-        except Exception as e:
-            logger.error(f"[digest] LLM failed: {repr(e)}")
-            desc = summary[:max_desc] if summary else "No summary available."
+        
         desc_chars = utils.count_graphemes(desc)
         desc_limit = min(max_desc, config.DIGEST_DESC_MAX_CHARS)
+        
         if desc_chars > desc_limit:
             logger.warning(f"[digest] Model output too long ({desc_chars} > {desc_limit}), truncating smartly")
             desc = utils.truncate_text(desc, desc_limit, sig="")
             desc_chars = utils.count_graphemes(desc)
             logger.info(f"[digest] Truncated to {desc_chars} chars")
+        
         if desc_chars > desc_limit:
             logger.warning(f"[digest] Still too long after truncation, returning None")
             return None, None
+        
         refined_desc = desc
         body = title + desc
+    
     final = body + sig
     final_len = utils.count_graphemes(final)
     if final_len > max_total:
@@ -198,6 +218,7 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [FINAL DIGEST POST] ===")
         logger.info(final)
         logger.info("=== [END FINAL POST] ===")
+    
     embed = None
     if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type, llm=llm, summary=summary)
@@ -205,4 +226,5 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.error("[digest] Image generation failed for digest_full, failing entire digest")
             return None, None
         logger.info(f"[digest] Embed generated successfully, passing to create_post")
+    
     return final, embed
