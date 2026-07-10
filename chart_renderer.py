@@ -23,21 +23,75 @@ VALUES = [
     "Equality", "Dignity", "Peace", "Sustain", "Knowledge", "Solidarity"
 ]
 
+def parse_bracket_format(raw: str) -> Optional[List[Tuple[float, float]]]:
+    values = []
+    clean = raw.replace('**', '').replace('*', '')
+    pattern = r'\[\s*([-\d.]+)\s*,\s*\+?([-\d.]+)\s*\]'
+    matches = re.findall(pattern, clean)
+    if len(matches) != 12:
+        logger.warning(f"[chart] Expected 12 pairs, got {len(matches)}")
+        return None
+    for neg_str, pos_str in matches:
+        try:
+            neg = max(-5, min(0, float(neg_str)))
+            pos = max(0, min(5, float(pos_str)))
+            values.append((neg, pos))
+        except ValueError:
+            values.append((0.0, 0.0))
+    return values
+
+def parse_text_format(raw: str) -> Optional[List[Tuple[float, float]]]:
+    values = []
+    clean = raw.replace('**', '').replace('*', '')
+    neg_pattern = r'Negative:\s*([-\d.]+)'
+    pos_pattern = r'Positive:\s*\+?([-\d.]+)'
+    neg_matches = re.findall(neg_pattern, clean)
+    pos_matches = re.findall(pos_pattern, clean)
+    if len(neg_matches) < 12 or len(pos_matches) < 12:
+        logger.warning(f"[chart] Expected 12 pairs, got {len(neg_matches)} neg, {len(pos_matches)} pos")
+        return None
+    for i in range(12):
+        try:
+            neg = max(-5, min(0, float(neg_matches[i])))
+            pos = max(0, min(5, float(pos_matches[i])))
+            values.append((neg, pos))
+        except ValueError:
+            values.append((0.0, 0.0))
+    return values
+
+def parse_inline_scores(raw: str) -> Optional[List[Tuple[float, float]]]:
+    values = []
+    clean = raw.replace('**', '').replace('*', '')
+    sections = re.split(r'\n\d+\.\s+', clean)
+    if len(sections) < 13:
+        logger.warning(f"[chart] Expected 12 sections, got {len(sections)}")
+        return None
+    for i, section in enumerate(sections[1:13], 1):
+        scores = re.findall(r'[+-]\d+', section)
+        if len(scores) >= 1:
+            score = int(scores[-1])
+            if score > 0:
+                values.append((0.0, min(5, float(score))))
+            else:
+                values.append((max(-5, float(score)), 0.0))
+        else:
+            values.append((0.0, 0.0))
+    if all(v == (0.0, 0.0) for v in values):
+        return None
+    return values
+
 def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
     try:
         raw = re.sub(r'```json\s*', '', raw, flags=re.I)
         raw = re.sub(r'```\s*', '', raw)
         raw = raw.strip()
-        
         decoder = json.JSONDecoder()
         all_arrays = []
         idx = 0
-        
         while True:
             idx = raw.find('[', idx)
             if idx == -1:
                 break
-            
             try:
                 data, end_idx = decoder.raw_decode(raw, idx)
                 if isinstance(data, list) and len(data) > 0:
@@ -45,12 +99,10 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
                 idx = end_idx
             except json.JSONDecodeError:
                 idx += 1
-        
         if not all_arrays:
             logger.warning(f"[chart] No valid JSON arrays found")
             logger.warning(f"[chart] Raw input: {raw[:300]}")
             return None
-        
         for _, data, _ in sorted(all_arrays, key=lambda x: x[0], reverse=True):
             if len(data) == 12 and all(isinstance(item, list) and len(item) >= 2 for item in data):
                 values = []
@@ -66,7 +118,6 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
                     except (ValueError, TypeError):
                         values.append((0.0, 0.0))
                 return values
-        
         for _, data, _ in sorted(all_arrays, key=lambda x: x[0], reverse=True):
             if len(data) == 12 and all(isinstance(item, (int, float)) for item in data):
                 values = []
@@ -83,7 +134,6 @@ def parse_values_json(raw: str) -> Optional[List[Tuple[float, float]]]:
                     except (ValueError, TypeError):
                         values.append((0.0, 0.0))
                 return values
-        
         logger.warning(f"[chart] No valid 12-element array found")
         logger.warning(f"[chart] Raw input: {raw[:300]}")
         return None
@@ -111,7 +161,6 @@ def value_to_y(v: float) -> int:
 def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT ANALYSIS", subtitle: str = "") -> str:
     net_balance = sum((min_val + max_val) / 2 for min_val, max_val in values)
     positive_count = sum(1 for min_val, max_val in values if (min_val + max_val) / 2 > 0)
-    
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -124,46 +173,35 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
   <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
   
   <g stroke="#1a2030" stroke-width="0.6">'''
-    
     for i in range(11):
         y = CHART_TOP + i * (CHART_H / 10)
         svg += f'\n    <line x1="{CHART_LEFT}" y1="{y:.1f}" x2="{CHART_RIGHT}" y2="{y:.1f}"/>'
-    
     svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c8d0e0">'
-    
     for i in range(11):
         val = 5 - i
         y = CHART_TOP + i * (CHART_H / 10) + 6
         svg += f'\n    <text x="80" y="{y:.1f}" text-anchor="end">{val:+d}</text>'
-    
     svg += '\n  </g>'
-    
     zero_y = value_to_y(0)
     svg += f'\n  <line x1="{CHART_LEFT}" y1="{zero_y}" x2="{CHART_RIGHT}" y2="{zero_y}" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,5"/>'
-    
     for i, (min_val, max_val) in enumerate(values):
         balance = (min_val + max_val) / 2
         x = CHART_LEFT + i * BAR_WIDTH + BAR_GAP / 2
         color = get_bar_color(balance)
-        
         balance_y = value_to_y(balance)
         bar_height = abs(balance_y - zero_y)
-        
         if abs(balance) > 0.01:
             if balance >= 0:
                 svg += f'\n  <rect x="{x:.1f}" y="{balance_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
             else:
                 svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
-        
         value_y = balance_y - 10 if balance >= 0 else balance_y + bar_height + 20
         svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{value_y:.1f}" text-anchor="middle" fill="{color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
-    
     svg += '\n  <g font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#c8d0e0">'
     for i, label in enumerate(VALUES):
         x = CHART_LEFT + i * BAR_WIDTH + BAR_WIDTH / 2
         svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{label}</text>'
     svg += '\n  </g>'
-    
     svg += f'\n  <g>'
     svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
     svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">NET: {net_balance:+.1f}</text>'
@@ -190,9 +228,15 @@ def svg_to_png(svg_str: str, output_path: str = "chart_output.png") -> bytes:
         return None
 
 def generate_chart_image(values_json: str, title: str = "SENTIMENT ANALYSIS", subtitle: str = "") -> Optional[bytes]:
-    values = parse_values_json(values_json)
+    values = parse_bracket_format(values_json)
     if not values:
-        logger.error("[chart] Failed to parse values JSON, returning None")
+        values = parse_text_format(values_json)
+    if not values:
+        values = parse_inline_scores(values_json)
+    if not values:
+        values = parse_values_json(values_json)
+    if not values:
+        logger.error("[chart] Failed to parse values, returning None")
         return None
     svg = render_values_svg(values, title, subtitle)
     try:
