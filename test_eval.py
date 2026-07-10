@@ -5,7 +5,7 @@ import logging
 import yaml
 import re
 
-logging.basicConfig(level='%(asctime)s %(message)s', datefmt='%H:%M:%S')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%H:%M:%S')
 logger = logging.getLogger(__name__)
 
 import config
