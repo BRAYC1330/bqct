@@ -44,10 +44,11 @@ def truncate_text(text: str, max_len: int, sig: str = "") -> str:
             next_char = truncated[i+1] if i+1 < len(truncated) else ''
             if prev_char.isdigit(): continue
             if next_char.islower(): continue
+            if i < 100: continue
             last_safe_dot = i
             break
             
-    if last_safe_dot > 0:
+    if last_safe_dot > 100:
         return truncated[:last_safe_dot + 1].strip()
         
     last_space = truncated.rfind(' ')
