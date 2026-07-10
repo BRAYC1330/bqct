@@ -37,12 +37,11 @@ def run_one(llm, name, prompt, news):
     
     logger.info(f"--- RAW ({tokens} tokens, {elapsed:.1f}s) ---\n{raw}\n--- END RAW ---")
     
-    # Ищем JSON в конце вывода (после рассуждений)
+    # Ищем JSON в конце вывода
     json_part = raw
     if "JSON:" in raw:
         json_part = raw.split("JSON:")[-1].strip()
     elif "[[" in raw:
-        # Ищем последний JSON массив
         last_bracket = raw.rfind("[[")
         if last_bracket != -1:
             json_part = raw[last_bracket:]
@@ -131,7 +130,6 @@ def print_comparison(results):
 
 def main():
     news = os.getenv("NEWS_TEXT", "").strip()
-    target_variant = os.getenv("PROMPT_VARIANT", "all").strip()
     
     if not news:
         logger.error("NEWS_TEXT is empty")
@@ -139,17 +137,11 @@ def main():
     
     prompts = load_prompts()
     
-    if target_variant == "all":
-        variants_to_run = list(prompts.keys())
-    else:
-        if target_variant not in prompts:
-            logger.error(f"Unknown variant: {target_variant}")
-            logger.error(f"Available: {', '.join(prompts.keys())}")
-            sys.exit(1)
-        variants_to_run = [target_variant]
+    if "simple_v2" not in prompts:
+        logger.error("simple_v2 not found in prompts_test.yaml")
+        sys.exit(1)
     
     logger.info(f"=== TEST EVAL START ===")
-    logger.info(f"Variants: {', '.join(variants_to_run)}")
     logger.info(f"News length: {len(news)} chars")
     logger.info(f"News preview: {news[:200]}...")
     
@@ -168,24 +160,18 @@ def main():
         sys.exit(1)
     logger.info(f"Model loaded in {time.time()-t0:.1f}s")
     
-    results = []
-    total_start = time.time()
+    prompt = prompts["simple_v2"].format(context=news[:1500])
+    result = run_one(llm, "simple_v2", prompt, news)
     
-    for variant in variants_to_run:
-        prompt = prompts[variant].format(context=news[:1500])
-        result = run_one(llm, variant, prompt, news)
-        results.append(result)
+    logger.info(f"\nTotal test time: {time.time()-t0:.1f}s")
     
-    logger.info(f"\nTotal test time: {time.time()-total_start:.1f}s")
+    print_comparison([result])
     
-    print_comparison(results)
-    
-    failed_count = sum(1 for r in results if r["failed"])
-    if failed_count == len(results):
-        logger.error("ALL VARIANTS FAILED")
+    if result["failed"]:
+        logger.error("TEST FAILED")
         sys.exit(1)
     
-    logger.info(f"=== TEST DONE ({len(results)-failed_count}/{len(results)} OK) ===")
+    logger.info(f"=== TEST DONE ===")
 
 if __name__ == "__main__":
     main()
