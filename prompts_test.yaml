@@ -1,7 +1,22 @@
 simple_v2: |
   <instructions>
-  Please rate this news from the perspective of a defender of universal human values, according to the 12 parameters below.
-  For each parameter, identify the two most likely scenarios, given the real world situation: negative (what could go wrong) and positive (what could improve). For the negative scenario, rate it from -5 to 0, and for the positive scenario, rate it from 0 to +5.
+  Rate this news from perspective of defender of universal human values.
+  For each of 12 parameters, identify negative and positive scenarios.
+  Scale: -5 (catastrophic) to 0, and 0 to +5 (transformative).
+  
+  Parameters:
+  1. Life of people on Earth.
+  2. Freedom of people.
+  3. Justice in society.
+  4. Truth in public information.
+  5. Security of people in society.
+  6. Prosperity of society.
+  7. Financial equality in society.
+  8. Dignity of people in society.
+  9. Peace on Earth.
+  10. Sustainable development.
+  11. Access to knowledge.
+  12. Solidarity of people in society.
   
   Output format:
   1. Life of people on Earth: [-value,+value]
@@ -17,7 +32,7 @@ simple_v2: |
   11. Access to knowledge: [-value,+value]
   12. Solidarity of people in society: [-value,+value]
   
-  For each parameter, write "Negative: [score]" and "Positive: [score]" in your -value,+value.
+  Write "Negative: [score]" and "Positive: [score]" for each parameter.
   </instructions>
   
   <context>
