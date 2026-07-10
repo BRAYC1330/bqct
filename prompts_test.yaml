@@ -4,20 +4,20 @@ simple_v2: |
   For each parameter, identify the two most likely scenarios, given the real world situation: negative (what could go wrong) and positive (what could improve). For the negative scenario, rate it from -5 to 0, and for the positive scenario, rate it from 0 to +5.
   
   Output format:
-  1. Life of people on Earth: [-value,+value]
-  2. Freedom of people: [-value,+value]
-  3. Justice in society: [-value,+value]
-  4. Truth in public information: [-value,+value]
-  5. Security of people in society: [-value,+value]
-  6. Prosperity of society: [-value,+value]
-  7. Financial equality in society: [-value,+value]
-  8. Dignity of people in society: [-value,+value]
-  9. Peace on Earth: [-value,+value]
-  10. Sustainable development: [-value,+value]
-  11. Access to knowledge: [-value,+value]
-  12. Solidarity of people in society: [-value,+value]
+  1. Life of people on Earth: [-score,+score]
+  2. Freedom of people: [-score,+score]
+  3. Justice in society: [-score,+score]
+  4. Truth in public information: [-score,+score]
+  5. Security of people in society: [-score,+score]
+  6. Prosperity of society: [-score,+score]
+  7. Financial equality in society: [-score,+score]
+  8. Dignity of people in society: [-score,+score]
+  9. Peace on Earth: [-score,+score]
+  10. Sustainable development: [-score,+score]
+  11. Access to knowledge: [-score,+score]
+  12. Solidarity of people in society: [-score,+score]
   
-  For each parameter, write "Negative: [score]" and "Positive: [score]" in your -value,+value.
+  For each parameter, write "Negative: [score]" and "Positive: [score]" in your -score,+score.
   </instructions>
   
   <context>
