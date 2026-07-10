@@ -3,6 +3,7 @@ import sys
 import time
 import logging
 import yaml
+import re
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%H:%M:%S')
 logger = logging.getLogger(__name__)
@@ -23,6 +24,31 @@ def load_prompts():
         logger.error(f"Failed to load prompts_test.yaml: {e}")
         sys.exit(1)
 
+def parse_text_format(raw: str):
+    """Парсит формат: 'Negative: -2 ... Positive: +2' для каждого параметра"""
+    values = []
+    
+    # Ищем все пары Negative/Positive
+    neg_pattern = r'Negative:\s*([-\d.]+)'
+    pos_pattern = r'Positive:\s*\+?([-\d.]+)'
+    
+    neg_matches = re.findall(neg_pattern, raw)
+    pos_matches = re.findall(pos_pattern, raw)
+    
+    if len(neg_matches) < 12 or len(pos_matches) < 12:
+        logger.warning(f"[chart] Expected 12 pairs, got {len(neg_matches)} neg, {len(pos_matches)} pos")
+        return None
+    
+    for i in range(12):
+        try:
+            neg = max(-5, min(0, float(neg_matches[i])))
+            pos = max(0, min(5, float(pos_matches[i])))
+            values.append((neg, pos))
+        except ValueError:
+            values.append((0.0, 0.0))
+    
+    return values
+
 def run_one(llm, name, prompt, news):
     logger.info(f"\n{'='*60}")
     logger.info(f"VARIANT: {name}")
@@ -37,16 +63,20 @@ def run_one(llm, name, prompt, news):
     
     logger.info(f"--- RAW ({tokens} tokens, {elapsed:.1f}s) ---\n{raw}\n--- END RAW ---")
     
-    # Ищем JSON в конце вывода
-    json_part = raw
-    if "JSON:" in raw:
-        json_part = raw.split("JSON:")[-1].strip()
-    elif "[[" in raw:
-        last_bracket = raw.rfind("[[")
-        if last_bracket != -1:
-            json_part = raw[last_bracket:]
+    # Пробуем новый парсер для текстового формата
+    values = parse_text_format(raw)
     
-    values = chart_renderer.parse_values_json(json_part)
+    if not values:
+        # Fallback на JSON парсер
+        json_part = raw
+        if "JSON:" in raw:
+            json_part = raw.split("JSON:")[-1].strip()
+        elif "[[" in raw:
+            last_bracket = raw.rfind("[[")
+            if last_bracket != -1:
+                json_part = raw[last_bracket:]
+        
+        values = chart_renderer.parse_values_json(json_part)
     
     if not values:
         logger.warning(f"[{name}] PARSE FAILED")
