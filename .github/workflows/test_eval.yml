@@ -6,7 +6,7 @@ on:
         description: 'News text to evaluate'
         required: false
         type: string
-        default: 'The Federal Reserve released minutes from its June meeting, revealing a divided committee that voted unanimously to hold interest rates steady at 3.50%–3.75%. While all participants supported the pause, a few officials argued for a rate hike, citing persistent inflation risks driven by AI infrastructure investment, energy prices, and tariffs. Fed staff raised inflation forecasts for 2026–2027 and lowered GDP growth projections, with Chair Kevin Warsh describing internal debates as intense. Market expectations shifted as traders priced in potential rate hikes, with some officials indicating that further tightening may be necessary if inflation does not trend toward the 2% target. The minutes highlighted AI-driven demand as a new structural inflationary pressure, complicating the path for future monetary policy. Fed Chair Kevin Warsh is scheduled to testify before the Senate Banking Committee on July 15.'
+        default: 'The World Health Organization announced a breakthrough in cancer treatment: a new universal vaccine has shown 95% effectiveness against all major cancer types in phase 3 clinical trials involving 50,000 patients across 40 countries. The vaccine, developed using AI-driven research, costs only $10 per dose and will be distributed free to low-income countries. Scientists estimate this could save 10 million lives annually and reduce global healthcare costs by $2 trillion over the next decade. The UN called it "the greatest medical achievement in human history".'
 concurrency:
   group: test-eval-${{ github.ref }}
   cancel-in-progress: true
