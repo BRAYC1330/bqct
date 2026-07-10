@@ -5,7 +5,7 @@ import logging
 import yaml
 import re
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%H:%M:%S')
+logging.basicConfig(level='%(asctime)s %(message)s', datefmt='%H:%M:%S')
 logger = logging.getLogger(__name__)
 
 import config
@@ -77,6 +77,39 @@ def parse_text_format(raw: str):
     
     return values
 
+def parse_inline_scores(raw: str):
+    """Парсит формат: '1. Life: ... +5. 2. Freedom: ... +4.' - ищет оценки в тексте каждого параметра"""
+    values = []
+    
+    # Убираем markdown
+    clean = raw.replace('**', '').replace('*', '')
+    
+    # Разбиваем по номерам параметров
+    sections = re.split(r'\n\d+\.\s+', clean)
+    
+    if len(sections) < 13:  # Первый элемент пустой или заголовок
+        logger.warning(f"[chart] Expected 12 sections, got {len(sections)}")
+        return None
+    
+    for i, section in enumerate(sections[1:13], 1):  # Пропускаем первый, берём 12
+        # Ищем все числа со знаком + или -
+        scores = re.findall(r'[+-]\d+', section)
+        
+        if len(scores) >= 1:
+            # Берём последнее число как оценку (обычно в конце)
+            score = int(scores[-1])
+            if score > 0:
+                values.append((0.0, min(5, float(score))))
+            else:
+                values.append((max(-5, float(score)), 0.0))
+        else:
+            values.append((0.0, 0.0))
+    
+    if all(v == (0.0, 0.0) for v in values):
+        return None
+    
+    return values
+
 def run_one(llm, name, prompt, news):
     logger.info(f"\n{'='*60}")
     logger.info(f"VARIANT: {name}")
@@ -97,6 +130,10 @@ def run_one(llm, name, prompt, news):
     if not values:
         # Пробуем парсер для текстового формата (с markdown)
         values = parse_text_format(raw)
+    
+    if not values:
+        # Пробуем парсер для inline оценок
+        values = parse_inline_scores(raw)
     
     if not values:
         # Fallback на JSON парсер
@@ -215,8 +252,7 @@ def main():
             model_path=config.MODEL_PATH,
             n_ctx=config.MODEL_N_CTX,
             n_threads=config.MODEL_N_THREADS,
-            verbose=False,
-            chat_format="chatml"  # Попробуем отключить thinking через chat_format
+            verbose=False
         )
     except Exception as e:
         logger.error(f"Model load failed: {e}")
