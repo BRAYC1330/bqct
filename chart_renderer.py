@@ -175,14 +175,14 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
     </linearGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
-  <text x="512" y="64" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
-  <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
+  <text x="512" y="64" text-anchor="middle" fill="#ffffff" font-family="DejaVu Sans Mono, monospace" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
+  <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="DejaVu Sans Mono, monospace" font-size="20" letter-spacing="2">{subtitle}</text>
   
   <g stroke="#1a2030" stroke-width="0.6">'''
     for i in range(11):
         y = CHART_TOP + i * (CHART_H / 10)
         svg += f'\n    <line x1="{CHART_LEFT}" y1="{y:.1f}" x2="{CHART_RIGHT}" y2="{y:.1f}"/>'
-    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c8d0e0">'
+    svg += '\n  </g>\n  <g font-family="DejaVu Sans Mono, monospace" font-size="16" font-weight="bold" fill="#c8d0e0">'
     for i in range(11):
         val = 5 - i
         y = CHART_TOP + i * (CHART_H / 10) + 6
@@ -204,17 +204,17 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
             else:
                 svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
                 text_y = zero_y + bar_height / 2 + 5
-            svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{text_y:.1f}" text-anchor="middle" fill="{text_color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
-    svg += '\n  <g font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#c8d0e0">'
+            svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{text_y:.1f}" text-anchor="middle" fill="{text_color}" font-family="DejaVu Sans Mono, monospace" font-size="14" font-weight="bold">{balance:+.1f}</text>'
+    svg += '\n  <g font-family="DejaVu Sans Mono, monospace" font-size="14" font-weight="bold" fill="#c8d0e0">'
     for i, label in enumerate(VALUES):
         x = CHART_LEFT + i * BAR_WIDTH + BAR_WIDTH / 2
-        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{label.upper()}</text>'
+        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{label}</text>'
     svg += '\n  </g>'
     svg += f'\n  <g>'
     svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
-    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">NET: {net_balance:+.1f}</text>'
+    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="DejaVu Sans Mono, monospace" font-size="20" font-weight="bold">NET: {net_balance:+.1f}</text>'
     svg += f'\n    <circle cx="350" cy="980" r="8" fill="#88ff00"/>'
-    svg += f'\n    <text x="370" y="988" fill="#c8d0e0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">POSITIVE: {positive_count}/12</text>'
+    svg += f'\n    <text x="370" y="988" fill="#c8d0e0" font-family="DejaVu Sans Mono, monospace" font-size="20" font-weight="bold">POSITIVE: {positive_count}/12</text>'
     svg += f'\n  </g>'
     svg += '\n</svg>'
     return svg
