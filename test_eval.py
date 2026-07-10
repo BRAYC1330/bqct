@@ -24,6 +24,28 @@ def load_prompts():
         logger.error(f"Failed to load prompts_test.yaml: {e}")
         sys.exit(1)
 
+def parse_bracket_format(raw: str):
+    """Парсит формат: [-1, +2] или [-1,+2] или **[-1, +2]**"""
+    values = []
+    
+    # Ищем все пары в квадратных скобках: [-1, +2] или [-1,+2]
+    pattern = r'\[\s*([-\d.]+)\s*,\s*\+?([-\d.]+)\s*\]'
+    matches = re.findall(pattern, raw)
+    
+    if len(matches) != 12:
+        logger.warning(f"[chart] Expected 12 pairs, got {len(matches)}")
+        return None
+    
+    for neg_str, pos_str in matches:
+        try:
+            neg = max(-5, min(0, float(neg_str)))
+            pos = max(0, min(5, float(pos_str)))
+            values.append((neg, pos))
+        except ValueError:
+            values.append((0.0, 0.0))
+    
+    return values
+
 def parse_text_format(raw: str):
     """Парсит формат: 'Negative: -2 ... Positive: +2' для каждого параметра"""
     values = []
@@ -63,8 +85,12 @@ def run_one(llm, name, prompt, news):
     
     logger.info(f"--- RAW ({tokens} tokens, {elapsed:.1f}s) ---\n{raw}\n--- END RAW ---")
     
-    # Пробуем новый парсер для текстового формата
-    values = parse_text_format(raw)
+    # Пробуем парсер для формата [-value, +value]
+    values = parse_bracket_format(raw)
+    
+    if not values:
+        # Пробуем парсер для текстового формата
+        values = parse_text_format(raw)
     
     if not values:
         # Fallback на JSON парсер
