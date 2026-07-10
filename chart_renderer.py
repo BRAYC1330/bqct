@@ -23,6 +23,12 @@ VALUES = [
     "Equality", "Dignity", "Peace", "Sustain", "Knowledge", "Solidarity"
 ]
 
+VALUE_ABBR = {
+    "Life": "LI", "Freedom": "FR", "Justice": "JU", "Truth": "TR",
+    "Security": "SE", "Prosperity": "PR", "Equality": "EQ", "Dignity": "DI",
+    "Peace": "PE", "Sustain": "SU", "Knowledge": "KN", "Solidarity": "SO"
+}
+
 def parse_bracket_format(raw: str) -> Optional[List[Tuple[float, float]]]:
     values = []
     clean = raw.replace('**', '').replace('*', '')
@@ -175,14 +181,22 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
     </linearGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
-  <text x="512" y="64" text-anchor="middle" fill="#ffffff" font-family="DejaVu Sans Mono, monospace" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
-  <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="DejaVu Sans Mono, monospace" font-size="20" letter-spacing="2">{subtitle}</text>
+  
+  <g font-family="Arial, sans-serif" font-size="20" font-weight="bold">
+    <circle cx="120" cy="40" r="8" fill="#00ff88"/>
+    <text x="140" y="48" fill="#c8d0e0">NET: {net_balance:+.1f}</text>
+    <text x="512" y="48" text-anchor="middle" fill="#ffffff" font-size="36" letter-spacing="4">{title}</text>
+    <text x="904" y="48" text-anchor="end" fill="#c8d0e0">POSITIVE: {positive_count}/12</text>
+    <circle cx="884" cy="40" r="8" fill="#88ff00"/>
+  </g>
+  
+  <text x="512" y="100" text-anchor="middle" fill="#8892a8" font-family="Arial, sans-serif" font-size="20" letter-spacing="2">{subtitle}</text>
   
   <g stroke="#1a2030" stroke-width="0.6">'''
     for i in range(11):
         y = CHART_TOP + i * (CHART_H / 10)
         svg += f'\n    <line x1="{CHART_LEFT}" y1="{y:.1f}" x2="{CHART_RIGHT}" y2="{y:.1f}"/>'
-    svg += '\n  </g>\n  <g font-family="DejaVu Sans Mono, monospace" font-size="16" font-weight="bold" fill="#c8d0e0">'
+    svg += '\n  </g>\n  <g font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c8d0e0">'
     for i in range(11):
         val = 5 - i
         y = CHART_TOP + i * (CHART_H / 10) + 6
@@ -204,18 +218,18 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
             else:
                 svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
                 text_y = zero_y + bar_height / 2 + 5
-            svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{text_y:.1f}" text-anchor="middle" fill="{text_color}" font-family="DejaVu Sans Mono, monospace" font-size="14" font-weight="bold">{balance:+.1f}</text>'
-    svg += '\n  <g font-family="DejaVu Sans Mono, monospace" font-size="14" font-weight="bold" fill="#c8d0e0">'
+            svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{text_y:.1f}" text-anchor="middle" fill="{text_color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
+    svg += '\n  <g font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c8d0e0">'
     for i, label in enumerate(VALUES):
         x = CHART_LEFT + i * BAR_WIDTH + BAR_WIDTH / 2
-        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{label}</text>'
+        abbr = VALUE_ABBR[label]
+        svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{abbr}</text>'
     svg += '\n  </g>'
-    svg += f'\n  <g>'
-    svg += f'\n    <circle cx="156" cy="980" r="8" fill="#00ff88"/>'
-    svg += f'\n    <text x="176" y="988" fill="#c8d0e0" font-family="DejaVu Sans Mono, monospace" font-size="20" font-weight="bold">NET: {net_balance:+.1f}</text>'
-    svg += f'\n    <circle cx="350" cy="980" r="8" fill="#88ff00"/>'
-    svg += f'\n    <text x="370" y="988" fill="#c8d0e0" font-family="DejaVu Sans Mono, monospace" font-size="20" font-weight="bold">POSITIVE: {positive_count}/12</text>'
-    svg += f'\n  </g>'
+    svg += '\n  <g font-family="Arial, sans-serif" font-size="14" fill="#8892a8">'
+    svg += '\n    <text x="512" y="940" text-anchor="middle">Parameters relate to universal human values:</text>'
+    legend_text = "LI - Life, FR - Freedom, JU - Justice, TR - Truth, SE - Security, PR - Prosperity, EQ - Equality, DI - Dignity, PE - Peace, SU - Sustainability, KN - Knowledge, SO - Solidarity"
+    svg += f'\n    <text x="512" y="970" text-anchor="middle">{legend_text}</text>'
+    svg += '\n  </g>'
     svg += '\n</svg>'
     return svg
 
