@@ -42,22 +42,16 @@ def _generate_chart_candles(llm, context: str) -> str:
     try:
         prompt_text = generator.load_prompt("chart_scene", context=context[:1500])
         prompt_text = str(prompt_text).strip()
-        
         if config.RAW_DEBUG:
             logger.info("=== [CHART SCENE PROMPT] ===")
             logger.info(prompt_text)
             logger.info("=== [END CHART SCENE PROMPT] ===")
-            
-        output = llm(prompt_text, max_tokens=200, temperature=0.2, stop=["\n\n", "Okay", "Let me", "First", "The news"])
-        
+        output = llm(prompt_text, max_tokens=1500, temperature=0.3)
         if config.RAW_DEBUG:
             logger.info(f"[digest] Raw LLM response object: {output}")
-            
         raw = _get_llm_text(output)
-        
         if config.RAW_DEBUG:
             logger.info(f"[digest] Raw LLM text output: '{raw}'")
-            
         return raw
     except Exception as e:
         logger.warning(f"[digest] Chart candles generation failed: {e}")
@@ -68,17 +62,21 @@ def _generate_chart_candles(llm, context: str) -> str:
 def _log_candles(candles_json: str) -> None:
     try:
         import chart_renderer
-        values = chart_renderer.parse_values_json(candles_json)
+        values = chart_renderer.parse_bracket_format(candles_json)
+        if not values:
+            values = chart_renderer.parse_text_format(candles_json)
+        if not values:
+            values = chart_renderer.parse_inline_scores(candles_json)
+        if not values:
+            values = chart_renderer.parse_values_json(candles_json)
         if not values:
             logger.info("[digest] Values parse failed, no coordinates to log")
             return
-        
         logger.info(f"[digest] === VALUES ANALYSIS (12 values) ===")
         for i, (label, (min_val, max_val)) in enumerate(zip(chart_renderer.VALUES, values)):
             balance = (min_val + max_val) / 2
             direction = "POSITIVE" if balance > 0 else "NEGATIVE" if balance < 0 else "NEUTRAL"
             logger.info(f"[digest] {label:12s}: [{min_val:+.1f}, {max_val:+.1f}] → {balance:+.1f} | {direction}")
-        
         net_balance = sum((min_val + max_val) / 2 for min_val, max_val in values)
         positive_count = sum(1 for min_val, max_val in values if (min_val + max_val) / 2 > 0)
         logger.info(f"[digest] Stats: NET={net_balance:+.1f} POSITIVE={positive_count}/12")
@@ -95,34 +93,24 @@ async def _generate_digest_embed(client, trends, task_type, llm=None, summary: s
         keyword = top_item.get("keyword", "news")
         short_keyword = _shorten_keyword(keyword, 3)
         safe_subtitle = short_keyword.replace("'", "").replace('"', '').upper()[:50]
-        
         candles_json = _generate_chart_candles(llm, summary)
-        
         logger.info(f"[digest] Raw Qwen chart output: '{candles_json[:500]}'")
-        
         if not candles_json:
             logger.error("[digest] Chart candles generation returned empty, failing digest")
             return None
-            
         _log_candles(candles_json)
-        
         image_bytes = chart_renderer.generate_chart_image(
             candles_json,
             title="SENTIMENT ANALYSIS",
             subtitle=safe_subtitle
         )
-        
         if not image_bytes:
             logger.error("[digest] Chart render failed, failing digest")
             return None
-            
         logger.info(f"[digest] Chart rendered: {len(image_bytes)} bytes")
-        
         embed = await bsky.upload_digest_image(client, image_bytes, "image/png", alt=f"Digest: {keyword}")
-        
         if config.RAW_DEBUG:
             logger.info(f"[digest] Embed structure: {embed}")
-        
         return embed
     except Exception as e:
         logger.warning(f"[digest] Image pipeline failed: {e}")
@@ -140,7 +128,6 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
     trophy = config.TREND_TROPHY
     refined_desc = ""
     summary = ""
-    
     if task_type == "digest_mini":
         lines = []
         for idx, item in enumerate(trends[:6]):
@@ -202,7 +189,6 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             return None, None
         refined_desc = desc
         body = title + desc
-        
     final = body + sig
     final_len = utils.count_graphemes(final)
     if final_len > max_total:
@@ -212,7 +198,6 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
         logger.info("=== [FINAL DIGEST POST] ===")
         logger.info(final)
         logger.info("=== [END FINAL POST] ===")
-        
     embed = None
     if client and task_type == "digest_full":
         embed = await _generate_digest_embed(client, trends, task_type, llm=llm, summary=summary)
@@ -220,5 +205,4 @@ async def build_digest(llm, trends, task_type: str, client=None, max_total: int 
             logger.error("[digest] Image generation failed for digest_full, failing entire digest")
             return None, None
         logger.info(f"[digest] Embed generated successfully, passing to create_post")
-            
     return final, embed
