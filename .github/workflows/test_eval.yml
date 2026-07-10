@@ -7,14 +7,6 @@ on:
         required: false
         type: string
         default: 'The Federal Reserve released minutes from its June meeting, revealing a divided committee that voted unanimously to hold interest rates steady at 3.50%–3.75%. While all participants supported the pause, a few officials argued for a rate hike, citing persistent inflation risks driven by AI infrastructure investment, energy prices, and tariffs. Fed staff raised inflation forecasts for 2026–2027 and lowered GDP growth projections, with Chair Kevin Warsh describing internal debates as intense. Market expectations shifted as traders priced in potential rate hikes, with some officials indicating that further tightening may be necessary if inflation does not trend toward the 2% target. The minutes highlighted AI-driven demand as a new structural inflationary pressure, complicating the path for future monetary policy. Fed Chair Kevin Warsh is scheduled to testify before the Senate Banking Committee on July 15.'
-      prompt_variant:
-        description: 'Prompt variant (all = run all variants)'
-        required: false
-        type: choice
-        options:
-          - all
-          - simple_v2
-        default: 'all'
 concurrency:
   group: test-eval-${{ github.ref }}
   cancel-in-progress: true
@@ -78,6 +70,5 @@ jobs:
       - name: Run test evaluation
         env:
           NEWS_TEXT: ${{ inputs.news }}
-          PROMPT_VARIANT: ${{ inputs.prompt_variant }}
           LLAMA_NO_ACCELERATE: 1
         run: python test_eval.py
