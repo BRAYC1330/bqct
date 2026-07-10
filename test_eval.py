@@ -215,7 +215,8 @@ def main():
             model_path=config.MODEL_PATH,
             n_ctx=config.MODEL_N_CTX,
             n_threads=config.MODEL_N_THREADS,
-            verbose=False
+            verbose=False,
+            chat_format="chatml"  # Попробуем отключить thinking через chat_format
         )
     except Exception as e:
         logger.error(f"Model load failed: {e}")
