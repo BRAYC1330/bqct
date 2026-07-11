@@ -245,7 +245,6 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
         abbr = VALUE_ABBR[label]
         svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{abbr}</text>'
     svg += '\n  </g>'
-    svg += '\n  </g>'
     svg += f'\n  <g font-family="Arial, sans-serif" font-size="16" fill="#e7e7e7">'
     svg += f'\n    <text x="512" y="933" text-anchor="middle">NET: {net_balance:+.1f}</text>'
     svg += '\n    <text x="512" y="959" text-anchor="middle">Parameters relate to universal human values:</text>'
