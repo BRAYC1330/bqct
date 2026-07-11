@@ -78,7 +78,7 @@ chart_scene: |
   11. Access to knowledge: [-value,+value]
   12. Solidarity of people in society: [-value,+value]
   Write "Negative: [score]" and "Positive: [score]" for each parameter.
-  Output ONLY the numbered list with scores. No explanations, no analysis, no reasoning.
+  Think step by step, then output the final scores in the format above.
   </instructions>
   
   <context>
