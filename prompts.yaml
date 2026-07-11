@@ -60,7 +60,7 @@ chart_scene: |
   6. Prosperity of society.
   7. Financial equality in society.
   8. Dignity of people in society.
-  9. Peace on Earth.
+  9. Entertainment for society.
   10. Sustainable development.
   11. Access to knowledge.
   12. Solidarity of people in society.
@@ -73,7 +73,7 @@ chart_scene: |
   6. Prosperity of society: [-value,+value]
   7. Financial equality in society: [-value,+value]
   8. Dignity of people in society: [-value,+value]
-  9. Peace on Earth: [-value,+value]
+  9. Entertainment for society: [-value,+value]
   10. Sustainable development: [-value,+value]
   11. Access to knowledge: [-value,+value]
   12. Solidarity of people in society: [-value,+value]
