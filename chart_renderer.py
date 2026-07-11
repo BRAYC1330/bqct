@@ -186,7 +186,7 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
   
-  <text x="59" y="48" fill="#e7e7e7" font-family="Arial, sans-serif" font-size="20" font-weight="bold">P</text>
+  <text x="56" y="48" fill="#e7e7e7" font-family="Arial, sans-serif" font-size="20" font-weight="bold">P</text>
   <circle cx="80" cy="42" r="8" fill="#00ff88"/>
   <text x="93" y="48" fill="#e7e7e7" font-family="Arial, sans-serif" font-size="20" font-weight="bold">SITIVE: {positive_count}/12</text>
   
