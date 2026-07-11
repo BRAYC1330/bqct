@@ -187,7 +187,7 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
   <rect width="1024" height="1024" fill="url(#bg)"/>
   
   <text x="56" y="48" fill="#e7e7e7" font-family="Arial, sans-serif" font-size="20" font-weight="bold">P</text>
-  <circle cx="81" cy="42" r="8" fill="#00ff88"/>
+  <circle cx="80" cy="42" r="8" fill="#00ff88"/>
   <text x="93" y="48" fill="#e7e7e7" font-family="Arial, sans-serif" font-size="20" font-weight="bold">SITIVE: {positive_count}/12</text>
   
   <text x="512" y="48" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
@@ -213,8 +213,6 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
     for i, (min_val, max_val) in enumerate(values):
         balance = (min_val + max_val) / 2
         x = CHART_LEFT + i * BAR_WIDTH + BAR_GAP / 2
-        color = get_bar_color(balance)
-        text_color = get_text_color_for_bar(color)
         
         min_y = value_to_y(min_val)
         max_y = value_to_y(max_val)
@@ -225,19 +223,18 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
                 pos_height = abs(max_y - zero_y)
                 svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{neg_height}" fill="#ff3366" stroke="#ff3366" stroke-width="1" opacity="0.8"/>'
                 svg += f'\n  <rect x="{x:.1f}" y="{max_y}" width="{BAR_ACTUAL_W:.1f}" height="{pos_height}" fill="#00ff88" stroke="#00ff88" stroke-width="1" opacity="0.8"/>'
-                text_y = zero_y + neg_height / 2 + 5
+                svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{min_y + 15:.1f}" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{min_val:+.0f}</text>'
+                svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{max_y + 15:.1f}" text-anchor="middle" fill="#050810" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{max_val:+.0f}</text>'
             elif min_val < 0:
                 bar_height = abs(min_y - zero_y)
-                svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
-                text_y = zero_y + bar_height / 2 + 5
+                svg += f'\n  <rect x="{x:.1f}" y="{zero_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="#ff3366" stroke="#ff3366" stroke-width="1" opacity="0.8"/>'
+                svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{min_y + 15:.1f}" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{min_val:+.0f}</text>'
             elif max_val > 0:
                 bar_height = abs(zero_y - max_y)
-                svg += f'\n  <rect x="{x:.1f}" y="{max_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="{color}" stroke="{color}" stroke-width="1" opacity="0.8"/>'
-                text_y = max_y + bar_height / 2 + 5
+                svg += f'\n  <rect x="{x:.1f}" y="{max_y}" width="{BAR_ACTUAL_W:.1f}" height="{bar_height}" fill="#00ff88" stroke="#00ff88" stroke-width="1" opacity="0.8"/>'
+                svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{max_y + 15:.1f}" text-anchor="middle" fill="#050810" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{max_val:+.0f}</text>'
             else:
                 continue
-            
-            svg += f'\n  <text x="{x + BAR_ACTUAL_W/2:.1f}" y="{text_y:.1f}" text-anchor="middle" fill="{text_color}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">{balance:+.1f}</text>'
     
     svg += '\n  <g font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c8d0e0">'
     for i, label in enumerate(VALUES):
@@ -246,7 +243,7 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
         svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{abbr}</text>'
     svg += '\n  </g>'
     svg += f'\n  <g font-family="Arial, sans-serif" font-size="16" fill="#e7e7e7">'
-    svg += f'\n    <text x="512" y="937" text-anchor="middle">NET: {net_balance:+.1f}</text>'
+    svg += f'\n    <text x="512" y="933" text-anchor="middle">NET: {net_balance:+.1f}</text>'
     svg += '\n    <text x="512" y="959" text-anchor="middle">Parameters relate to universal human values:</text>'
     legend_line1 = "LI - Life, FR - Freedom, JU - Justice, TR - Truth, SE - Security, PR - Prosperity"
     legend_line2 = "EQ - Equality, DI - Dignity, EN - Entertainment, SU - Sustainability, KN - Knowledge, SO - Solidarity"
