@@ -20,13 +20,13 @@ BAR_ACTUAL_W = BAR_WIDTH - BAR_GAP
 
 VALUES = [
     "Life", "Freedom", "Justice", "Truth", "Security", "Prosperity",
-    "Equality", "Dignity", "Peace", "Sustain", "Knowledge", "Solidarity"
+    "Equality", "Dignity", "Entertain", "Sustain", "Knowledge", "Solidarity"
 ]
 
 VALUE_ABBR = {
     "Life": "LI", "Freedom": "FR", "Justice": "JU", "Truth": "TR",
     "Security": "SE", "Prosperity": "PR", "Equality": "EQ", "Dignity": "DI",
-    "Peace": "PE", "Sustain": "SU", "Knowledge": "KN", "Solidarity": "SO"
+    "Entertain": "EN", "Sustain": "SU", "Knowledge": "KN", "Solidarity": "SO"
 }
 
 def parse_bracket_format(raw: str) -> Optional[List[Tuple[float, float]]]:
@@ -187,7 +187,7 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
   <rect width="1024" height="1024" fill="url(#bg)"/>
   
   <text x="56" y="48" fill="#e7e7e7" font-family="Arial, sans-serif" font-size="20" font-weight="bold">P</text>
-  <circle cx="80" cy="42" r="8" fill="#00ff88"/>
+  <circle cx="81" cy="42" r="8" fill="#00ff88"/>
   <text x="93" y="48" fill="#e7e7e7" font-family="Arial, sans-serif" font-size="20" font-weight="bold">SITIVE: {positive_count}/12</text>
   
   <text x="512" y="48" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold" letter-spacing="4">{title}</text>
@@ -246,10 +246,10 @@ def render_values_svg(values: List[Tuple[float, float]], title: str = "SENTIMENT
         svg += f'\n    <text x="{x:.1f}" y="{CHART_BOTTOM + 30}" text-anchor="middle">{abbr}</text>'
     svg += '\n  </g>'
     svg += f'\n  <g font-family="Arial, sans-serif" font-size="16" fill="#e7e7e7">'
-    svg += f'\n    <text x="512" y="933" text-anchor="middle">NET: {net_balance:+.1f}</text>'
+    svg += f'\n    <text x="512" y="937" text-anchor="middle">NET: {net_balance:+.1f}</text>'
     svg += '\n    <text x="512" y="959" text-anchor="middle">Parameters relate to universal human values:</text>'
     legend_line1 = "LI - Life, FR - Freedom, JU - Justice, TR - Truth, SE - Security, PR - Prosperity"
-    legend_line2 = "EQ - Equality, DI - Dignity, PE - Peace, SU - Sustainability, KN - Knowledge, SO - Solidarity"
+    legend_line2 = "EQ - Equality, DI - Dignity, EN - Entertainment, SU - Sustainability, KN - Knowledge, SO - Solidarity"
     svg += f'\n    <text x="512" y="987" text-anchor="middle">{legend_line1}</text>'
     svg += f'\n    <text x="512" y="1015" text-anchor="middle">{legend_line2}</text>'
     svg += '\n  </g>'
